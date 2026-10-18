@@ -84,13 +84,23 @@ backend/src/
 
 ```text
 frontend/src/
+  app/             # AppRouter
+  api/
+    client.ts      # Axios instance + token refresh
+    hooks/         # TanStack Query hooks per domain (auth, catalog, commerce, seller, admin, ...)
   components/
     ui/            # Button, Input, Badge, Alert, Skeleton, EmptyState, Rating
     product/       # ProductCard, ProductGrid, PriceDisplay, VariantSelector, SellerCard
+  layouts/         # Marketplace, Auth, Workspace (seller/admin shell)
   pages/
-  layouts/
-  api/             # Axios + TanStack Query hooks
-  features/        # (growing domain features)
+    marketplace/   # Public browsing: home, catalog, product, stores, search
+    account/       # Signed-in buyer: cart, checkout, orders, disputes, messages
+    auth/          # Login, register
+    info/          # Static/help pages
+    seller/        # Seller console (/seller/*)
+    admin/         # Admin console (/admin/*); one file per section in tabs/
+    workspace/     # Shared by seller + admin: inbox, alerts, workspace.module.css
+  utils/
 ```
 
 ## License

@@ -12,9 +12,6 @@ import styles from '@/pages/workspace/workspace.module.css';
 export function SellerDashboardPage() {
   const navigate = useNavigate();
   const { data: user } = useMe();
-  const { data: dashboard, isLoading, isError, error } = useSellerDashboard();
-  const { data: products } = useSellerProducts();
-  const { data: orders } = useSellerOrders();
 
   if (!user) {
     return (
@@ -42,18 +39,31 @@ export function SellerDashboardPage() {
     );
   }
 
+  return <SellerDashboard />;
+}
+
+const OPEN_ORDER_STATUSES = ['PAID', 'CONFIRMED', 'PROCESSING', 'READY_FOR_SHIPMENT'];
+
+/** Rendered only after the seller gate, so its queries never fire for guests or customers. */
+function SellerDashboard() {
+  const navigate = useNavigate();
+  const { data: dashboard, isLoading, isError, error } = useSellerDashboard();
+  const { data: products } = useSellerProducts();
+  const { data: orders } = useSellerOrders();
+
   const wallet = dashboard?.wallet as
     | { pendingBalance: string; availableBalance: string; currency: string }
     | null
     | undefined;
   const seller = dashboard?.seller as
-    | { businessName: string; verificationStatus: string; totalOrders?: number; ratingAvg?: string }
+    | { businessName: string; verificationStatus: string; ratingAvg?: string }
     | undefined;
   const store = dashboard?.store as { name: string; slug: string } | undefined;
   const productStats = (dashboard?.products || {}) as Record<string, number>;
   const orderStats = (dashboard?.orders || {}) as Record<string, number>;
   const productTotal = Object.values(productStats).reduce((a, b) => a + b, 0);
   const orderTotal = Object.values(orderStats).reduce((a, b) => a + b, 0);
+  const openOrders = OPEN_ORDER_STATUSES.reduce((sum, status) => sum + (orderStats[status] ?? 0), 0);
   const maxProduct = Math.max(1, ...Object.values(productStats));
   const lowStock = Number(dashboard?.lowStockProducts ?? 0);
 
@@ -174,7 +184,7 @@ export function SellerDashboardPage() {
                 <span>Orders</span>
               </div>
               <strong>{orderTotal}</strong>
-              <em>{seller?.totalOrders ?? orderTotal} lifetime</em>
+              <em>{openOrders} to fulfil</em>
             </article>
             <article className={styles.kpi}>
               <div className={styles.kpiHead}>

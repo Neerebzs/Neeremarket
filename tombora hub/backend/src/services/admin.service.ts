@@ -28,7 +28,11 @@ export async function getDashboard() {
     prisma.dispute.count({ where: { status: { in: ['OPEN', 'SELLER_RESPONDED', 'ESCALATED'] } } }),
     prisma.dispute.count({ where: { status: 'ESCALATED' } }),
     prisma.order.aggregate({
-      where: { status: { in: ['PAID', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED'] } },
+      where: {
+        status: {
+          in: ['PAID', 'CONFIRMED', 'PROCESSING', 'READY_FOR_SHIPMENT', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'COMPLETED'],
+        },
+      },
       _sum: { total: true },
     }),
   ]);

@@ -250,12 +250,13 @@ export async function getMySellerDashboard(userId: string) {
       _count: { _all: true },
     }),
     prisma.$queryRaw<{ count: bigint }[]>`
-      SELECT COUNT(*)::bigint as count
+      SELECT COUNT(DISTINCT p.id)::bigint as count
       FROM inventory i
       JOIN product_variants v ON v.id = i.variant_id
       JOIN products p ON p.id = v.product_id
       WHERE p.store_id = ${seller.store.id}::uuid
         AND p.deleted_at IS NULL
+        AND v.is_active = true
         AND (i.quantity - i.reserved) <= i.low_stock_threshold
     `,
   ]);
