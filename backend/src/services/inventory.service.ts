@@ -3,6 +3,17 @@ import { Errors } from '../shared/errors';
 
 type Tx = Prisma.TransactionClient;
 
+/**
+ * Row-locks a variant's inventory for the rest of the transaction, then reads it fresh.
+ * Every stock change goes through this so concurrent checkouts cannot oversell or
+ * overwrite each other's reservation. Callers touching several variants should lock
+ * them in a stable (sorted) order to avoid deadlocks.
+ */
+export async function lockInventory(tx: Tx, variantId: string) {
+  await tx.$queryRaw`SELECT id FROM inventory WHERE variant_id = ${variantId}::uuid FOR UPDATE`;
+  return tx.inventory.findUnique({ where: { variantId } });
+}
+
 export async function reserveStock(
   tx: Tx,
   variantId: string,
@@ -10,7 +21,7 @@ export async function reserveStock(
   refId: string,
   actorId?: string,
 ) {
-  const inventory = await tx.inventory.findUnique({ where: { variantId } });
+  const inventory = await lockInventory(tx, variantId);
   if (!inventory) throw Errors.notFound('Inventory');
 
   const available = inventory.quantity - inventory.reserved;
@@ -42,7 +53,7 @@ export async function commitReservedStock(
   quantity: number,
   refId: string,
 ) {
-  const inventory = await tx.inventory.findUnique({ where: { variantId } });
+  const inventory = await lockInventory(tx, variantId);
   if (!inventory) throw Errors.notFound('Inventory');
   if (inventory.reserved < quantity || inventory.quantity < quantity) {
     throw Errors.insufficientStock();
@@ -106,7 +117,7 @@ export async function releaseReservedStock(
   refId: string,
   reason = 'Payment failed or expired',
 ) {
-  const inventory = await tx.inventory.findUnique({ where: { variantId } });
+  const inventory = await lockInventory(tx, variantId);
   if (!inventory) return;
 
   const releaseQty = Math.min(quantity, inventory.reserved);

@@ -17,8 +17,9 @@ type CheckoutInput = z.infer<typeof checkoutSchema>;
 type Tx = Prisma.TransactionClient;
 
 async function nextOrderNumber(tx: Tx) {
-  const count = await tx.order.count();
-  return `ORD-${10001 + count}`;
+  // A sequence never hands the same number to two concurrent checkouts (a row count would).
+  const [row] = await tx.$queryRaw<{ n: bigint }[]>`SELECT nextval('order_number_seq') AS n`;
+  return `ORD-${row.n}`;
 }
 
 function serializeMoneyOrder(order: {
@@ -264,9 +265,12 @@ export async function checkout(userId: string, input: CheckoutInput) {
             currency: env.DEFAULT_CURRENCY,
           },
         });
-
-        await reserveStock(tx, line.variantId, line.quantity, order.id, userId);
       }
+    }
+
+    // Lock stock rows in a stable order so two multi-item checkouts cannot deadlock.
+    for (const line of [...lines].sort((a, b) => a.variantId.localeCompare(b.variantId))) {
+      await reserveStock(tx, line.variantId, line.quantity, order.id, userId);
     }
 
     await tx.delivery.create({
@@ -454,16 +458,6 @@ export async function confirmPaymentFromWebhook(
     throw Errors.conflict('Received amount does not match the order total');
   }
 
-  await prisma.paymentWebhook.create({
-    data: {
-      paymentId: payment.id,
-      provider: provider.code,
-      payloadHash,
-      payload: body as object,
-      processedAt: new Date(),
-    },
-  });
-
   if (payment.status === 'PAID') {
     return { duplicate: true, status: 'PAID' };
   }
@@ -471,25 +465,46 @@ export async function confirmPaymentFromWebhook(
     return { duplicate: true, status: payment.status };
   }
 
+  // The webhook and the customer's polling can confirm the same payment at the same moment.
+  // Each transaction below starts by atomically claiming the payment (only while it is still
+  // INITIATED/PENDING); the row lock that takes makes any concurrent attempt wait and then
+  // match nothing, so the work inside runs exactly once. The webhook is recorded inside the
+  // same transaction, so a rolled-back attempt never marks the payload as processed.
+  const recordWebhook = (tx: Tx) =>
+    tx.paymentWebhook.create({
+      data: {
+        paymentId: payment.id,
+        provider: provider.code,
+        payloadHash,
+        payload: body as object,
+        processedAt: new Date(),
+      },
+    });
+
   if (verified.status === 'FAILED' || verified.status === 'CANCELLED') {
-    await prisma.$transaction(async (tx) => {
-      await tx.payment.update({
-        where: { id: payment.id },
-        data: { status: verified.status === 'CANCELLED' ? 'CANCELLED' : 'FAILED' },
+    const failedStatus = verified.status === 'CANCELLED' ? 'CANCELLED' : 'FAILED';
+    const applied = await prisma.$transaction(async (tx) => {
+      const claimed = await tx.payment.updateMany({
+        where: { id: payment.id, status: { in: ['INITIATED', 'PENDING'] } },
+        data: { status: failedStatus },
+      });
+      if (claimed.count === 0) return false;
+      await recordWebhook(tx);
+
+      const items = payment.order.sellerOrders
+        .flatMap((so) => so.items)
+        .sort((a, b) => a.variantId.localeCompare(b.variantId));
+      for (const item of items) {
+        await releaseReservedStock(tx, item.variantId, item.quantity, payment.orderId);
+      }
+      await tx.sellerOrder.updateMany({
+        where: { orderId: payment.orderId },
+        data: { status: 'CANCELLED' },
       });
 
-      for (const sellerOrder of payment.order.sellerOrders) {
-        for (const item of sellerOrder.items) {
-          await releaseReservedStock(tx, item.variantId, item.quantity, payment.orderId);
-        }
-        await tx.sellerOrder.update({
-          where: { id: sellerOrder.id },
-          data: { status: 'CANCELLED' },
-        });
-      }
-
-      if (payment.order.status === 'PENDING_PAYMENT') {
-        assertOrderTransition(payment.order.status, 'CANCELLED');
+      const order = await tx.order.findUniqueOrThrow({ where: { id: payment.orderId } });
+      if (order.status === 'PENDING_PAYMENT') {
+        assertOrderTransition(order.status, 'CANCELLED');
         await tx.order.update({
           where: { id: payment.orderId },
           data: { status: 'CANCELLED', cancelledAt: new Date() },
@@ -503,7 +518,9 @@ export async function confirmPaymentFromWebhook(
           },
         });
       }
+      return true;
     });
+    if (!applied) return { duplicate: true, status: failedStatus };
 
     domainEvents.emit('PaymentFailed', {
       paymentId: payment.id,
@@ -517,11 +534,16 @@ export async function confirmPaymentFromWebhook(
     return { duplicate: false, status: verified.status };
   }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.payment.update({
-      where: { id: payment.id },
+  const { settleSellerOrderCommissions } = await import('./finance.service');
+
+  // Payment, stock, commissions and the auto-confirm commit together or not at all.
+  const applied = await prisma.$transaction(async (tx) => {
+    const claimed = await tx.payment.updateMany({
+      where: { id: payment.id, status: { in: ['INITIATED', 'PENDING'] } },
       data: { status: 'PAID', paidAt: new Date() },
     });
+    if (claimed.count === 0) return false;
+    await recordWebhook(tx);
 
     await tx.paymentTransaction.create({
       data: {
@@ -532,7 +554,8 @@ export async function confirmPaymentFromWebhook(
       },
     });
 
-    assertOrderTransition(payment.order.status, 'PAID');
+    const order = await tx.order.findUniqueOrThrow({ where: { id: payment.orderId } });
+    assertOrderTransition(order.status, 'PAID');
     await tx.order.update({
       where: { id: payment.orderId },
       data: { status: 'PAID', paidAt: new Date() },
@@ -540,58 +563,57 @@ export async function confirmPaymentFromWebhook(
     await tx.orderStatusHistory.create({
       data: {
         orderId: payment.orderId,
-        fromStatus: payment.order.status,
+        fromStatus: order.status,
         toStatus: 'PAID',
         reason: 'Payment webhook confirmed',
       },
     });
 
-    for (const sellerOrder of payment.order.sellerOrders) {
-      await tx.sellerOrder.update({
-        where: { id: sellerOrder.id },
-        data: { status: 'PAID' },
+    await tx.sellerOrder.updateMany({
+      where: { orderId: payment.orderId },
+      data: { status: 'PAID' },
+    });
+    const items = payment.order.sellerOrders
+      .flatMap((so) => so.items)
+      .sort((a, b) => a.variantId.localeCompare(b.variantId));
+    for (const item of items) {
+      await commitReservedStock(tx, item.variantId, item.quantity, payment.orderId);
+      await tx.product.update({
+        where: { id: (await tx.productVariant.findUniqueOrThrow({ where: { id: item.variantId } })).productId },
+        data: { salesCount: { increment: item.quantity } },
       });
-      for (const item of sellerOrder.items) {
-        await commitReservedStock(tx, item.variantId, item.quantity, payment.orderId);
-        await tx.product.update({
-          where: { id: (await tx.productVariant.findUniqueOrThrow({ where: { id: item.variantId } })).productId },
-          data: { salesCount: { increment: item.quantity } },
-        });
-      }
     }
+
+    for (const sellerOrder of payment.order.sellerOrders) {
+      await settleSellerOrderCommissions(tx, sellerOrder.id);
+    }
+
+    // Auto-confirm for seller processing
+    assertOrderTransition('PAID', 'CONFIRMED');
+    await tx.order.update({
+      where: { id: payment.orderId },
+      data: { status: 'CONFIRMED' },
+    });
+    await tx.sellerOrder.updateMany({
+      where: { orderId: payment.orderId },
+      data: { status: 'CONFIRMED' },
+    });
+    await tx.orderStatusHistory.create({
+      data: {
+        orderId: payment.orderId,
+        fromStatus: 'PAID',
+        toStatus: 'CONFIRMED',
+        reason: 'Auto-confirmed after payment',
+      },
+    });
+    return true;
   });
+  if (!applied) return { duplicate: true, status: 'PAID' };
 
   await clearCart(payment.order.customerId);
   domainEvents.emit('PaymentCompleted', {
     paymentId: payment.id,
     orderId: payment.orderId,
-  });
-
-  const { settleOrderAfterPayment } = await import('./finance.service');
-  await settleOrderAfterPayment(payment.orderId);
-
-  // Auto-confirm for seller processing
-  await prisma.$transaction(async (tx) => {
-    const order = await tx.order.findUniqueOrThrow({ where: { id: payment.orderId } });
-    if (order.status === 'PAID') {
-      assertOrderTransition('PAID', 'CONFIRMED');
-      await tx.order.update({
-        where: { id: order.id },
-        data: { status: 'CONFIRMED' },
-      });
-      await tx.sellerOrder.updateMany({
-        where: { orderId: order.id },
-        data: { status: 'CONFIRMED' },
-      });
-      await tx.orderStatusHistory.create({
-        data: {
-          orderId: order.id,
-          fromStatus: 'PAID',
-          toStatus: 'CONFIRMED',
-          reason: 'Auto-confirmed after payment',
-        },
-      });
-    }
   });
 
   return { duplicate: false, status: 'PAID' };

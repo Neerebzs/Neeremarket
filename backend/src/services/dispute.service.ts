@@ -376,16 +376,21 @@ export async function withdrawDispute(user: AuthUser, id: string, reason?: strin
   if (party !== 'CUSTOMER') throw Errors.forbidden();
   if (!isActive(dispute.status)) throw Errors.conflict('This dispute is already closed');
 
-  await prisma.$transaction([
-    prisma.dispute.update({ where: { id }, data: { status: 'WITHDRAWN', resolvedAt: new Date() } }),
-    prisma.disputeMessage.create({
+  await prisma.$transaction(async (tx) => {
+    // Only close a dispute that is still open, so a concurrent resolve/withdraw cannot both win.
+    const closed = await tx.dispute.updateMany({
+      where: { id, status: { in: [...ACTIVE_DISPUTE_STATUSES] } },
+      data: { status: 'WITHDRAWN', resolvedAt: new Date() },
+    });
+    if (closed.count === 0) throw Errors.conflict('This dispute is already closed');
+    await tx.disputeMessage.create({
       data: {
         disputeId: id,
         authorRole: 'SYSTEM',
         body: `The customer closed this dispute.${reason ? ` Note: ${reason}` : ''}`,
       },
-    }),
-  ]);
+    });
+  });
 
   await notifyUser({
     userId: dispute.seller.userId,
@@ -428,9 +433,9 @@ export async function resolveDispute(
       ? `NeereMarket closed this dispute without action. ${input.note}`
       : `NeereMarket resolved this dispute: ${label}${refundAmount !== null ? ` (${refundAmount} RWF)` : ''}. ${input.note}`;
 
-  await prisma.$transaction([
-    prisma.dispute.update({
-      where: { id },
+  await prisma.$transaction(async (tx) => {
+    const closed = await tx.dispute.updateMany({
+      where: { id, status: { in: [...ACTIVE_DISPUTE_STATUSES] } },
       data: {
         status: input.outcome,
         resolution: input.resolution,
@@ -439,11 +444,12 @@ export async function resolveDispute(
         resolvedById: user.id,
         resolvedAt: new Date(),
       },
-    }),
-    prisma.disputeMessage.create({
+    });
+    if (closed.count === 0) throw Errors.conflict('This dispute is already closed');
+    await tx.disputeMessage.create({
       data: { disputeId: id, authorRole: 'SYSTEM', body: summary },
-    }),
-  ]);
+    });
+  });
 
   await writeAuditLog({
     actorId: user.id,

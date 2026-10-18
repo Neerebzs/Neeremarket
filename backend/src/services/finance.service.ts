@@ -1,4 +1,4 @@
-import type { Prisma } from '@prisma/client';
+import type { OrderStatus, Prisma } from '@prisma/client';
 import { prisma } from '../shared/prisma';
 import { Errors } from '../shared/errors';
 import { env } from '../config/env';
@@ -22,12 +22,19 @@ type Tx = Prisma.TransactionClient;
 
 const MIN_MOMO_AMOUNT = 100;
 
-async function ensureWallet(tx: Tx, sellerId: string) {
-  const existing = await tx.sellerWallet.findUnique({ where: { sellerId } });
-  if (existing) return existing;
-  return tx.sellerWallet.create({
-    data: { sellerId, currency: env.DEFAULT_CURRENCY },
+/**
+ * Returns the seller's wallet row-locked for the rest of the transaction. Balance checks and
+ * the writes that follow them are therefore serialized per seller, so concurrent sales,
+ * payouts and refunds cannot overwrite each other or overdraw the wallet.
+ */
+async function lockWallet(tx: Tx, sellerId: string) {
+  await tx.sellerWallet.upsert({
+    where: { sellerId },
+    update: {},
+    create: { sellerId, currency: env.DEFAULT_CURRENCY },
   });
+  await tx.$queryRaw`SELECT id FROM seller_wallets WHERE seller_id = ${sellerId}::uuid FOR UPDATE`;
+  return tx.sellerWallet.findUniqueOrThrow({ where: { sellerId } });
 }
 
 /**
@@ -49,6 +56,7 @@ export async function settleSellerOrderCommissions(tx: Tx, sellerOrderId: string
 
   let commissionTotal = 0n;
   let earningsTotal = 0n;
+  let newlySettled = 0n;
 
   for (const item of sellerOrder.items) {
     if (item.commissionTransactions.length > 0) {
@@ -119,13 +127,17 @@ export async function settleSellerOrderCommissions(tx: Tx, sellerOrderId: string
 
     commissionTotal += commissionAmount;
     earningsTotal += sellerNet;
+    newlySettled += sellerNet;
   }
 
-  const wallet = await ensureWallet(tx, sellerOrder.sellerId);
-  await tx.sellerWallet.update({
-    where: { id: wallet.id },
-    data: { pendingBalance: wallet.pendingBalance + earningsTotal },
-  });
+  // Items settled on an earlier run were credited then; only credit what is new.
+  if (newlySettled > 0n) {
+    const wallet = await lockWallet(tx, sellerOrder.sellerId);
+    await tx.sellerWallet.update({
+      where: { id: wallet.id },
+      data: { pendingBalance: wallet.pendingBalance + newlySettled },
+    });
+  }
 
   await tx.sellerOrder.update({
     where: { id: sellerOrder.id },
@@ -156,7 +168,7 @@ export async function releaseSellerOrderEarnings(tx: Tx, sellerOrderId: string) 
   });
   if (alreadyReleased) return;
 
-  const wallet = await ensureWallet(tx, sellerOrder.sellerId);
+  const wallet = await lockWallet(tx, sellerOrder.sellerId);
   if (wallet.pendingBalance < sellerOrder.sellerEarnings) {
     throw Errors.conflict('Insufficient pending balance to release');
   }
@@ -257,7 +269,7 @@ export async function requestPayout(userId: string, amount: number, phone: strin
     const seller = await tx.sellerProfile.findUnique({ where: { userId } });
     if (!seller) throw Errors.notFound('Seller profile');
 
-    const wallet = await ensureWallet(tx, seller.id);
+    const wallet = await lockWallet(tx, seller.id);
     const amt = BigInt(amount);
     if (wallet.availableBalance < amt) {
       throw Errors.conflict('Insufficient available balance');
@@ -315,7 +327,7 @@ export async function requestPayout(userId: string, amount: number, phone: strin
 }
 
 async function restorePayoutFunds(tx: Tx, payout: { id: string; sellerId: string; amount: bigint; currency: string }, description: string) {
-  const wallet = await ensureWallet(tx, payout.sellerId);
+  const wallet = await lockWallet(tx, payout.sellerId);
   await tx.sellerWallet.update({
     where: { id: wallet.id },
     data: { availableBalance: wallet.availableBalance + payout.amount },
@@ -371,11 +383,13 @@ export async function reviewPayout(
       if (!['REQUESTED', 'UNDER_REVIEW', 'APPROVED'].includes(payout.status)) {
         throw Errors.conflict(`Cannot cancel a payout in status ${payout.status}`);
       }
-      await restorePayoutFunds(tx, payout, 'Payout cancelled — funds restored');
-      const updated = await tx.payoutRequest.update({
-        where: { id: payoutId },
+      const claimed = await tx.payoutRequest.updateMany({
+        where: { id: payoutId, status: { in: ['REQUESTED', 'UNDER_REVIEW', 'APPROVED'] } },
         data: { status: 'CANCELLED', reviewNotes: notes },
       });
+      if (claimed.count === 0) throw Errors.conflict('This payout was already processed');
+      await restorePayoutFunds(tx, payout, 'Payout cancelled — funds restored');
+      const updated = await tx.payoutRequest.findUniqueOrThrow({ where: { id: payoutId } });
       await writeAuditLog({
         actorId,
         action: 'payout.cancel',
@@ -392,10 +406,12 @@ export async function reviewPayout(
     if (!['REQUESTED', 'UNDER_REVIEW'].includes(payout.status)) {
       throw Errors.conflict(`Cannot approve a payout in status ${payout.status}`);
     }
-    const updated = await tx.payoutRequest.update({
-      where: { id: payoutId },
+    const claimed = await tx.payoutRequest.updateMany({
+      where: { id: payoutId, status: { in: ['REQUESTED', 'UNDER_REVIEW'] } },
       data: { status: 'APPROVED', reviewNotes: notes },
     });
+    if (claimed.count === 0) throw Errors.conflict('This payout was already processed');
+    const updated = await tx.payoutRequest.findUniqueOrThrow({ where: { id: payoutId } });
     await writeAuditLog({
       actorId,
       action: 'payout.approve',
@@ -552,7 +568,7 @@ export async function listPayoutsForAdmin(status?: string) {
 /** Sellers can move a parcel up to "shipped"; only the customer (or an admin) confirms delivery. */
 export type SellerFulfilmentStatus = 'PROCESSING' | 'READY_FOR_SHIPMENT' | 'SHIPPED' | 'OUT_FOR_DELIVERY';
 
-const AWAITING_RECEIPT = ['SHIPPED', 'OUT_FOR_DELIVERY'];
+const AWAITING_RECEIPT: OrderStatus[] = ['SHIPPED', 'OUT_FOR_DELIVERY'];
 const ACTIVE_DISPUTE = ['OPEN', 'SELLER_RESPONDED', 'ESCALATED'] as const;
 
 export async function updateSellerOrderStatus(
@@ -571,10 +587,11 @@ export async function updateSellerOrderStatus(
 
     assertOrderTransition(sellerOrder.status, toStatus);
 
-    await tx.sellerOrder.update({
-      where: { id: sellerOrderId },
+    const moved = await tx.sellerOrder.updateMany({
+      where: { id: sellerOrderId, status: sellerOrder.status },
       data: { status: toStatus },
     });
+    if (moved.count === 0) throw Errors.conflict('This order was updated by someone else; refresh and try again');
 
     const updated = await tx.sellerOrder.findUniqueOrThrow({
       where: { id: sellerOrderId },
@@ -638,10 +655,13 @@ export async function confirmSellerOrderDelivery(input: {
     }
 
     assertOrderTransition(sellerOrder.status, 'DELIVERED');
-    await tx.sellerOrder.update({
-      where: { id: sellerOrderId },
+    // Claim the parcel: a concurrent confirmation (double click, customer + admin) waits on the
+    // row lock and then matches nothing, so earnings are released exactly once.
+    const claimed = await tx.sellerOrder.updateMany({
+      where: { id: sellerOrderId, status: { in: [...AWAITING_RECEIPT] } },
       data: { status: 'DELIVERED' },
     });
+    if (claimed.count === 0) throw Errors.conflict('Delivery was already confirmed for this parcel');
     await releaseSellerOrderEarnings(tx, sellerOrderId);
 
     const siblings = await tx.sellerOrder.findMany({ where: { orderId } });
@@ -685,16 +705,6 @@ function canMoveParent(from: string, to: string) {
   }
 }
 
-/** Settle commissions right after payment confirmation */
-export async function settleOrderAfterPayment(orderId: string) {
-  await prisma.$transaction(async (tx) => {
-    const sellerOrders = await tx.sellerOrder.findMany({ where: { orderId } });
-    for (const so of sellerOrders) {
-      await settleSellerOrderCommissions(tx, so.id);
-    }
-  });
-}
-
 export async function clawbackRefund(
   tx: Tx,
   orderItemId: string,
@@ -715,7 +725,7 @@ export async function clawbackRefund(
   const refundCommission = (item.commissionAmount * ratio) / 10000n;
   const refundNet = refundGross - refundCommission;
 
-  const wallet = await ensureWallet(tx, item.sellerOrder.sellerId);
+  const wallet = await lockWallet(tx, item.sellerOrder.sellerId);
 
   // Prefer clawing from pending, then available
   let fromPending = refundNet <= wallet.pendingBalance ? refundNet : wallet.pendingBalance;

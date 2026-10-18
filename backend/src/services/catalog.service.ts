@@ -10,7 +10,7 @@ import type {
   updateProductSchema,
 } from '../validators/catalog.validator';
 import { env } from '../config/env';
-import { syncProductStockStatus } from './inventory.service';
+import { lockInventory, syncProductStockStatus } from './inventory.service';
 
 type ListQuery = z.infer<typeof productListQuerySchema>;
 type InventoryListQuery = z.infer<typeof inventoryListQuerySchema>;
@@ -725,15 +725,16 @@ async function syncProductVariants(
         },
       });
 
-      if (match.inventory) {
-        if (variant.stock < match.inventory.reserved) {
+      const inventory = match.inventory ? await lockInventory(tx, match.id) : null;
+      if (inventory) {
+        if (variant.stock < inventory.reserved) {
           throw Errors.conflict(
-            `Stock for ${variant.name || variant.sku} cannot be lower than ${match.inventory.reserved} reserved units`,
+            `Stock for ${variant.name || variant.sku} cannot be lower than ${inventory.reserved} reserved units`,
           );
         }
-        if (variant.stock !== match.inventory.quantity || variant.lowStockThreshold != null) {
+        if (variant.stock !== inventory.quantity || variant.lowStockThreshold != null) {
           await tx.inventory.update({
-            where: { id: match.inventory.id },
+            where: { id: inventory.id },
             data: {
               quantity: variant.stock,
               ...(variant.lowStockThreshold != null
@@ -742,12 +743,12 @@ async function syncProductVariants(
             },
           });
         }
-        if (variant.stock !== match.inventory.quantity) {
+        if (variant.stock !== inventory.quantity) {
           await tx.inventoryMovement.create({
             data: {
-              inventoryId: match.inventory.id,
+              inventoryId: inventory.id,
               type: 'ADJUSTMENT',
-              delta: variant.stock - match.inventory.quantity,
+              delta: variant.stock - inventory.quantity,
               reason: 'Listing stock update',
               actorId: userId,
             },
@@ -946,6 +947,8 @@ export async function adjustVariantStock(
       include: { inventory: true },
     });
     if (!variant?.inventory) throw Errors.notFound('Inventory');
+    const inventory = await lockInventory(tx, variant.id);
+    if (!inventory) throw Errors.notFound('Inventory');
 
     if (input.isAvailable != null && input.isAvailable !== variant.isActive) {
       await tx.productVariant.update({
@@ -954,7 +957,6 @@ export async function adjustVariantStock(
       });
     }
 
-    const inventory = variant.inventory;
     const delta =
       input.setQuantity != null ? input.setQuantity - inventory.quantity : (input.quantity ?? 0);
     const nextQty = inventory.quantity + delta;
