@@ -9,7 +9,7 @@ import {
 } from '@/api/hooks';
 import { Alert, Button, EmptyState, Input, TableSkeleton } from '@/components/ui';
 import { getErrorMessage } from '@/api/client';
-import styles from './workspace.module.css';
+import styles from '@/pages/workspace/workspace.module.css';
 
 type OnboardingForm = {
   idNumber: string;

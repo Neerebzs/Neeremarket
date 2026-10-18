@@ -7,7 +7,7 @@ import { ICONS, MetricIcon } from '@/components/dashboard/metrics';
 import { getErrorMessage } from '@/api/client';
 import { prettyStatus, statusTone } from '@/utils/status';
 import { variantLabel } from '@/utils/variant';
-import styles from './workspace.module.css';
+import styles from '@/pages/workspace/workspace.module.css';
 
 const FILTERS = [
   { id: 'all', label: 'All' },

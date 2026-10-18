@@ -7,7 +7,7 @@ import { getErrorMessage } from '@/api/client';
 import { isAdminRole } from '@/utils/auth';
 import { formatRwf } from '@/utils/money';
 import { prettyStatus, statusTone } from '@/utils/status';
-import styles from './workspace.module.css';
+import styles from '@/pages/workspace/workspace.module.css';
 
 const AWAITING_RECEIPT = ['SHIPPED', 'OUT_FOR_DELIVERY'];
 

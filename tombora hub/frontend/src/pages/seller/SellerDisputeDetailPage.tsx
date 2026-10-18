@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { useMe } from '@/api/hooks';
 import { EmptyState } from '@/components/ui';
 import { DisputeThread } from '@/components/disputes/DisputeThread';
-import styles from './workspace.module.css';
+import styles from '@/pages/workspace/workspace.module.css';
 
 export function SellerDisputeDetailPage() {
   const { id = '' } = useParams();

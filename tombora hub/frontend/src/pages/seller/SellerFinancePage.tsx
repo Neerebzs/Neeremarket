@@ -6,7 +6,7 @@ import { getErrorMessage } from '@/api/client';
 import { formatRwf } from '@/utils/money';
 import { prettyStatus, statusTone } from '@/utils/status';
 import { ICONS, MetricIcon } from '@/components/dashboard/metrics';
-import styles from './workspace.module.css';
+import styles from '@/pages/workspace/workspace.module.css';
 
 export function SellerFinancePage() {
   const { data: finance, isLoading, isError, error } = useSellerFinance();

@@ -8,7 +8,7 @@ import { prettyStatus, statusTone } from '@/utils/status';
 import { variantLabel } from '@/utils/variant';
 import { categoryPath } from '@/utils/category';
 import { useState } from 'react';
-import styles from './workspace.module.css';
+import styles from '@/pages/workspace/workspace.module.css';
 
 export function SellerProductDetailPage() {
   const { productId = '' } = useParams();

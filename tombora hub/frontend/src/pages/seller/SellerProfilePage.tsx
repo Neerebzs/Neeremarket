@@ -5,7 +5,7 @@ import { useMe, useSellerProfile, useUpdateSellerProfile, useUploadMedia } from 
 import { Alert, Badge, Button, EmptyState, Input } from '@/components/ui';
 import { getErrorMessage } from '@/api/client';
 import { prettyStatus, statusTone } from '@/utils/status';
-import styles from './workspace.module.css';
+import styles from '@/pages/workspace/workspace.module.css';
 
 type ImageKind = 'logo' | 'cover';
 

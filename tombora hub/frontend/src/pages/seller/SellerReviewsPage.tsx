@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useMe, useSellerReviews } from '@/api/hooks';
 import { Alert, Badge, EmptyState, Rating, TableSkeleton } from '@/components/ui';
 import { getErrorMessage } from '@/api/client';
-import styles from './workspace.module.css';
+import styles from '@/pages/workspace/workspace.module.css';
 
 const FILTERS = [
   { id: 'all', label: 'All' },

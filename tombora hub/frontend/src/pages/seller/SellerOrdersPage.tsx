@@ -18,7 +18,7 @@ import { SellerOrderDetailModal } from '@/components/orders/SellerOrderDetailMod
 import { getErrorMessage } from '@/api/client';
 import { formatRwf } from '@/utils/money';
 import { prettyStatus, statusTone } from '@/utils/status';
-import styles from './workspace.module.css';
+import styles from '@/pages/workspace/workspace.module.css';
 
 const NEXT: Record<string, 'PROCESSING' | 'READY_FOR_SHIPMENT' | 'SHIPPED' | null> = {
   CONFIRMED: 'PROCESSING',

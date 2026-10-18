@@ -4,7 +4,7 @@ import { useMarkNotificationsRead, useMe, useNotifications } from '@/api/hooks';
 import { Alert, Badge, Button, EmptyState, TableSkeleton } from '@/components/ui';
 import { getErrorMessage } from '@/api/client';
 import { loginHref } from '@/utils/auth';
-import styles from '../workspace.module.css';
+import styles from './workspace.module.css';
 
 export function AlertsPage() {
   const { data: user } = useMe();

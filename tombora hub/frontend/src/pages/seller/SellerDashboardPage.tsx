@@ -7,7 +7,7 @@ import { getErrorMessage } from '@/api/client';
 import { isSellerRole } from '@/utils/auth';
 import { formatRwf } from '@/utils/money';
 import { prettyStatus, statusTone } from '@/utils/status';
-import styles from './workspace.module.css';
+import styles from '@/pages/workspace/workspace.module.css';
 
 export function SellerDashboardPage() {
   const navigate = useNavigate();

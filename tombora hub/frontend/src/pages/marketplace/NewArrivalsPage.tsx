@@ -7,7 +7,7 @@ import { ProductGrid } from '@/components/product';
 import gridStyles from '@/components/product/ProductGrid.module.css';
 import { getErrorMessage } from '@/api/client';
 import { pageTitle } from '@/config/brand';
-import infoStyles from './InfoPages.module.css';
+import infoStyles from '@/pages/info/InfoPages.module.css';
 import styles from './NewArrivalsPage.module.css';
 
 export function NewArrivalsPage() {

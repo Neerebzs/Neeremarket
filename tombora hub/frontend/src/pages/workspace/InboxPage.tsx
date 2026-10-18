@@ -5,7 +5,7 @@ import { useMe, useMessageThreads, useSendMessage, useThread } from '@/api/hooks
 import { Alert, Button, EmptyState, Input } from '@/components/ui';
 import { getErrorMessage } from '@/api/client';
 import { loginHref } from '@/utils/auth';
-import styles from '../workspace.module.css';
+import styles from './workspace.module.css';
 
 export function InboxPage({
   basePath,

@@ -4,7 +4,7 @@ import { useMe } from '@/api/hooks';
 import { EmptyState } from '@/components/ui';
 import { DisputeThread } from '@/components/disputes/DisputeThread';
 import { isAdminRole } from '@/utils/auth';
-import styles from './workspace.module.css';
+import styles from '@/pages/workspace/workspace.module.css';
 
 export function AdminDisputeDetailPage() {
   const { id = '' } = useParams();

@@ -59,7 +59,7 @@ import {
   disputeTypeLabel,
   isDisputeActive,
 } from '@/utils/disputes';
-import styles from './workspace.module.css';
+import styles from '@/pages/workspace/workspace.module.css';
 
 const SECTIONS = [
   'overview',

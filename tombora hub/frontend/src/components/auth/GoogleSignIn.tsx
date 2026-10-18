@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import styles from '@/pages/Auth.module.css';
+import styles from '@/pages/auth/Auth.module.css';
 
 type GoogleCredentialResponse = { credential?: string };
 

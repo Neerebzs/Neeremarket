@@ -5,7 +5,7 @@ import { useProducts } from '@/api/hooks';
 import { Alert, Button, ProductGridSkeleton } from '@/components/ui';
 import { ProductGrid } from '@/components/product';
 import gridStyles from '@/components/product/ProductGrid.module.css';
-import styles from './QuickActionPages.module.css';
+import styles from '@/pages/info/QuickActionPages.module.css';
 
 export function ImageSearchPage() {
   const [preview, setPreview] = useState<string | null>(null);
