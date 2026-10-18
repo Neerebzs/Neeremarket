@@ -523,8 +523,15 @@ export async function upsertPage(
           isPublished: input.isPublished ?? false,
         },
       })
-    : await prisma.cmsPage.create({
-        data: {
+    : // The admin form is keyed by slug, so saving an existing slug updates that page.
+      await prisma.cmsPage.upsert({
+        where: { slug: input.slug },
+        update: {
+          title: input.title,
+          body: input.body,
+          isPublished: input.isPublished ?? false,
+        },
+        create: {
           slug: input.slug,
           title: input.title,
           body: input.body,
@@ -532,9 +539,10 @@ export async function upsertPage(
         },
       });
 
+  const created = page.createdAt.getTime() === page.updatedAt.getTime();
   await writeAuditLog({
     actorId,
-    action: input.id ? 'cms.page_update' : 'cms.page_create',
+    action: input.id || !created ? 'cms.page_update' : 'cms.page_create',
     entityType: 'CmsPage',
     entityId: page.id,
     after: { slug: page.slug, isPublished: page.isPublished },

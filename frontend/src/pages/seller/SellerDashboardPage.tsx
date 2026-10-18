@@ -146,7 +146,9 @@ function SellerDashboard() {
           {lowStock > 0 ? (
             <aside className={styles.notice}>
               <p>
-                <strong>{lowStock} listings are low on stock</strong>
+                <strong>
+                  {lowStock} {lowStock === 1 ? 'listing is' : 'listings are'} low on stock
+                </strong>
                 Restock before they drop out of the catalog.
               </p>
               <Link to="/seller/inventory" className={styles.link}>

@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import { ZodError } from 'zod';
 import multer from 'multer';
+import { Prisma } from '@prisma/client';
 import { AppError } from './errors';
 import { logger } from './logger';
 import { isProd } from '../config/env';
@@ -61,6 +62,22 @@ export function errorHandler(err: unknown, _req: Request, res: Response, _next: 
       success: false,
       error: { code: 'UPLOAD_ERROR', message: err.message },
     });
+  }
+
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    // P2023: malformed id in the URL (e.g. not a UUID); P2025: record vanished mid-request.
+    if (err.code === 'P2023' || err.code === 'P2025') {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'Resource not found' },
+      });
+    }
+    if (err.code === 'P2002') {
+      return res.status(409).json({
+        success: false,
+        error: { code: 'CONFLICT', message: 'This record already exists' },
+      });
+    }
   }
 
   logger.error({ err }, 'Unhandled error');

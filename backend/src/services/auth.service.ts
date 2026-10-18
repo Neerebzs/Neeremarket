@@ -30,7 +30,8 @@ export function signRefreshToken(userId: string) {
   return jwt.sign(
     { sub: userId, type: 'refresh' } satisfies TokenPayload,
     env.JWT_REFRESH_SECRET,
-    { expiresIn: env.JWT_REFRESH_TTL as jwt.SignOptions['expiresIn'] },
+    // jwtid keeps tokens issued in the same second distinct (token_hash is unique).
+    { expiresIn: env.JWT_REFRESH_TTL as jwt.SignOptions['expiresIn'], jwtid: crypto.randomUUID() },
   );
 }
 
