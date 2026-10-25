@@ -92,6 +92,16 @@ export function SellerOrdersPage() {
         <title>Seller orders | NeereMarket</title>
       </Helmet>
 
+      <header className={styles.pageHead}>
+        <div className={styles.pageHeadCopy}>
+          <p className={styles.kicker}>Order Fulfillment</p>
+          <h1>Customer Orders & Shipments</h1>
+          <p className={styles.muted}>
+            Track incoming purchases, update packaging and dispatch status, and manage customer deliveries across Rwanda.
+          </p>
+        </div>
+      </header>
+
       {isLoading ? <TableSkeleton /> : null}
       {isError ? <Alert tone="error">{getErrorMessage(error)}</Alert> : null}
 

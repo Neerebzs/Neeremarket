@@ -137,198 +137,6 @@
 }
 
 /* ─── Contextual Identity Hero Card (Seller / Admin) ─── */
-.identityCard {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.75rem 0.8rem;
-  border-radius: 10px;
-  background: var(--color-surface-subtle);
-  border: 1px solid var(--color-border);
-  position: relative;
-  transition: border-color 0.15s ease, background 0.15s ease;
-}
-
-.identityCard:hover {
-  border-color: #d6d3d1;
-  background: #f7f6f2;
-}
-
-.identityAvatarWrap {
-  position: relative;
-  width: 2.25rem;
-  height: 2.25rem;
-  flex-shrink: 0;
-}
-
-.identityAvatarImg {
-  width: 100%;
-  height: 100%;
-  border-radius: 8px;
-  object-fit: cover;
-  border: 1px solid var(--color-border);
-  background: #ffffff;
-}
-
-.identityAvatarFallback {
-  width: 100%;
-  height: 100%;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  background: var(--color-brand);
-  color: #ffffff;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.verifiedDot {
-  position: absolute;
-  bottom: -3px;
-  right: -3px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--color-success);
-  border: 2px solid #ffffff;
-  display: grid;
-  place-items: center;
-}
-
-.miniCheck {
-  width: 8px;
-  height: 8px;
-}
-
-.identityMeta {
-  min-width: 0;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.identityTitleRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.35rem;
-}
-
-.identityTitle {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--color-ink);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  line-height: 1.25;
-}
-
-.identitySubRow {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-}
-
-.identityLocation {
-  font-size: 0.6875rem;
-  color: var(--color-ink-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.identityStatusPill {
-  display: inline-flex;
-  align-items: center;
-  padding: 1px 6px;
-  border-radius: 999px;
-  font-size: 0.625rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  line-height: 1.3;
-}
-
-.statusVerified {
-  background: var(--color-success-soft);
-  color: var(--color-success);
-  border: 1px solid var(--color-success-border);
-}
-
-.statusPending {
-  background: var(--color-warning-soft);
-  color: var(--color-warning);
-  border: 1px solid var(--color-warning-border);
-}
-
-.identityStoreLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  margin-top: 0.25rem;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  color: var(--color-brand);
-  text-decoration: none;
-  transition: color 0.15s ease;
-}
-
-.identityStoreLink:hover {
-  text-decoration: underline;
-  color: var(--color-brand-deep);
-}
-
-.externalIcon {
-  width: 9px;
-  height: 9px;
-}
-
-/* Admin Identity Card variant */
-.identityCardAdmin {
-  background: #fdfbf7;
-}
-
-.adminShieldWrap {
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  background: #171717;
-  color: #ffffff;
-  flex-shrink: 0;
-}
-
-.adminShieldIcon {
-  width: 1.2rem;
-  height: 1.2rem;
-}
-
-.adminStatusRow {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.gatewayPulseDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--color-success);
-  box-shadow: 0 0 0 2px rgba(22, 128, 93, 0.25);
-  flex-shrink: 0;
-}
-
-.adminRoleTag {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  color: var(--color-ink-muted);
-}
-
 /* ─── Sidebar Navigation Body ─── */
 .sidebarBody {
   flex: 1;
@@ -372,45 +180,33 @@
   gap: 2px;
 }
 
-/* Nav Item Link */
+/* Nav Item Link (TailAdmin Style) */
 .navItem {
   position: relative;
   display: flex;
   align-items: center;
   gap: 0.65rem;
-  min-height: 2.35rem;
-  padding: 0.4rem 0.65rem 0.4rem 0.6rem;
-  border-radius: 8px;
-  color: #57534e;
-  font-size: 0.84375rem;
+  min-height: 2.5rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 10px;
+  color: #64748b;
+  font-size: 0.875rem;
   font-weight: 500;
   letter-spacing: -0.01em;
   text-decoration: none;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: all 0.15s ease;
   overflow: visible;
 }
 
 .navItem:hover {
-  background: #f5f5f4;
-  color: #171717;
+  background: #f8fafc;
+  color: #1e293b;
 }
 
 .navItemActive {
-  background: var(--color-brand-soft) !important;
-  color: var(--color-brand) !important;
+  background: #eef2ff !important;
+  color: #465fff !important;
   font-weight: 600;
-}
-
-.navItemActive::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3.5px;
-  height: 1.35rem;
-  border-radius: 0 3px 3px 0;
-  background: var(--color-brand);
 }
 
 .iconWrap {
@@ -421,23 +217,22 @@
   display: grid;
   place-items: center;
   background: transparent;
-  color: #78716c;
+  color: #64748b;
   flex-shrink: 0;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: color 0.15s ease;
 }
 
 .navItem:hover .iconWrap {
-  color: #171717;
+  color: #1e293b;
 }
 
 .navItemActive .iconWrap {
-  color: var(--color-brand);
-  background: rgba(197, 77, 0, 0.09);
+  color: #465fff;
 }
 
 .icon {
-  width: 1.15rem;
-  height: 1.15rem;
+  width: 1.2rem;
+  height: 1.2rem;
 }
 
 .navText {
@@ -981,30 +776,50 @@
   box-shadow: 0 0 0 2px rgba(22, 128, 93, 0.2);
 }
 
-/* Header Search */
+.hamburgerBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 10px;
+  border: 1px solid #e4e7ec;
+  background: #ffffff;
+  color: #475569;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.hamburgerBtn:hover {
+  background: #f8fafc;
+  color: #1e293b;
+  border-color: #cbd5e1;
+}
+
+/* Header Search (TailAdmin Command Bar) */
 .headerSearch {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  width: min(100%, 360px);
-  height: 2.35rem;
+  width: min(100%, 340px);
+  height: 2.45rem;
   padding: 0 0.85rem;
   border-radius: 999px;
-  background: var(--color-surface-subtle);
-  border: 1px solid var(--color-border);
+  background: #ffffff;
+  border: 1px solid #e4e7ec;
   transition: all 0.15s ease;
 }
 
 .headerSearch:focus-within {
-  border-color: var(--color-brand);
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(197, 77, 0, 0.08);
+  border-color: #465fff;
+  box-shadow: 0 0 0 3px rgba(70, 95, 255, 0.1);
 }
 
 .headerSearchIcon {
-  width: 1rem;
-  height: 1rem;
-  color: var(--color-ink-muted);
+  width: 1.05rem;
+  height: 1.05rem;
+  color: #94a3b8;
   flex-shrink: 0;
 }
 
@@ -1014,29 +829,73 @@
   width: 100%;
   font-family: inherit;
   font-size: 0.8125rem;
-  color: var(--color-ink);
+  color: #1e293b;
   outline: none;
 }
 
 .headerSearchInput::placeholder {
-  color: #78716c;
+  color: #94a3b8;
 }
 
-/* Header Action Buttons */
-.headerCtaBtn {
+.cmdKBadge {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  height: 2.25rem;
-  padding: 0 0.85rem;
-  border-radius: 8px;
-  background: var(--color-brand);
-  color: #ffffff;
-  font-size: 0.8125rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  font-size: 0.6875rem;
   font-weight: 600;
+  color: #64748b;
+  font-family: inherit;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.roundActionBtn {
+  position: relative;
+  width: 2.45rem;
+  height: 2.45rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1px solid #e4e7ec;
+  background: #ffffff;
+  color: #64748b;
+  cursor: pointer;
   text-decoration: none;
-  transition: background 0.15s ease;
-  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.roundActionBtn:hover {
+  background: #f8fafc;
+  color: #1e293b;
+  border-color: #cbd5e1;
+}
+
+.alertDot {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+  border: 1.5px solid #ffffff;
+}
+
+.userPhoto {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: #465fff;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .headerCtaBtn:hover {

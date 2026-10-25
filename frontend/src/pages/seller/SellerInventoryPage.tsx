@@ -77,6 +77,16 @@ export function SellerInventoryPage() {
         <title>Inventory | NeereMarket</title>
       </Helmet>
 
+      <header className={styles.pageHead}>
+        <div className={styles.pageHeadCopy}>
+          <p className={styles.kicker}>Warehouse & Stock</p>
+          <h1>Inventory Stock Control</h1>
+          <p className={styles.muted}>
+            Real-time variant quantity tracking, reserved order allocations, safety thresholds, and low-stock replenishment alerts.
+          </p>
+        </div>
+      </header>
+
       {banner ? <Alert tone="success">{banner}</Alert> : null}
       {err ? <Alert tone="error">{err}</Alert> : null}
 

@@ -108,6 +108,25 @@ export function SellerProfilePage() {
       <Helmet>
         <title>Store profile | NeereMarket</title>
       </Helmet>
+      <header className={styles.pageHead}>
+        <div className={styles.pageHeadCopy}>
+          <p className={styles.kicker}>Merchant Settings</p>
+          <h1>Store Profile & Identity</h1>
+          <p className={styles.muted}>
+            Configure your public storefront branding, Kigali market center location, contact channels, and KYC business details.
+          </p>
+        </div>
+        {seller?.store ? (
+          <div className={styles.actions}>
+            <Link to={`/stores/${seller.store.slug}`} target="_blank" rel="noopener noreferrer">
+              <Button type="button" size="sm" variant="secondary">
+                View Live Store ↗
+              </Button>
+            </Link>
+          </div>
+        ) : null}
+      </header>
+
       {isLoading ? <p className={styles.muted}>Loading profile…</p> : null}
       {isError ? <Alert tone="error">{getErrorMessage(error)}</Alert> : null}
       {msg ? <Alert tone="success">{msg}</Alert> : null}

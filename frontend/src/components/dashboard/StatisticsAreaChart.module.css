@@ -1,0 +1,206 @@
+.card {
+  background: #ffffff;
+  border: 1px solid #e4e7ec;
+  border-radius: 16px;
+  padding: 1.4rem 1.65rem;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.headText {
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  margin: 0.25rem 0 0;
+  font-size: 0.8125rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.controlsRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* Segmented Tabs */
+.tabsWrap {
+  display: inline-flex;
+  align-items: center;
+  background: #f1f5f9;
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.tabBtn {
+  background: transparent;
+  border: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #64748b;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  line-height: 1.2;
+}
+
+.tabBtn:hover {
+  color: #1e293b;
+}
+
+.tabBtnActive {
+  background: #ffffff;
+  color: #1e293b;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* Date Range Pill */
+.dateRangeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: #ffffff;
+  border: 1px solid #e4e7ec;
+  border-radius: 999px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.dateRangeBtn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.dateRangeBtn svg {
+  color: #64748b;
+}
+
+/* Chart Wrap */
+.chartWrap {
+  position: relative;
+  width: 100%;
+  height: 250px;
+}
+
+.svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.yTickText {
+  font-size: 11px;
+  fill: #94a3b8;
+  font-family: inherit;
+  font-weight: 500;
+}
+
+.gridLine {
+  stroke: #f1f5f9;
+  stroke-width: 1;
+}
+
+.mainLine {
+  transition: stroke-dashoffset 0.5s ease;
+}
+
+.secLine {
+  opacity: 0.85;
+}
+
+.pointGroup {
+  cursor: pointer;
+  outline: none;
+}
+
+.pointCircle {
+  fill: #ffffff;
+  stroke: #465fff;
+  stroke-width: 2.5;
+  transition: all 0.16s ease;
+}
+
+.pointCircleHovered {
+  fill: #465fff;
+  stroke: #ffffff;
+  stroke-width: 3;
+  filter: drop-shadow(0 2px 5px rgba(70, 95, 255, 0.4));
+}
+
+.xLabel {
+  font-size: 11px;
+  fill: #64748b;
+  font-family: inherit;
+  font-weight: 500;
+  transition: fill 0.15s ease, font-weight 0.15s ease;
+}
+
+.xLabelActive {
+  fill: #1e293b;
+  font-weight: 700;
+}
+
+.tooltip {
+  position: absolute;
+  transform: translate(-50%, -130%);
+  background: #1e293b;
+  color: #ffffff;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: fadeIn 0.15s ease-out forwards;
+}
+
+.tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: #1e293b;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -120%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -130%);
+  }
+}

@@ -162,6 +162,23 @@ export function SellerProductsPage() {
         <title>Catalog | NeereMarket</title>
       </Helmet>
 
+      <header className={styles.pageHead}>
+        <div className={styles.pageHeadCopy}>
+          <p className={styles.kicker}>Catalog Governance</p>
+          <h1>Products & Listings</h1>
+          <p className={styles.muted}>
+            Manage your store's item catalog, pricing in RWF, attributes, inventory stock, and public visibility.
+          </p>
+        </div>
+        <div className={styles.actions}>
+          <Link to="/seller/products/new">
+            <Button type="button" size="sm">
+              + Add Product
+            </Button>
+          </Link>
+        </div>
+      </header>
+
       <TableCard>
         <TableBanner
           icon={

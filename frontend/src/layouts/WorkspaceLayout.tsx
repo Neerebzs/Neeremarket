@@ -7,7 +7,6 @@ import {
   useMe,
   useMessageThreads,
   useNotifications,
-  useSellerProfile,
 } from '@/api/hooks';
 import { APP_LOGO_SRC, APP_NAME } from '@/config/brand';
 import { isSellerRole, loginHref } from '@/utils/auth';
@@ -50,7 +49,6 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
   const { data: user, isLoading } = useMe();
   const { data: notifications } = useNotifications();
   const isSeller = variant === 'seller' && isSellerRole(user?.roles);
-  const { data: seller } = useSellerProfile(Boolean(isSeller && user));
   const { data: messageThreads } = useMessageThreads(variant === 'admin', Boolean(user));
   const logout = useLogout();
   const navigate = useNavigate();
@@ -61,6 +59,7 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
   const menuRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [collapsed, setCollapsed] = useState(() => {
     try {
@@ -77,102 +76,77 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
 
   const unreadAlerts = notifications?.unreadCount || 0;
 
-  // Seller Navigation Architecture
+  // Seller Navigation Architecture (TailAdmin Structure)
   const sellerGroups: Array<{ label: string; items: NavItem[] }> = useMemo(() => [
     {
-      label: 'Store Operations',
+      label: 'MENU',
       items: [
-        { to: '/seller', label: 'Overview', end: true, icon: 'overview' },
+        { to: '/seller', label: 'eCommerce', end: true, icon: 'overview' },
         { to: '/seller/orders', label: 'Orders', icon: 'orders' },
-        { to: '/seller/products', label: 'Products & Listings', icon: 'products' },
-        { to: '/seller/inventory', label: 'Inventory Stock', icon: 'inventory' },
-        { to: '/seller/reviews', label: 'Customer Reviews', icon: 'reviews' },
-        { to: '/seller/finance', label: 'Finances & Payouts', icon: 'finance' },
+        { to: '/seller/products', label: 'Products', icon: 'products' },
+        { to: '/seller/inventory', label: 'Inventory', icon: 'inventory', badge: 'NEW', badgeTone: 'brand' },
+        { to: '/seller/reviews', label: 'Reviews', icon: 'reviews' },
+        { to: '/seller/finance', label: 'Finances', icon: 'finance', badge: 'PRO', badgeTone: 'neutral' },
       ],
     },
     {
-      label: 'Communication',
+      label: 'SUPPORT',
       items: [
         {
           to: '/seller/messages',
-          label: 'Customer Messages',
+          label: 'Messages',
           icon: 'messages',
           badge: unreadMessages > 0 ? (unreadMessages > 99 ? '99+' : unreadMessages) : null,
           badgeTone: 'brand',
         },
-        { to: '/seller/disputes', label: 'Dispute Cases', icon: 'disputes' },
+        { to: '/seller/disputes', label: 'Disputes', icon: 'disputes' },
         {
           to: '/seller/notifications',
-          label: 'Store Alerts',
+          label: 'Alerts',
           icon: 'alerts',
           badge: unreadAlerts > 0 ? (unreadAlerts > 99 ? '99+' : unreadAlerts) : null,
           badgeTone: 'brand',
         },
-      ],
-    },
-    {
-      label: 'Storefront & Account',
-      items: [
         { to: '/seller/profile', label: 'Store Settings', icon: 'profile' },
-        { to: '/seller/onboarding', label: 'Seller Verification', icon: 'onboarding' },
+        { to: '/seller/onboarding', label: 'Verification', icon: 'onboarding' },
       ],
     },
   ], [unreadMessages, unreadAlerts]);
 
-  // Admin Navigation Architecture
+  // Admin Navigation Architecture (TailAdmin Structure)
   const adminGroups: Array<{ label: string; items: NavItem[] }> = useMemo(() => [
     {
-      label: 'Overview',
+      label: 'MENU',
       items: [
-        { to: '/admin', label: 'Operations Dashboard', end: true, icon: 'overview' },
+        { to: '/admin', label: 'Dashboard', end: true, icon: 'overview' },
+        { to: '/admin/sellers', label: 'Sellers', icon: 'sellers' },
+        { to: '/admin/products', label: 'Products', icon: 'products' },
+        { to: '/admin/orders', label: 'Orders', icon: 'orders' },
+        { to: '/admin/payouts', label: 'Payouts', icon: 'payouts', badge: 'PRO', badgeTone: 'neutral' },
+        { to: '/admin/disputes', label: 'Disputes', icon: 'disputes' },
       ],
     },
     {
-      label: 'Marketplace',
-      items: [
-        { to: '/admin/sellers', label: 'Sellers Directory', icon: 'sellers' },
-        { to: '/admin/products', label: 'Product Moderation', icon: 'products' },
-        { to: '/admin/orders', label: 'Marketplace Orders', icon: 'orders' },
-      ],
-    },
-    {
-      label: 'Finance',
-      items: [
-        { to: '/admin/payouts', label: 'Payouts & Settlement', icon: 'payouts' },
-      ],
-    },
-    {
-      label: 'Operations',
-      items: [
-        { to: '/admin/disputes', label: 'Dispute Resolution', icon: 'disputes' },
-      ],
-    },
-    {
-      label: 'Communication',
+      label: 'SUPPORT',
       items: [
         {
           to: '/admin/messages',
-          label: 'Inquiries & Messages',
+          label: 'Messages',
           icon: 'messages',
           badge: unreadMessages > 0 ? (unreadMessages > 99 ? '99+' : unreadMessages) : null,
           badgeTone: 'brand',
         },
         {
           to: '/admin/notifications',
-          label: 'System Alerts',
+          label: 'Notifications',
           icon: 'alerts',
           badge: unreadAlerts > 0 ? (unreadAlerts > 99 ? '99+' : unreadAlerts) : null,
           badgeTone: 'brand',
         },
-      ],
-    },
-    {
-      label: 'System & Governance',
-      items: [
         { to: '/admin/users', label: 'Users & Roles', icon: 'users' },
-        { to: '/admin/cms', label: 'Content Management', icon: 'cms' },
+        { to: '/admin/cms', label: 'Content (CMS)', icon: 'cms' },
         { to: '/admin/audit', label: 'Audit Trail', icon: 'audit' },
-        { to: '/admin/settings', label: 'Platform Settings', icon: 'settings' },
+        { to: '/admin/settings', label: 'Settings', icon: 'settings' },
         { to: '/admin/profile', label: 'Admin Profile', icon: 'profile' },
       ],
     },
@@ -216,10 +190,15 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
     }
   }, [collapsed]);
 
-  // Global keyboard shortcut: Ctrl+[ or Cmd+[ toggles sidebar collapse
+  // Global keyboard shortcuts: Ctrl+[ toggles sidebar, Ctrl+K focuses search
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        return;
+      }
       if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
       if ((e.ctrlKey || e.metaKey) && e.key === '[') {
         e.preventDefault();
@@ -356,9 +335,6 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
     setCollapsed((value) => !value);
   }
 
-  const isVerifiedSeller = seller?.verificationStatus === 'VERIFIED';
-  const liveStoreHref = seller?.store?.slug ? `/stores/${seller.store.slug}` : '/stores';
-
   return (
     <div
       className={`${styles.shell} ${open ? styles.navOpen : ''} ${
@@ -394,7 +370,7 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
               <div className={styles.brandText}>
                 <span className={styles.brandName}>{APP_NAME}</span>
                 <span className={styles.brandTagline}>
-                  {variant === 'seller' ? 'Merchant Portal' : 'Admin Console'}
+                  {variant === 'seller' ? 'Seller Hub' : 'Admin Console'}
                 </span>
               </div>
             </Link>
@@ -409,108 +385,6 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
               <CollapseIcon collapsed={collapsed} />
             </button>
           </div>
-
-          {/* Contextual Storefront / Admin Identity Banner */}
-          {variant === 'seller' ? (
-            <div className={styles.identityCard}>
-              <div className={styles.identityAvatarWrap}>
-                {seller?.logoUrl ? (
-                  <img
-                    src={seller.logoUrl}
-                    alt={seller.businessName || 'Store logo'}
-                    className={styles.identityAvatarImg}
-                  />
-                ) : (
-                  <span className={styles.identityAvatarFallback}>
-                    {(seller?.businessName || user?.fullName || 'ST').slice(0, 2).toUpperCase()}
-                  </span>
-                )}
-                {isVerifiedSeller ? (
-                  <span
-                    className={styles.verifiedDot}
-                    title="Verified Merchant"
-                    aria-label="Verified merchant"
-                  >
-                    <svg viewBox="0 0 12 12" className={styles.miniCheck} aria-hidden="true">
-                      <path
-                        d="M2.5 6.2l2.3 2.3 4.7-4.7"
-                        fill="none"
-                        stroke="#fff"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </span>
-                ) : null}
-              </div>
-              <div className={styles.identityMeta}>
-                <div className={styles.identityTitleRow}>
-                  <strong className={styles.identityTitle} title={seller?.businessName || 'Store'}>
-                    {seller?.businessName || user?.fullName || 'My Storefront'}
-                  </strong>
-                </div>
-                <div className={styles.identitySubRow}>
-                  <span className={styles.identityLocation} title={seller?.marketLocation || 'Kigali, Rwanda'}>
-                    {seller?.marketLocation || 'Kigali, Rwanda'}
-                  </span>
-                  <span
-                    className={`${styles.identityStatusPill} ${
-                      isVerifiedSeller ? styles.statusVerified : styles.statusPending
-                    }`}
-                  >
-                    {isVerifiedSeller ? 'Verified' : 'In Review'}
-                  </span>
-                </div>
-                <Link
-                  to={liveStoreHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.identityStoreLink}
-                  title="View live public store in new tab"
-                >
-                  <span>View Live Store</span>
-                  <ExternalArrowIcon />
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <div className={`${styles.identityCard} ${styles.identityCardAdmin}`}>
-              <div className={styles.adminShieldWrap}>
-                <svg viewBox="0 0 24 24" className={styles.adminShieldIcon} aria-hidden="true">
-                  <path
-                    d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M9 12l2 2 4-4"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
-              <div className={styles.identityMeta}>
-                <strong className={styles.identityTitle}>Marketplace Ops</strong>
-                <div className={styles.adminStatusRow}>
-                  <span className={styles.gatewayPulseDot} aria-hidden="true" />
-                  <span className={styles.adminRoleTag}>
-                    {user?.roles.includes('SUPER_ADMIN') ? 'Super Admin' : 'Operations Staff'}
-                  </span>
-                </div>
-                <Link to="/" className={styles.identityStoreLink} title="Open customer marketplace">
-                  <span>Customer Storefront</span>
-                  <ExternalArrowIcon />
-                </Link>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Navigation Groups */}
@@ -675,128 +549,87 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
 
       {/* Main Content Workspace */}
       <div ref={mainRef} className={styles.main}>
-        {/* Sticky Topbar */}
+        {/* Sticky Topbar (TailAdmin Style) */}
         <header className={styles.topbar}>
           <div className={styles.topLeft}>
             <button
               type="button"
-              className={styles.menuBtn}
-              aria-label="Open navigation"
+              className={styles.hamburgerBtn}
+              aria-label="Toggle navigation"
               aria-expanded={open}
               aria-controls="workspace-navigation"
-              onClick={() => setOpen(true)}
+              onClick={() => {
+                if (window.innerWidth <= 980) {
+                  setOpen(true);
+                } else {
+                  setCollapsed((v) => !v);
+                }
+              }}
             >
-              <span />
-              <span />
-              <span />
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <line x1="4" y1="7" x2="20" y2="7" />
+                <line x1="4" y1="12" x2="20" y2="12" />
+                <line x1="4" y1="17" x2="20" y2="17" />
+              </svg>
             </button>
-            <div className={styles.context}>
-              <div className={styles.breadcrumbRow}>
-                <span className={styles.contextHint}>{pageHint}</span>
-                <span className={styles.breadcrumbSep}>/</span>
-                <span className={styles.liveIndicator}>
-                  <span className={styles.liveIndicatorDot} aria-hidden="true" />
-                  {variant === 'seller' ? 'Kigali Live' : 'Operations Active'}
-                </span>
-              </div>
-              <h1 className={styles.contextTitle}>{pageTitle}</h1>
+
+            {/* Quick Header Search Command Bar */}
+            <div className={styles.headerSearch}>
+              <svg viewBox="0 0 24 24" className={styles.headerSearchIcon} aria-hidden="true">
+                <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="1.8" />
+                <path d="M16 16l4.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+              <input
+                ref={searchInputRef}
+                type="search"
+                placeholder="Search or type command..."
+                aria-label="Search workspace"
+                className={styles.headerSearchInput}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const val = (e.target as HTMLInputElement).value.trim();
+                    if (val) {
+                      navigate(
+                        variant === 'seller'
+                          ? `/seller/products?q=${encodeURIComponent(val)}`
+                          : `/admin/sellers?q=${encodeURIComponent(val)}`,
+                      );
+                    }
+                  }
+                }}
+              />
+              <kbd className={styles.cmdKBadge}>⌘K</kbd>
             </div>
           </div>
 
-          {/* Quick Header Search Bar */}
-          <div className={styles.headerSearch}>
-            <svg viewBox="0 0 24 24" className={styles.headerSearchIcon} aria-hidden="true">
-              <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="1.8" />
-              <path d="M16 16l4.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
-            <input
-              type="search"
-              placeholder={
-                variant === 'seller'
-                  ? 'Search orders, listings, inventory...'
-                  : 'Search sellers, products, orders...'
-              }
-              aria-label="Search workspace"
-              className={styles.headerSearchInput}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const val = (e.target as HTMLInputElement).value.trim();
-                  if (val) {
-                    navigate(
-                      variant === 'seller'
-                        ? `/seller/products?q=${encodeURIComponent(val)}`
-                        : `/admin/sellers?q=${encodeURIComponent(val)}`,
-                    );
-                  }
-                }
-              }}
-            />
-          </div>
-
           <div className={styles.topActions}>
-            {variant === 'seller' && isSeller ? (
-              <Link to="/seller/products/new" className={styles.headerCtaBtn}>
-                <PlusIcon />
-                <span>New Listing</span>
-              </Link>
-            ) : variant === 'admin' ? (
-              <Link to="/" target="_blank" rel="noopener noreferrer" className={styles.headerLiveBtn}>
-                <StoreIcon />
-                <span>Storefront ↗</span>
-              </Link>
-            ) : null}
-            <Link
-              to={variant === 'seller' ? '/seller/messages' : '/admin/messages'}
-              className={styles.iconBtn}
-              aria-label="Messages"
-              title="Messages"
+            {/* Theme Toggle Button (Moon) */}
+            <button
+              type="button"
+              className={styles.roundActionBtn}
+              aria-label="Toggle dark mode"
+              title="Toggle theme"
             >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
               </svg>
-              {unreadMessages > 0 ? (
-                <span className={styles.badge}>{unreadMessages > 9 ? '9+' : unreadMessages}</span>
-              ) : null}
-            </Link>
+            </button>
 
+            {/* Notification Bell with red indicator dot */}
             <Link
               to={variant === 'seller' ? '/seller/notifications' : '/admin/notifications'}
-              className={styles.iconBtn}
+              className={styles.roundActionBtn}
               aria-label="Notifications"
               title="Notifications"
             >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M13.73 21a2 2 0 0 1-3.46 0"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
               </svg>
-              {unreadAlerts > 0 ? (
-                <span className={styles.badge}>{unreadAlerts > 9 ? '9+' : unreadAlerts}</span>
-              ) : null}
+              {unreadAlerts > 0 && <span className={styles.alertDot} aria-hidden="true" />}
             </Link>
 
-            <span className={styles.divider} aria-hidden="true" />
-
+            {/* User Profile dropdown */}
             {isLoading ? (
               <div className={styles.accountBtn} aria-hidden>
                 <b>..</b>
@@ -812,7 +645,9 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
                   aria-expanded={menuOpen}
                   onClick={() => setMenuOpen((value) => !value)}
                 >
-                  <b>{initials}</b>
+                  <span className={styles.userPhoto}>
+                    <b>{initials}</b>
+                  </span>
                   <span className={styles.accountName}>{displayName}</span>
                   <ChevronIcon open={menuOpen} />
                 </button>
@@ -1090,21 +925,6 @@ function StoreIcon() {
         fill="none"
         stroke="currentColor"
         strokeWidth="1.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function ExternalArrowIcon() {
-  return (
-    <svg viewBox="0 0 12 12" className={styles.externalIcon} aria-hidden="true">
-      <path
-        d="M3.5 2.5h6v6M9.5 2.5L2.5 9.5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
         strokeLinecap="round"
         strokeLinejoin="round"
       />

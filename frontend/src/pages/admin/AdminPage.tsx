@@ -37,6 +37,59 @@ function isSection(value: string | undefined): value is Section {
   return !!value && (SECTIONS as readonly string[]).includes(value);
 }
 
+const SECTION_INFO: Record<Exclude<Section, 'overview'>, { kicker: string; title: string; description: string }> = {
+  users: {
+    kicker: 'Access & Governance',
+    title: 'User Accounts & Roles',
+    description: 'Manage customer accounts, seller merchant profiles, and operations staff role permissions across NeereMarket.',
+  },
+  sellers: {
+    kicker: 'Merchant Pipeline',
+    title: 'Seller Verification & KYC Directory',
+    description: 'Review merchant KYC documents, business licenses, physical market locations in Kigali, and store verification status.',
+  },
+  products: {
+    kicker: 'Catalog Moderation',
+    title: 'Listing Quality & Catalog Approval',
+    description: 'Inspect newly submitted merchant items, verify image quality and category classification, and moderate public visibility.',
+  },
+  orders: {
+    kicker: 'Transaction Monitoring',
+    title: 'Platform Orders & Fulfillment',
+    description: 'Monitor live marketplace orders across physical stores and digital merchants in Kigali, review payment status, and track delivery pipelines.',
+  },
+  payouts: {
+    kicker: 'Financial Settlement',
+    title: 'Merchant Payouts & Escrow Releases',
+    description: 'Process seller withdrawal requests via MTN MoMo and Airtel Money, inspect escrow liability, and approve financial settlements.',
+  },
+  disputes: {
+    kicker: 'Trust & Safety',
+    title: 'Dispute Cases & Claims Resolution',
+    description: 'Arbitrate buyer and seller claims, review evidence submissions, and determine escrow release or refund actions.',
+  },
+  cms: {
+    kicker: 'Platform Merchandising',
+    title: 'Content & Banner Management',
+    description: 'Control homepage hero banners, promotional carousels, featured commercial centers, and curated store highlights.',
+  },
+  settings: {
+    kicker: 'Platform Architecture',
+    title: 'System Settings & Operational Rates',
+    description: 'Configure marketplace commission percentages, Kigali delivery fee rules, escrow hold durations, and operational parameters.',
+  },
+  audit: {
+    kicker: 'Security & Compliance',
+    title: 'System Audit Trail & Event Logs',
+    description: 'Immutable historical record of staff actions, merchant approvals, permission changes, and security events.',
+  },
+  profile: {
+    kicker: 'Account & Security',
+    title: 'Administrator Profile & Credentials',
+    description: 'Manage your operations staff profile, security settings, notification preferences, and administrative session.',
+  },
+};
+
 export function AdminPage() {
   const { data: user } = useMe();
   const navigate = useNavigate();
@@ -75,6 +128,15 @@ export function AdminPage() {
       <Helmet>
         <title>{`Admin ${section} | NeereMarket`}</title>
       </Helmet>
+      {section !== 'overview' && SECTION_INFO[section] ? (
+        <header className={styles.pageHead}>
+          <div className={styles.pageHeadCopy}>
+            <p className={styles.kicker}>{SECTION_INFO[section].kicker}</p>
+            <h1>{SECTION_INFO[section].title}</h1>
+            <p className={styles.muted}>{SECTION_INFO[section].description}</p>
+          </div>
+        </header>
+      ) : null}
       {section === 'overview' ? <OverviewTab /> : null}
       {section === 'users' ? <UsersTab /> : null}
       {section === 'sellers' ? <SellersTab /> : null}
