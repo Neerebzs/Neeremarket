@@ -1,4 +1,10 @@
 @import './tokens.css';
+
+/* Tailwind CSS */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* Latin variable fonts cover the current English and Kinyarwanda UI. */
 @font-face {
   font-family: 'Inter Variable'; font-style: normal; font-weight: 100 900; font-display: swap;
