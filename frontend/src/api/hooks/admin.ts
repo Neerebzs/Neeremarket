@@ -1,3 +1,4 @@
+type Pagination = { page: number; limit: number; total: number; totalPages: number };
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, type ApiSuccess } from '../client';
 import type { ReturnRow } from './seller';
@@ -31,12 +32,13 @@ export function useAdminDashboard() {
   });
 }
 
-export function useAdminUsers(q?: string) {
+export function useAdminUsers(q?: string, page = 1) {
   return useQuery({
-    queryKey: ['admin', 'users', q],
+    queryKey: ['admin', 'users', q, page],
     queryFn: async () => {
       const { data } = await api.get<
         ApiSuccess<{
+          pagination: Pagination;
           items: Array<{
             id: string;
             email: string | null;
@@ -48,7 +50,7 @@ export function useAdminUsers(q?: string) {
             roles: string[];
           }>;
         }>
-      >('/admin/users', { params: { q } });
+      >('/admin/users', { params: { q, page, limit: 20 } });
       return data.data;
     },
   });
@@ -82,12 +84,14 @@ export function useUnlockUser() {
   });
 }
 
-export function useAdminSellers(status?: string) {
+export function useAdminSellers(status?: string, enabled = true, page = 1) {
   return useQuery({
-    queryKey: ['admin', 'sellers', status],
+    enabled,
+    queryKey: ['admin', 'sellers', status, page],
     queryFn: async () => {
       const { data } = await api.get<
         ApiSuccess<{
+          pagination: Pagination;
           items: Array<{
             id: string;
             businessName: string;
@@ -96,7 +100,7 @@ export function useAdminSellers(status?: string) {
             store: { name: string; slug: string } | null;
           }>;
         }>
-      >('/admin/sellers', { params: { status } });
+      >('/admin/sellers', { params: { status, page, limit: 20 } });
       return data.data;
     },
   });
@@ -120,12 +124,14 @@ export function useModerateSeller() {
   });
 }
 
-export function useAdminProducts(status?: string) {
+export function useAdminProducts(status?: string, enabled = true, page = 1) {
   return useQuery({
-    queryKey: ['admin', 'products', status],
+    enabled,
+    queryKey: ['admin', 'products', status, page],
     queryFn: async () => {
       const { data } = await api.get<
         ApiSuccess<{
+          pagination: Pagination;
           items: Array<{
             id: string;
             name: string;
@@ -134,7 +140,7 @@ export function useAdminProducts(status?: string) {
             store: { name: string };
           }>;
         }>
-      >('/admin/products', { params: { status } });
+      >('/admin/products', { params: { status, page, limit: 20 } });
       return data.data;
     },
   });
@@ -327,12 +333,13 @@ export function useAdminProduct(productId?: string) {
   });
 }
 
-export function useAdminOrders() {
+export function useAdminOrders(page = 1) {
   return useQuery({
-    queryKey: ['admin', 'orders'],
+    queryKey: ['admin', 'orders', page],
     queryFn: async () => {
       const { data } = await api.get<
         ApiSuccess<{
+          pagination: Pagination;
           items: Array<{
             id: string;
             orderNumber: string;
@@ -341,7 +348,7 @@ export function useAdminOrders() {
             customer: { fullName: string };
           }>;
         }>
-      >('/admin/orders');
+      >('/admin/orders', { params: { page, limit: 20 } });
       return data.data;
     },
   });
@@ -670,8 +677,9 @@ export function usePayoutAction() {
   });
 }
 
-export function useAdminReturns() {
+export function useAdminReturns(enabled = true) {
   return useQuery({
+    enabled,
     queryKey: ['admin', 'returns'],
     queryFn: async () => {
       const { data } = await api.get<ApiSuccess<{ returns: ReturnRow[] }>>('/admin/finance/returns');

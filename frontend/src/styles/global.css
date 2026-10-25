@@ -1,119 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400;500;600;700;800;900&display=swap');
-@import '@fontsource/geist-sans/latin.css';
-@import '@fontsource/geist-mono/latin.css';
-@import '@fontsource/cormorant-garamond/latin.css';
-
-:root {
-  /* Retail canvas & Brand Colors */
-  --color-bg: #f4f5f7;
-  --color-bg-elevated: #ffffff;
-  --color-ink: #0f172a;
-  --color-ink-muted: #64748b;
-  --color-ink-subtle: #94a3b8;
-  --color-foreground: #0f172a;
-  --color-muted-foreground: #64748b;
-
-  /* Brand Colors from Guide */
-  --color-brand-sage: #668c65;
-  --color-brand-sage-alt: #6b8f6b;
-  --color-dark-brand: #0d182a;
-
-  /* CTAs & Secondary Accents - Ecommerce Primary Orange */
-  --color-brand: #e85d04;
-  --color-brand-deep: #c44d00;
-  --color-brand-soft: #fff1e6;
-  --color-brand-glow: rgba(232, 93, 4, 0.35);
-  --color-accent: #0d9488;
-  --color-accent-soft: #e6f7f5;
-  --color-gold: #f5b700;
-  --color-border: #e2e8f0;
-  --color-success: #15803d;
-  --color-danger: #dc2626;
-  --color-warning: #d97706;
-  --shadow-soft: none;
-  --shadow-lift: none;
-  --radius: 12px;
-  --radius-sm: 8px;
-
-  /* Typography System Guide - Font Families */
-  --font-geist-sans: 'Geist Sans', 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-sans: var(--font-geist-sans);
-  --font-geist-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --font-mono: var(--font-geist-mono);
-  --font-serif: 'Cormorant Garamond', Georgia, serif;
-  --font-outfit: 'Outfit', sans-serif;
-  --font-display: var(--font-outfit);
-  --font-system-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif;
-
-  /* Typography System Guide - Text Size Scale (14px HTML Base) */
-  --text-xs: 0.75rem;     /* 10.5px */
-  --text-sm: 0.875rem;    /* 12.25px */
-  --text-base: 1rem;      /* 14px (default body) */
-  --text-md: 1rem;        /* 14px */
-  --text-lg: 1.125rem;    /* 15.75px */
-  --text-xl: 1.25rem;     /* 17.5px */
-  --text-2xl: 1.5rem;     /* 21px */
-  --text-3xl: 1.875rem;   /* 26.25px */
-  --text-4xl: 2.25rem;    /* 31.5px */
-  --text-5xl: 3rem;       /* 42px */
-  --text-6xl: 3.75rem;    /* 52.5px */
-  --text-7xl: 4.5rem;     /* 63px */
-  --text-8xl: 6rem;       /* 84px */
-  --text-9xl: 8rem;       /* 112px */
-
-  /* Typography System Guide - Custom Micro Sizes */
-  --text-6px: 6px;
-  --text-7px: 7px;
-  --text-8px: 8px;
-  --text-10px: 10px;
-  --text-11px: 11px;
-  --text-15px: 15px;
-  --text-22px: 22px;
-
-  /* Typography System Guide - Font Weights */
-  --font-thin: 100;
-  --font-extralight: 200;
-  --font-light: 300;
-  --font-normal: 400;
-  --font-medium: 500;
-  --font-semibold: 600;
-  --font-bold: 700;
-  --font-extrabold: 800;
-  --font-black: 900;
-
-  /* Weight aliases for backwards compatibility */
-  --weight-light: 300;
-  --weight-regular: 400;
-  --weight-medium: 500;
-  --weight-semibold: 600;
-  --weight-bold: 700;
-  --weight-extrabold: 800;
-  --weight-black: 900;
-
-  /* Typography System Guide - Letter Spacing (Tracking) */
-  --tracking-tighter: -0.05em;
-  --tracking-tight: -0.025em;
-  --tracking-snug: -0.015em;
-  --tracking-normal: 0em;
-  --tracking-wide: 0.025em;
-  --tracking-wider: 0.05em;
-  --tracking-widest: 0.1em;
-  --tracking-label: 0.08em;
-  --tracking-200: 0.2em;
-  --tracking-250: 0.25em;
-
-  /* Typography System Guide - Line Height (Leading) */
-  --leading-none: 1;
-  --leading-tight: 1.25;
-  --leading-snug: 1.375;
-  --leading-normal: 1.5;
-  --leading-relaxed: 1.625;
-  --leading-loose: 2;
-
-  --header-h: 72px;
-  --bottom-nav-h: 3.65rem;
-  --max: 1280px;
+@import './tokens.css';
+/* Latin variable fonts cover the current English and Kinyarwanda UI. */
+@font-face {
+  font-family: 'Inter Variable'; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url('/fonts/inter-latin-variable.woff2') format('woff2');
+}
+/* Same family, sources and weight mapping as Alibaba.com's public font stylesheet.
+   Fonts are served by Alibaba's CDN; the bundled Inter font is the offline fallback. */
+@font-face {
+  font-family: 'Alibaba_B2B_Sans'; font-style: normal; font-weight: 400; font-display: swap;
+  src: url('https://s.alicdn.com/@common/font/Alibaba_B2B_Sans_Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Alibaba_B2B_Sans'; font-style: normal; font-weight: 500 600; font-display: swap;
+  src: url('https://s.alicdn.com/@common/font/Alibaba_B2B_Sans_SemiBold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Alibaba_B2B_Sans'; font-style: normal; font-weight: 700 900; font-display: swap;
+  src: url('https://s.alicdn.com/@common/font/Alibaba_B2B_Sans_Bold.woff2') format('woff2');
 }
 
 *,
@@ -126,16 +29,16 @@
 
 /* Base Configuration */
 html {
-  font-size: 14px; /* 125% of default 16px to mimic OS display scaling */
+  font-size: 16px;
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
   text-rendering: optimizeLegibility;
-  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  font-feature-settings: normal;
 }
 
 body {
   margin: 0;
-  font-family: var(--font-geist-sans);
+  font-family: var(--font-sans);
   font-size: var(--text-base);
   font-weight: var(--font-normal);
   line-height: var(--leading-normal);
@@ -151,7 +54,7 @@ body {
 /* Dashboard UI font stack when dashboard-ui class is present */
 body.dashboard-ui,
 .dashboard-ui {
-  font-family: var(--font-system-ui);
+  font-family: var(--font-sans);
 }
 
 a {
@@ -179,7 +82,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-geist-sans);
+  font-family: var(--font-sans);
   font-weight: var(--font-semibold);
   line-height: var(--leading-tight);
   letter-spacing: var(--tracking-tight);
@@ -256,11 +159,11 @@ small {
 
 /* Font Families */
 .font-sans {
-  font-family: var(--font-geist-sans) !important;
+  font-family: var(--font-sans) !important;
 }
 
 .font-mono {
-  font-family: var(--font-geist-mono) !important;
+  font-family: var(--font-mono) !important;
 }
 
 .font-serif {
@@ -287,11 +190,11 @@ small {
 .text-9xl { font-size: var(--text-9xl) !important; }
 
 /* Custom Micro Sizes */
-.text-\[6px\] { font-size: 6px !important; }
-.text-\[7px\] { font-size: 7px !important; }
-.text-\[8px\] { font-size: 8px !important; }
-.text-\[10px\] { font-size: 10px !important; }
-.text-\[11px\] { font-size: 11px !important; }
+.text-\[6px\] { font-size: 12px !important; }
+.text-\[7px\] { font-size: 12px !important; }
+.text-\[8px\] { font-size: 12px !important; }
+.text-\[10px\] { font-size: 12px !important; }
+.text-\[11px\] { font-size: 12px !important; }
 .text-\[15px\] { font-size: 15px !important; }
 .text-\[22px\] { font-size: 22px !important; }
 
@@ -327,14 +230,14 @@ small {
 /* Text Colors */
 .text-foreground { color: var(--color-ink) !important; }
 .text-muted-foreground { color: var(--color-ink-muted) !important; }
-.text-slate-900 { color: #0f172a !important; }
+.text-slate-900 { color: #171717 !important; }
 .text-slate-600 { color: #475569 !important; }
-.text-slate-500 { color: #64748b !important; }
-.text-slate-400 { color: #94a3b8 !important; }
+.text-slate-500 { color: #57534E !important; }
+.text-slate-400 { color: #78716C !important; }
 .text-white { color: #ffffff !important; }
-.text-\[\#668c65\] { color: #668c65 !important; }
-.text-\[\#6b8f6b\] { color: #6b8f6b !important; }
-.text-\[\#0d182a\] { color: #0d182a !important; }
+.text-\[\#668c65\] { color: var(--color-brand) !important; }
+.text-\[\#6b8f6b\] { color: var(--color-brand) !important; }
+.text-\[\#0d182a\] { color: var(--color-ink) !important; }
 
 /* Special Text Helpers */
 .truncate {
@@ -370,3 +273,28 @@ small {
 .text-left { text-align: left !important; }
 .text-center { text-align: center !important; }
 .text-right { text-align: right !important; }
+
+/* Shared interaction and accessibility defaults. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-focus) !important;
+  outline-offset: 3px;
+}
+:where(input, select, textarea) { max-width: 100%; }
+:where(button, a, input, select, textarea) { touch-action: manipulation; }
+::selection { background: var(--color-brand-soft); color: var(--color-ink); }
+.skip-link {
+  position: fixed; top: 8px; left: 8px; z-index: 1000;
+  padding: 12px 16px; border-radius: 8px;
+  background: var(--color-ink); color: white;
+  transform: translateY(-160%);
+}
+.skip-link:focus { transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

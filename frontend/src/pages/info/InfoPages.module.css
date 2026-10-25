@@ -127,7 +127,7 @@
 }
 
 .card:hover {
-  border-color: #f0c7a8;
+  border-color: var(--color-brand-border);
 }
 
 .split {
@@ -296,3 +296,4 @@
     grid-template-columns: 1fr;
   }
 }
+.hero h1 { font-family: var(--font-display); }

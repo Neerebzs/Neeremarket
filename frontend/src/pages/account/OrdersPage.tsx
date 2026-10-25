@@ -165,13 +165,13 @@ export function OrdersPage() {
       {allItems.length > 0 ? (
         <section className={styles.controlsRow} aria-label="Order filters and search">
           {/* Status Tabs Bar */}
-          <div className={styles.tabsBar} role="tablist" aria-label="Order Status Filters">
+          <div className={styles.tabsBar} role="group" aria-label="Order Status Filters">
             <button
               type="button"
               className={`${styles.tabBtn} ${activeTab === 'ALL' ? styles.tabBtnActive : ''}`}
               onClick={() => setActiveTab('ALL')}
-              role="tab"
-              aria-selected={activeTab === 'ALL'}
+
+              aria-pressed={activeTab === 'ALL'}
             >
               <span>All</span>
               <span className={styles.tabCount}>{counts.all}</span>
@@ -181,8 +181,8 @@ export function OrdersPage() {
               type="button"
               className={`${styles.tabBtn} ${activeTab === 'UNPAID' ? styles.tabBtnActive : ''}`}
               onClick={() => setActiveTab('UNPAID')}
-              role="tab"
-              aria-selected={activeTab === 'UNPAID'}
+
+              aria-pressed={activeTab === 'UNPAID'}
             >
               <span>Pending Payment</span>
               {counts.unpaid > 0 ? (
@@ -194,8 +194,8 @@ export function OrdersPage() {
               type="button"
               className={`${styles.tabBtn} ${activeTab === 'PROCESSING' ? styles.tabBtnActive : ''}`}
               onClick={() => setActiveTab('PROCESSING')}
-              role="tab"
-              aria-selected={activeTab === 'PROCESSING'}
+
+              aria-pressed={activeTab === 'PROCESSING'}
             >
               <span>In Transit</span>
               {counts.processing > 0 ? (
@@ -207,8 +207,8 @@ export function OrdersPage() {
               type="button"
               className={`${styles.tabBtn} ${activeTab === 'DELIVERED' ? styles.tabBtnActive : ''}`}
               onClick={() => setActiveTab('DELIVERED')}
-              role="tab"
-              aria-selected={activeTab === 'DELIVERED'}
+
+              aria-pressed={activeTab === 'DELIVERED'}
             >
               <span>Delivered</span>
               {counts.delivered > 0 ? (
@@ -220,8 +220,8 @@ export function OrdersPage() {
               type="button"
               className={`${styles.tabBtn} ${activeTab === 'CANCELLED' ? styles.tabBtnActive : ''}`}
               onClick={() => setActiveTab('CANCELLED')}
-              role="tab"
-              aria-selected={activeTab === 'CANCELLED'}
+
+              aria-pressed={activeTab === 'CANCELLED'}
             >
               <span>Cancelled</span>
               {counts.cancelled > 0 ? (
@@ -437,7 +437,7 @@ export function OrdersPage() {
                     height="14"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="#15803d"
+                    stroke="var(--color-success)"
                     strokeWidth="2.2"
                     strokeLinecap="round"
                     strokeLinejoin="round"

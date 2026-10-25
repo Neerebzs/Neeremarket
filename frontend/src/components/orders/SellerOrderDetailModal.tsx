@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useModalFocus } from '@/components/ui/useModalFocus';
+import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import type { SellerOrder } from '@/api/hooks';
 import { Badge, Button } from '@/components/ui';
@@ -29,15 +30,8 @@ export function SellerOrderDetailModal({
   onUpdateStatus,
   isUpdatingStatus = false,
 }: SellerOrderDetailModalProps) {
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useModalFocus(dialogRef, isOpen && !!order, onClose);
 
   if (!isOpen || !order) return null;
 
@@ -75,7 +69,7 @@ export function SellerOrderDetailModal({
 
   return (
     <div className={styles.overlay} onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="order-detail-title">
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div ref={dialogRef} tabIndex={-1} className={styles.modal} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className={styles.modalHead}>
           <div className={styles.modalTitleWrap}>
@@ -143,8 +137,8 @@ export function SellerOrderDetailModal({
                           borderRadius: '6px',
                           fontSize: '0.75rem',
                           fontWeight: 600,
-                          background: '#ecfdf5',
-                          color: '#065f46',
+                          background: 'var(--color-success-soft)',
+                          color: 'var(--color-success)',
                           textDecoration: 'none',
                           border: '1px solid #a7f3d0'
                         }}
@@ -167,8 +161,8 @@ export function SellerOrderDetailModal({
                               borderRadius: '6px',
                               fontSize: '0.75rem',
                               fontWeight: 600,
-                              background: '#f0fdf4',
-                              color: '#15803d',
+                              background: 'var(--color-success-soft)',
+                              color: 'var(--color-success)',
                               textDecoration: 'none',
                               border: '1px solid #bbf7d0'
                             }}

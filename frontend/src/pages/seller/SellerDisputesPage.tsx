@@ -168,7 +168,7 @@ export function SellerDisputesPage() {
                 <article key={d.id} className={styles.mobileCard}>
                   <div className={styles.mobileCardHead}>
                     <div>
-                      <span className={styles.mono} style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#4a6c4a' }}>
+                      <span className={styles.mono} style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--color-brand-deep)' }}>
                         {d.disputeNumber}
                       </span>
                       <span className={styles.mobileCardSubtitle}>Order {d.sellerOrderNumber}</span>

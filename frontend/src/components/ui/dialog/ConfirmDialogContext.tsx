@@ -1,8 +1,8 @@
+import { useModalFocus } from '../useModalFocus';
 import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useRef,
   useState,
   type ReactNode,
@@ -32,6 +32,7 @@ const ConfirmContext = createContext<ConfirmFn | null>(null);
 export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<ConfirmState | null>(null);
   const confirmBtnRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   const confirm = useCallback<ConfirmFn>((options) => {
     return new Promise<boolean>((resolve) => {
@@ -65,28 +66,7 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
     }, 180);
   }, []);
 
-  // Keyboard navigation & accessibility
-  useEffect(() => {
-    if (!state?.isOpen) return;
-
-    // Focus confirm button when dialog appears
-    const timer = setTimeout(() => {
-      confirmBtnRef.current?.focus();
-    }, 50);
-
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        closeWith(false);
-      }
-    }
-
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [state?.isOpen, closeWith]);
+  useModalFocus(dialogRef, !!state?.isOpen, () => closeWith(false));
 
   return (
     <ConfirmContext.Provider value={confirm}>
@@ -102,6 +82,8 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
           role="presentation"
         >
           <div
+            ref={dialogRef}
+            tabIndex={-1}
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="confirm-dialog-title"

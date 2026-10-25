@@ -1,15 +1,15 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { handleImageError } from '@/utils/images';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useCategories, useProducts, useStores, type ProductListItem } from '@/api/hooks';
-import { Button } from '@/components/ui';
+import { Alert } from '@/components/ui';
 import { PriceDisplay } from '@/components/product';
 import {
   categoryImage,
   FALLBACK_CATEGORY_VISUAL,
   getCategoryQuadTiles,
 } from '@/utils/categoryVisuals';
-import { HomeQuickActions } from '@/components/navigation/HomeQuickActions';
 import styles from './HomePage.module.css';
 
 const SLIDE_IMAGES = {
@@ -31,36 +31,48 @@ function chunkItems<T>(items: T[], size: number) {
 }
 
 export function HomePage() {
-  const { data: products, isLoading } = useProducts({ page: 1, limit: 16 });
+  const { data: products, isLoading, isError: productsError } = useProducts({ page: 1, limit: 16, sort: 'popular' });
   const { data: newArrivalsData, isLoading: newArrivalsLoading } = useProducts({
     page: 1,
-    limit: 4,
+    limit: 12,
     sort: 'newest',
   });
-  const { data: categories } = useCategories();
-  const { data: stores } = useStores(1);
+  const { data: categories, isError: categoriesError } = useCategories();
+  const { data: stores, isError: storesError } = useStores(1);
   const [slide, setSlide] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const [storePage, setStorePage] = useState(0);
-  const [storesPerPage, setStoresPerPage] = useState(2);
+  const [, setPaused] = useState(false);
   const [catPage, setCatPage] = useState(0);
   const [catsPerPage, setCatsPerPage] = useState(12);
-  const [catsPaused, setCatsPaused] = useState(false);
+  const [, setCatsPaused] = useState(false);
 
   const items = products?.items ?? [];
   const newArrivals = newArrivalsData?.items ?? [];
+  const arrivalsRef = useRef<HTMLDivElement>(null);
+  const [arrivalEdges, setArrivalEdges] = useState({ start: true, end: true });
+  useEffect(() => {
+    const row = arrivalsRef.current;
+    if (!row) return;
+    const sync = () => setArrivalEdges({ start: row.scrollLeft <= 2, end: row.scrollLeft + row.clientWidth >= row.scrollWidth - 2 });
+    sync();
+    row.addEventListener('scroll', sync, { passive: true });
+    const observer = new ResizeObserver(sync);
+    observer.observe(row);
+    return () => { row.removeEventListener('scroll', sync); observer.disconnect(); };
+  }, [newArrivals.length]);
+  function scrollArrivals(direction: number) {
+    const row = arrivalsRef.current;
+    if (!row) return;
+    const card = row.firstElementChild as HTMLElement | null;
+    const distance = (card?.offsetWidth ?? 240) + 12;
+    row.scrollBy({ left: direction * distance, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }
+
   const trending = items.slice(0, 12);
   const verifiedStores = (stores?.items ?? []).filter(
     (store) => store.seller.verificationStatus === 'VERIFIED',
   );
-  const storePages = useMemo(
-    () => chunkItems(verifiedStores, storesPerPage),
-    [verifiedStores, storesPerPage],
-  );
-  const storePageCount = storePages.length;
-
   const [showcaseStoreIdx, setShowcaseStoreIdx] = useState(0);
-  const [showcasePaused, setShowcasePaused] = useState(false);
+  const [, setShowcasePaused] = useState(false);
   const showcaseStores = useMemo(() => {
     return verifiedStores.length ? verifiedStores : (stores?.items ?? []);
   }, [verifiedStores, stores]);
@@ -70,21 +82,6 @@ export function HomePage() {
   const showcaseProducts = useMemo(() => {
     if (!currentStore) return [];
     const list = [...(currentStore.products || [])];
-    if (list.length < 8 && items.length) {
-      const existingIds = new Set(list.map((p) => p.id));
-      for (const p of items) {
-        if (!existingIds.has(p.id)) {
-          list.push({
-            id: p.id,
-            name: p.name,
-            slug: p.slug,
-            imageUrl: p.images[0]?.url || null,
-          });
-          existingIds.add(p.id);
-          if (list.length >= 8) break;
-        }
-      }
-    }
     return list.slice(0, 8);
   }, [currentStore, items]);
 
@@ -133,7 +130,6 @@ export function HomePage() {
   useEffect(() => {
     function syncPageSize() {
       const w = window.innerWidth;
-      setStoresPerPage(w <= 640 ? 1 : 2);
       if (w <= 640) setCatsPerPage(6);
       else if (w <= 900) setCatsPerPage(8);
       else setCatsPerPage(12);
@@ -144,44 +140,16 @@ export function HomePage() {
   }, []);
 
   useEffect(() => {
-    setStorePage((current) => Math.min(current, Math.max(0, storePageCount - 1)));
-  }, [storePageCount]);
-
-  useEffect(() => {
     setCatPage((current) => Math.min(current, Math.max(0, catPageCount - 1)));
   }, [catPageCount]);
 
-  useEffect(() => {
-    if (paused) return;
-    const id = window.setInterval(() => {
-      setSlide((current) => (current + 1) % slidesCount);
-    }, 5500);
-    return () => window.clearInterval(id);
-  }, [paused]);
 
-  useEffect(() => {
-    if (storePageCount <= 1) return;
-    const id = window.setInterval(() => {
-      setStorePage((current) => (current + 1) % storePageCount);
-    }, 6500);
-    return () => window.clearInterval(id);
-  }, [storePageCount]);
 
-  useEffect(() => {
-    if (catsPaused || catPageCount <= 1) return;
-    const id = window.setInterval(() => {
-      setCatPage((current) => (current + 1) % catPageCount);
-    }, 5000);
-    return () => window.clearInterval(id);
-  }, [catsPaused, catPageCount]);
 
-  useEffect(() => {
-    if (showcasePaused || showcaseStores.length <= 1) return;
-    const id = window.setInterval(() => {
-      setShowcaseStoreIdx((current) => (current + 1) % showcaseStores.length);
-    }, 6000);
-    return () => window.clearInterval(id);
-  }, [showcasePaused, showcaseStores.length]);
+
+
+
+
 
   function goTo(index: number) {
     setSlide((index + slidesCount) % slidesCount);
@@ -197,39 +165,14 @@ export function HomePage() {
         />
       </Helmet>
 
-      <HomeQuickActions />
+      {productsError || categoriesError || storesError ? <div className="container" style={{ paddingTop: '1rem' }}><Alert tone="error">Some marketplace sections could not load. Please refresh or browse products and stores directly.</Alert></div> : null}
 
       <section className={`container ${styles.market}`} aria-label="Marketplace hero">
-        <aside className={styles.arrivalsPanel} aria-labelledby="hero-arrivals">
-          <div className={styles.panelTitleRow}>
-            <h2 id="hero-arrivals" className={styles.arrivalsTitle}>
-              New arrivals
-            </h2>
-            <span className={styles.liveBadge}>Rwanda</span>
-          </div>
-          {newArrivals.length ? (
-            <div className={styles.arrivalsGrid}>
-              {newArrivals.slice(0, 4).map((product) => (
-                <Link key={product.id} to={`/products/${product.slug}`} className={styles.arrivalCard}>
-                  <span className={styles.arrivalThumb}>
-                    <img src={productImage(product)} alt="" />
-                  </span>
-                  <span className={styles.arrivalLabel}>{product.name}</span>
-                </Link>
-              ))}
-            </div>
-          ) : null}
-          {!newArrivals.length && newArrivalsLoading ? (
-            <p className={styles.panelHint}>Loading new arrivals…</p>
-          ) : null}
-          {!newArrivals.length && !newArrivalsLoading ? (
-            <p className={styles.panelHint}>Fresh listings will show here soon.</p>
-          ) : null}
-          <Link to="/new-arrivals" className={styles.arrivalsCta}>
-            Shop the latest arrivals
-          </Link>
+        <aside className={styles.heroCategories} aria-labelledby="hero-categories-heading">
+          <h2 id="hero-categories-heading">Categories</h2>
+          <ul>{categoryList.slice(0, 12).map(category => <li key={category.id}><Link to={`/categories/${category.slug}`}><span>{category.name}</span><span aria-hidden="true">›</span></Link></li>)}</ul>
+          <Link to="/categories" className={styles.allCategories}>More categories <span aria-hidden="true">›</span></Link>
         </aside>
-
         <div className={styles.centerCol}>
           <div
             className={styles.carousel}
@@ -239,32 +182,25 @@ export function HomePage() {
             aria-label="Campaigns and promotions"
           >
             <div className={styles.track} style={{ transform: `translateX(-${slide * 100}%)` }}>
-              <article className={`${styles.slide} ${styles.slideHome}`}>
-                <img src={SLIDE_IMAGES.home} alt="" />
+              <article aria-hidden={slide !== 0} {...(slide !== 0 ? { inert: '' } : {})} className={`${styles.slide} ${styles.slideHome}`}>
+                <div className={styles.heroProducts} aria-label="Explore products">
+                  {items.slice(0, 4).map(product => <Link key={product.id} to={`/products/${product.slug}`} aria-label={product.name}><img src={productImage(product)} onError={handleImageError} alt="" /><span>{product.category?.name || 'Shop local'}</span></Link>)}
+                </div>
                 <div className={styles.slideCopy}>
-                  <p className={styles.eyebrow}>Rwanda’s marketplace</p>
-                  <h1>Shop Kigali. Pay with MoMo. Delivered.</h1>
+                  <p className={styles.eyebrow}>Discover local favourites</p>
+                  <h1>Find your next everyday favourite.</h1>
                   <p>
-                    Fashion, phones, beauty, and grocery from local sellers — priced in RWF, paid
-                    with MTN MoMo and Airtel Money.
+                    Shop fashion, tech, home and more from local sellers. All priced in RWF.
                   </p>
                   <div className={styles.slideActions}>
-                    <Link to="/products">
-                      <Button type="button" className={styles.slideCta}>
-                        Browse the market
-                      </Button>
-                    </Link>
-                    <Link to="/sell">
-                      <Button type="button" variant="secondary" className={styles.slideSecondary}>
-                        Start selling
-                      </Button>
-                    </Link>
+                    <Link to="/products" className={styles.slideCta}>Shop now</Link>
+                    <Link to="/sell" className={styles.slideSecondary}>Start selling</Link>
                   </div>
                 </div>
               </article>
 
-              <article className={`${styles.slide} ${styles.slideAd}`}>
-                <img src={SLIDE_IMAGES.advertise} alt="" />
+              <article aria-hidden={slide !== 1} {...(slide !== 1 ? { inert: '' } : {})} className={`${styles.slide} ${styles.slideAd}`}>
+                <img loading="lazy" onError={handleImageError} src={SLIDE_IMAGES.advertise} alt="" />
                 <div className={styles.slideCopy}>
                   <p className={styles.eyebrow}>Advertise</p>
                   <h2>Put your store in front of Rwanda.</h2>
@@ -272,25 +208,17 @@ export function HomePage() {
                     Promote your boutique, stall, or brand on NeereMarket. Reach buyers who already
                     shop and pay with Mobile Money.
                   </p>
-                  <Link to="/sell">
-                    <Button type="button" className={styles.slideCta}>
-                      Advertise your store
-                    </Button>
-                  </Link>
+                  <Link to="/sell" className={styles.slideCta}>Advertise your store</Link>
                 </div>
               </article>
 
-              <article className={`${styles.slide} ${styles.slideOffer}`}>
-                <img src={SLIDE_IMAGES.offer} alt="" />
+              <article aria-hidden={slide !== 2} {...(slide !== 2 ? { inert: '' } : {})} className={`${styles.slide} ${styles.slideOffer}`}>
+                <img loading="lazy" onError={handleImageError} src={SLIDE_IMAGES.offer} alt="" />
                 <div className={styles.slideCopy}>
                   <p className={styles.eyebrow}>Offers</p>
                   <h2>Today’s deals in RWF.</h2>
                   <p>Limited-time markdowns from verified Kigali sellers. Same checkout — MoMo or Airtel.</p>
-                  <Link to="/deals">
-                    <Button type="button" className={styles.slideCta}>
-                      Shop offers
-                    </Button>
-                  </Link>
+                  <Link to="/deals" className={styles.slideCta}>Shop offers</Link>
                 </div>
               </article>
             </div>
@@ -312,13 +240,12 @@ export function HomePage() {
               ›
             </button>
 
-            <div className={styles.dots} role="tablist" aria-label="Carousel slides">
+            <div className={styles.dots} role="group" aria-label="Carousel slides">
               {['Home', 'Advertise', 'Offers'].map((label, index) => (
                 <button
                   key={label}
                   type="button"
-                  role="tab"
-                  aria-selected={slide === index}
+                  aria-pressed={slide === index}
                   aria-label={label}
                   className={slide === index ? styles.dotActive : styles.dot}
                   onClick={() => goTo(index)}
@@ -327,127 +254,19 @@ export function HomePage() {
             </div>
           </div>
 
-          <div className={styles.storeCarousel} aria-label="Verified stores">
-            <div className={styles.storeHead}>
-              <div className={styles.storeHeadTitle}>
-                <svg className={styles.verifiedIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  <path d="m9 12 2 2 4-4" />
-                </svg>
-                <h2>Verified stores</h2>
-              </div>
-              <Link to="/stores">View all</Link>
-            </div>
-            <div className={styles.storeStage}>
-              <div className={styles.storeViewport}>
-                <div
-                  className={styles.storeTrack}
-                  style={{ transform: `translateX(-${storePage * 100}%)` }}
-                >
-                  {storePages.map((page, pageIndex) => (
-                    <div key={pageIndex} className={styles.verifiedStores}>
-                      {page.map((store) => {
-                        const productsForStore = store.products ?? [];
-                        return (
-                          <article key={store.id} className={styles.storeCard}>
-                            <Link to={`/stores/${store.slug}`} className={styles.storeCardHead}>
-                              <div className={styles.storeNameRow}>
-                                <strong>{store.name}</strong>
-                              </div>
-                              <span className={styles.storeLocation}>
-                                {[store.seller.marketLocation, store.seller.district]
-                                  .filter(Boolean)
-                                  .join(' · ') || 'Kigali, Rwanda'}
-                              </span>
-                            </Link>
-                            <div className={styles.storeProducts}>
-                              {productsForStore.slice(0, 4).map((product) => (
-                                <Link
-                                  key={product.id}
-                                  to={`/stores/${store.slug}`}
-                                  className={styles.storeProduct}
-                                  title={`${product.name} — ${store.name}`}
-                                >
-                                  {product.imageUrl ? (
-                                    <img src={product.imageUrl} alt="" />
-                                  ) : (
-                                    <span>{product.name.slice(0, 1)}</span>
-                                  )}
-                                </Link>
-                              ))}
-                              {!productsForStore.length ? (
-                                <Link to={`/stores/${store.slug}`} className={styles.storeProductEmpty}>
-                                  Visit store
-                                </Link>
-                              ) : null}
-                            </div>
-                            <Link to={`/stores/${store.slug}`} className={styles.storeCardCta}>
-                              Shop {store.name}
-                            </Link>
-                          </article>
-                        );
-                      })}
-                      {!page.length ? (
-                        <article className={styles.storeCard}>
-                          <div className={styles.storeCardHead}>
-                            <strong>Verified stores</strong>
-                            <span>Shop trusted storefronts</span>
-                          </div>
-                          <Link to="/stores" className={styles.storeCardCta}>
-                            Browse stores
-                          </Link>
-                        </article>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              {storePageCount > 1 ? (
-                <>
-                  <button
-                    type="button"
-                    className={`${styles.storeArrow} ${styles.storePrev}`}
-                    aria-label="Previous verified stores"
-                    onClick={() =>
-                      setStorePage((current) => (current - 1 + storePageCount) % storePageCount)
-                    }
-                  >
-                    ‹
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.storeArrow} ${styles.storeNext}`}
-                    aria-label="Next verified stores"
-                    onClick={() => setStorePage((current) => (current + 1) % storePageCount)}
-                  >
-                    ›
-                  </button>
-                </>
-              ) : null}
-            </div>
-            {storePageCount > 1 ? (
-              <div className={styles.storeDots} role="tablist" aria-label="Verified store pages">
-                {storePages.map((_, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    role="tab"
-                    aria-selected={storePage === index}
-                    aria-label={`Stores page ${index + 1}`}
-                    className={storePage === index ? styles.dotActive : styles.dot}
-                    onClick={() => setStorePage(index)}
-                  />
-                ))}
-              </div>
-            ) : null}
-          </div>
+          <nav className={styles.heroServices} aria-label="Shopping services">
+            <Link to="/how-it-works"><strong>Mobile Money</strong><span>MTN MoMo &amp; Airtel</span></Link>
+            <Link to="/stores"><strong>Verified stores</strong><span>Discover local sellers</span></Link>
+            <Link to="/sell"><strong>Start selling</strong><span>Grow your business</span></Link>
+            <Link to="/help"><strong>Buyer support</strong><span>Here to help you shop</span></Link>
+          </nav>
         </div>
 
         <aside className={styles.trendPanel} aria-labelledby="trending-heading">
           <div className={styles.panelHead}>
             <div className={styles.panelTitleRow}>
-              <h2 id="trending-heading">Trending</h2>
-              <span className={styles.liveBadge}>Live</span>
+              <h2 id="trending-heading">You may like</h2>
+              
             </div>
             <Link to="/products">See all</Link>
           </div>
@@ -455,7 +274,7 @@ export function HomePage() {
             {trending.map((product) => (
               <li key={product.id}>
                 <Link to={`/products/${product.slug}`} className={styles.trendItem}>
-                  <img src={productImage(product)} alt="" />
+                  <img loading="lazy" onError={handleImageError} src={productImage(product)} alt="" />
                   <div>
                     <p>{product.name}</p>
                     <PriceDisplay price={product.price} discountPrice={product.discountPrice} />
@@ -470,8 +289,31 @@ export function HomePage() {
           ) : null}
         </aside>
       </section>
-
-
+      <section className={`container ${styles.discovery}`} aria-labelledby="new-arrivals-heading">
+        <div className={styles.arrivalsHead}>
+          <h2 id="new-arrivals-heading">New arrivals</h2>
+          <div className={styles.arrivalsControls}>
+            <Link to="/new-arrivals">View all new arrivals <span aria-hidden="true">›</span></Link>
+            <button type="button" aria-label="Previous new arrivals" aria-controls="new-arrivals-track" disabled={arrivalEdges.start} onClick={() => scrollArrivals(-1)}>‹</button>
+            <button type="button" aria-label="Next new arrivals" aria-controls="new-arrivals-track" disabled={arrivalEdges.end} onClick={() => scrollArrivals(1)}>›</button>
+          </div>
+        </div>
+        {newArrivals.length ? (
+          <div id="new-arrivals-track" ref={arrivalsRef} className={styles.arrivalsGrid} role="region" aria-label="Swipe through new arrivals" tabIndex={0} onKeyDown={event => {
+            if (event.target !== event.currentTarget) return;
+            if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); scrollArrivals(event.key === 'ArrowLeft' ? -1 : 1); }
+          }}>
+            {newArrivals.map(product => (
+              <Link key={product.id} to={`/products/${product.slug}`} className={styles.arrivalCard}>
+                <h3 className={styles.arrivalLabel}>{product.name}</h3>
+                <span className={styles.arrivalThumb}>
+                  <img loading="lazy" onError={handleImageError} src={productImage(product)} alt="" />
+                </span>
+              </Link>
+            ))}
+          </div>
+        ) : <p className={styles.panelHint} role="status">{newArrivalsLoading ? 'Loading new arrivals…' : 'Fresh listings will show here soon.'}</p>}
+      </section>
 
       <section className={`container ${styles.section}`} aria-labelledby="cats-heading">
         <div
@@ -525,13 +367,13 @@ export function HomePage() {
               </div>
 
               {catPageCount > 1 ? (
-                <div className={styles.catDots} role="tablist" aria-label="Category pages">
+                <div className={styles.catDots} role="group" aria-label="Category pages">
                   {catPages.map((_, index) => (
                     <button
                       key={`cat-dot-${index}`}
                       type="button"
-                      role="tab"
-                      aria-selected={index === catPage}
+
+                      aria-pressed={index === catPage}
                       aria-label={`Category page ${index + 1}`}
                       className={index === catPage ? styles.catDotActive : styles.catDot}
                       onClick={() => setCatPage(index)}
@@ -598,17 +440,17 @@ export function HomePage() {
                 <p className={styles.showcaseLocation}>
                   {[currentStore.seller.marketLocation, currentStore.seller.district]
                     .filter(Boolean)
-                    .join(' · ') || 'Kigali, Rwanda'}
+                    .join(' Â· ') || 'Kigali, Rwanda'}
                 </p>
                 <Link
                   to={`/stores/${currentStore.slug}`}
                   className={styles.showcasePillBtn}
                 >
-                  Source Now
+                  Visit store
                 </Link>
               </div>
               <div className={styles.showcaseBannerImage}>
-                <img src={showcaseBannerImg} alt={currentStore.name} />
+                <img loading="lazy" onError={handleImageError} src={showcaseBannerImg} alt={currentStore.name} />
               </div>
             </div>
 
@@ -635,13 +477,13 @@ export function HomePage() {
           </div>
 
           {showcaseStores.length > 1 ? (
-            <div className={styles.showcaseDots} role="tablist" aria-label="Featured store pages">
+            <div className={styles.showcaseDots} role="group" aria-label="Featured store pages">
               {showcaseStores.map((st, index) => (
                 <button
                   key={st.id}
                   type="button"
-                  role="tab"
-                  aria-selected={index === showcaseStoreIdx}
+
+                  aria-pressed={index === showcaseStoreIdx}
                   aria-label={`Store ${index + 1}: ${st.name}`}
                   className={index === showcaseStoreIdx ? styles.showcaseDotActive : styles.showcaseDot}
                   onClick={() => setShowcaseStoreIdx(index)}

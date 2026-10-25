@@ -1,8 +1,12 @@
+import { useMe } from '@/api/hooks';
+import { hasAdminPermission } from '@/utils/adminAccess';
+import { useTableSort } from '@/components/ui/useTableSort';
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAdminUsers, useUpdateUserStatus, useUnlockUser } from '@/api/hooks';
 import {
   ActionIconButton,
+  useConfirm,
   Alert,
   Badge,
   SortTh,
@@ -18,14 +22,18 @@ import { prettyStatus, statusTone } from '@/utils/status';
 import styles from '@/pages/workspace/workspace.module.css';
 
 export function UsersTab() {
+  const { data: currentAdmin } = useMe();
+  const canMutate = hasAdminPermission(currentAdmin, 'sellers.suspend');
+  const { sortRows, sortProps } = useTableSort();
   const [params] = useSearchParams();
   const urlQ = params.get('q') || '';
   const [q, setQ] = useState(urlQ);
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = 20;
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const { data, isLoading, isError, error, refetch } = useAdminUsers(q || undefined);
+  const { data, isLoading, isError, error, refetch } = useAdminUsers(q || undefined, page);
+  const confirm = useConfirm();
   const updateStatus = useUpdateUserStatus();
   const unlockUser = useUnlockUser();
   const [msg, setMsg] = useState<string | null>(null);
@@ -48,14 +56,16 @@ export function UsersTab() {
         ? allUsers.filter((u) => u.status === statusFilter)
         : allUsers;
 
-  const totalPages = Math.ceil(displayedUsers.length / pageSize);
-  const paginatedUsers = displayedUsers.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = data?.pagination.totalPages ?? 1;
+  const safePage = Math.min(page, Math.max(1, totalPages));
+  const paginatedUsers = sortRows(displayedUsers, {'User': (u) => u.fullName, 'Roles': (u) => u.roles.join(', '), 'Status': (u) => u.status});
 
   return (
     <>
-      {msg ? <Alert tone="success">{msg}</Alert> : null}
+      {msg ? <Alert tone={updateStatus.isError || unlockUser.isError ? 'error' : 'success'}>{msg}</Alert> : null}
       {isLoading ? <TableSkeleton /> : null}
       {isError ? <Alert tone="error">{getErrorMessage(error)}</Alert> : null}
+      <p className={styles.muted}>Search covers the user directory. Status filters and column sorting apply to the current page.</p>
       <TableCard>
         <TableBanner
           icon={
@@ -68,8 +78,7 @@ export function UsersTab() {
           }
           title="User Accounts & Roles"
           subtitle={
-            <span>
-              <strong>{suspendedCount}</strong> suspended · <strong>{activeCount}</strong> active
+            <span>On this page: <strong>{suspendedCount}</strong> suspended · <strong>{activeCount}</strong> active
               {lockedCount > 0 ? (
                 <>
                   {' '}· <strong style={{ color: 'var(--color-danger, #ef4444)' }}>{lockedCount}</strong> locked
@@ -105,13 +114,14 @@ export function UsersTab() {
           <table className={styles.table}>
             <thead>
               <tr>
-                <SortTh>User</SortTh>
-                <SortTh>Roles</SortTh>
-                <SortTh>Status</SortTh>
+                <SortTh {...sortProps('User')}>User</SortTh>
+                <SortTh {...sortProps('Roles')}>Roles</SortTh>
+                <SortTh {...sortProps('Status')}>Status</SortTh>
                 <SortTh sortable={false}>Actions</SortTh>
               </tr>
             </thead>
             <tbody>
+              {!paginatedUsers.length && !isLoading && !isError ? <tr><td colSpan={4}>No records match this view. Adjust the filters or move to another page.</td></tr> : null}
               {paginatedUsers.map((u) => {
                 const userLocked = isLocked(u);
                 return (
@@ -139,8 +149,9 @@ export function UsersTab() {
                             icon="unlock"
                             tone="warning"
                             label="Unlock Account"
-                            disabled={unlockUser.isPending}
-                            onClick={() => {
+                            disabled={!canMutate || unlockUser.isPending}
+                            onClick={async () => {
+                              if (!canMutate || !await confirm({ title: 'Unlock account', message: `Unlock access for ${u.fullName}?`, tone: 'warning' })) return;
                               unlockUser.mutate(u.id, {
                                 onSuccess: () => setMsg(`Unlocked account for ${u.fullName}`),
                                 onError: (err) => setMsg(getErrorMessage(err)),
@@ -152,8 +163,9 @@ export function UsersTab() {
                           icon={u.status === 'ACTIVE' ? 'ban' : 'check'}
                           tone={u.status === 'ACTIVE' ? 'danger' : 'success'}
                           label={u.status === 'ACTIVE' ? 'Suspend Account' : 'Activate Account'}
-                          disabled={updateStatus.isPending}
-                          onClick={() => {
+                          disabled={!canMutate || updateStatus.isPending}
+                          onClick={async () => {
+                            if (!canMutate || !await confirm({ title: 'Change account access', message: `Change access for ${u.fullName}? This affects their ability to sign in.`, tone: 'warning' })) return;
                             const next = u.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
                             updateStatus.mutate(
                               { id: u.id, status: next },
@@ -173,9 +185,9 @@ export function UsersTab() {
           </table>
         </div>
         <TablePagination
-          page={page}
+          page={safePage}
           totalPages={totalPages}
-          totalItems={displayedUsers.length}
+          totalItems={data?.pagination.total ?? displayedUsers.length}
           pageSize={pageSize}
           onPageChange={setPage}
         />

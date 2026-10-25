@@ -1,57 +1,61 @@
+import { lazy } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { MarketplaceLayout } from '@/layouts/MarketplaceLayout';
 import { WorkspaceLayout } from '@/layouts/WorkspaceLayout';
-import { HomePage } from '@/pages/marketplace/HomePage';
-import { ProductsPage } from '@/pages/marketplace/ProductsPage';
-import { CategoryPage } from '@/pages/marketplace/CategoryPage';
-import { ProductDetailPage } from '@/pages/marketplace/ProductDetailPage';
-import { SearchPage } from '@/pages/marketplace/SearchPage';
-import { StoresPage } from '@/pages/marketplace/StoresPage';
-import { StorefrontPage } from '@/pages/marketplace/StorefrontPage';
-import { LoginPage } from '@/pages/auth/LoginPage';
-import { RegisterPage } from '@/pages/auth/RegisterPage';
-import { AccountPage } from '@/pages/account/AccountPage';
-import { SellerDashboardPage } from '@/pages/seller/SellerDashboardPage';
-import { SellerProductsPage } from '@/pages/seller/SellerProductsPage';
-import { SellerProductFormPage } from '@/pages/seller/SellerProductFormPage';
-import { SellerFinancePage } from '@/pages/seller/SellerFinancePage';
-import { SellerOrdersPage } from '@/pages/seller/SellerOrdersPage';
-import { SellerDisputesPage } from '@/pages/seller/SellerDisputesPage';
-import { SellerProfilePage } from '@/pages/seller/SellerProfilePage';
-import { SellerOnboardingPage } from '@/pages/seller/SellerOnboardingPage';
-import { SellerInventoryPage } from '@/pages/seller/SellerInventoryPage';
-import { SellerReviewsPage } from '@/pages/seller/SellerReviewsPage';
-import { SellerProductDetailPage } from '@/pages/seller/SellerProductDetailPage';
-import { InboxPage } from '@/pages/workspace/InboxPage';
-import { AlertsPage } from '@/pages/workspace/AlertsPage';
-import { CartPage } from '@/pages/account/CartPage';
-import { CheckoutPage } from '@/pages/account/CheckoutPage';
-import { OrdersPage } from '@/pages/account/OrdersPage';
-import { OrderDetailPage } from '@/pages/account/OrderDetailPage';
-import { WishlistPage } from '@/pages/account/WishlistPage';
-import { NotificationsPage } from '@/pages/account/NotificationsPage';
-import { MessagesPage } from '@/pages/account/MessagesPage';
-import { AdminPage } from '@/pages/admin/AdminPage';
-import { PlaceholderPage } from '@/pages/marketplace/PlaceholderPage';
-import { WhyTomboraPage } from '@/pages/info/WhyTomboraPage';
-import { HowItWorksPage } from '@/pages/info/HowItWorksPage';
-import { SellPage } from '@/pages/info/SellPage';
-import { HelpPage } from '@/pages/info/HelpPage';
-import { ReturnsPage } from '@/pages/info/ReturnsPage';
-import { ContactPage } from '@/pages/info/ContactPage';
-import { SourcingRequestPage } from '@/pages/info/SourcingRequestPage';
-import { OnlineServicePage } from '@/pages/info/OnlineServicePage';
-import { MobileAppPage } from '@/pages/info/MobileAppPage';
-import { ImageSearchPage } from '@/pages/marketplace/ImageSearchPage';
-import { NewArrivalsPage } from '@/pages/marketplace/NewArrivalsPage';
-import { DisputesPage } from '@/pages/account/DisputesPage';
-import { NewDisputePage } from '@/pages/account/NewDisputePage';
-import { DisputeDetailPage } from '@/pages/account/DisputeDetailPage';
-import { SellerDisputeDetailPage } from '@/pages/seller/SellerDisputeDetailPage';
-import { AdminDisputeDetailPage } from '@/pages/admin/AdminDisputeDetailPage';
-import { AdminOrderDetailPage } from '@/pages/admin/AdminOrderDetailPage';
-import { SellerOrderDetailPage } from '@/pages/seller/SellerOrderDetailPage';
+const HomePage = lazy(() => import('@/pages/marketplace/HomePage').then(module => ({ default: module.HomePage })));
+const ProductsPage = lazy(() => import('@/pages/marketplace/ProductsPage').then(module => ({ default: module.ProductsPage })));
+const CategoryPage = lazy(() => import('@/pages/marketplace/CategoryPage').then(module => ({ default: module.CategoryPage })));
+const ProductDetailPage = lazy(() => import('@/pages/marketplace/ProductDetailPage').then(module => ({ default: module.ProductDetailPage })));
+const SearchPage = lazy(() => import('@/pages/marketplace/SearchPage').then(module => ({ default: module.SearchPage })));
+const StoresPage = lazy(() => import('@/pages/marketplace/StoresPage').then(module => ({ default: module.StoresPage })));
+const StorefrontPage = lazy(() => import('@/pages/marketplace/StorefrontPage').then(module => ({ default: module.StorefrontPage })));
+const LoginPage = lazy(() => import('@/pages/auth/LoginPage').then(module => ({ default: module.LoginPage })));
+const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage').then(module => ({ default: module.RegisterPage })));
+const AccountPage = lazy(() => import('@/pages/account/AccountPage').then(module => ({ default: module.AccountPage })));
+const SellerDashboardPage = lazy(() => import('@/pages/seller/SellerDashboardPage').then(module => ({ default: module.SellerDashboardPage })));
+const SellerProductsPage = lazy(() => import('@/pages/seller/SellerProductsPage').then(module => ({ default: module.SellerProductsPage })));
+const SellerProductFormPage = lazy(() => import('@/pages/seller/SellerProductFormPage').then(module => ({ default: module.SellerProductFormPage })));
+const SellerFinancePage = lazy(() => import('@/pages/seller/SellerFinancePage').then(module => ({ default: module.SellerFinancePage })));
+const SellerOrdersPage = lazy(() => import('@/pages/seller/SellerOrdersPage').then(module => ({ default: module.SellerOrdersPage })));
+const SellerDisputesPage = lazy(() => import('@/pages/seller/SellerDisputesPage').then(module => ({ default: module.SellerDisputesPage })));
+const SellerProfilePage = lazy(() => import('@/pages/seller/SellerProfilePage').then(module => ({ default: module.SellerProfilePage })));
+const SellerOnboardingPage = lazy(() => import('@/pages/seller/SellerOnboardingPage').then(module => ({ default: module.SellerOnboardingPage })));
+const SellerInventoryPage = lazy(() => import('@/pages/seller/SellerInventoryPage').then(module => ({ default: module.SellerInventoryPage })));
+const SellerReviewsPage = lazy(() => import('@/pages/seller/SellerReviewsPage').then(module => ({ default: module.SellerReviewsPage })));
+const SellerProductDetailPage = lazy(() => import('@/pages/seller/SellerProductDetailPage').then(module => ({ default: module.SellerProductDetailPage })));
+const InboxPage = lazy(() => import('@/pages/workspace/InboxPage').then(module => ({ default: module.InboxPage })));
+const AlertsPage = lazy(() => import('@/pages/workspace/AlertsPage').then(module => ({ default: module.AlertsPage })));
+const CartPage = lazy(() => import('@/pages/account/CartPage').then(module => ({ default: module.CartPage })));
+const CheckoutPage = lazy(() => import('@/pages/account/CheckoutPage').then(module => ({ default: module.CheckoutPage })));
+const OrdersPage = lazy(() => import('@/pages/account/OrdersPage').then(module => ({ default: module.OrdersPage })));
+const OrderDetailPage = lazy(() => import('@/pages/account/OrderDetailPage').then(module => ({ default: module.OrderDetailPage })));
+const WishlistPage = lazy(() => import('@/pages/account/WishlistPage').then(module => ({ default: module.WishlistPage })));
+const NotificationsPage = lazy(() => import('@/pages/account/NotificationsPage').then(module => ({ default: module.NotificationsPage })));
+const MessagesPage = lazy(() => import('@/pages/account/MessagesPage').then(module => ({ default: module.MessagesPage })));
+const AdminPage = lazy(() => import('@/pages/admin/AdminPage').then(module => ({ default: module.AdminPage })));
+const CategoriesPage = lazy(() => import('@/pages/marketplace/CategoriesPage').then(module => ({ default: module.CategoriesPage })));
+const ContentPage = lazy(() => import('@/pages/marketplace/ContentPage').then(module => ({ default: module.ContentPage })));
+const DealsPage = lazy(() => import('@/pages/marketplace/ProductsPage').then(module => ({ default: module.DealsPage })));
+const PlaceholderPage = lazy(() => import('@/pages/marketplace/PlaceholderPage').then(module => ({ default: module.PlaceholderPage })));
+const WhyTomboraPage = lazy(() => import('@/pages/info/WhyTomboraPage').then(module => ({ default: module.WhyTomboraPage })));
+const HowItWorksPage = lazy(() => import('@/pages/info/HowItWorksPage').then(module => ({ default: module.HowItWorksPage })));
+const SellPage = lazy(() => import('@/pages/info/SellPage').then(module => ({ default: module.SellPage })));
+const HelpPage = lazy(() => import('@/pages/info/HelpPage').then(module => ({ default: module.HelpPage })));
+const ReturnsPage = lazy(() => import('@/pages/info/ReturnsPage').then(module => ({ default: module.ReturnsPage })));
+const ContactPage = lazy(() => import('@/pages/info/ContactPage').then(module => ({ default: module.ContactPage })));
+const SourcingRequestPage = lazy(() => import('@/pages/info/SourcingRequestPage').then(module => ({ default: module.SourcingRequestPage })));
+const OnlineServicePage = lazy(() => import('@/pages/info/OnlineServicePage').then(module => ({ default: module.OnlineServicePage })));
+const MobileAppPage = lazy(() => import('@/pages/info/MobileAppPage').then(module => ({ default: module.MobileAppPage })));
+const ImageSearchPage = lazy(() => import('@/pages/marketplace/ImageSearchPage').then(module => ({ default: module.ImageSearchPage })));
+const NewArrivalsPage = lazy(() => import('@/pages/marketplace/NewArrivalsPage').then(module => ({ default: module.NewArrivalsPage })));
+const DisputesPage = lazy(() => import('@/pages/account/DisputesPage').then(module => ({ default: module.DisputesPage })));
+const NewDisputePage = lazy(() => import('@/pages/account/NewDisputePage').then(module => ({ default: module.NewDisputePage })));
+const DisputeDetailPage = lazy(() => import('@/pages/account/DisputeDetailPage').then(module => ({ default: module.DisputeDetailPage })));
+const SellerDisputeDetailPage = lazy(() => import('@/pages/seller/SellerDisputeDetailPage').then(module => ({ default: module.SellerDisputeDetailPage })));
+const AdminDisputeDetailPage = lazy(() => import('@/pages/admin/AdminDisputeDetailPage').then(module => ({ default: module.AdminDisputeDetailPage })));
+const AdminOrderDetailPage = lazy(() => import('@/pages/admin/AdminOrderDetailPage').then(module => ({ default: module.AdminOrderDetailPage })));
+const SellerOrderDetailPage = lazy(() => import('@/pages/seller/SellerOrderDetailPage').then(module => ({ default: module.SellerOrderDetailPage })));
 
 export function AppRouter() {
   return (
@@ -93,12 +97,12 @@ export function AppRouter() {
           <Route index element={<HomePage />} />
           <Route path="products" element={<ProductsPage />} />
           <Route path="products/:slug" element={<ProductDetailPage />} />
-          <Route path="categories" element={<PlaceholderPage title="Categories" />} />
+          <Route path="categories" element={<CategoriesPage />} />
           <Route path="categories/:slug" element={<CategoryPage />} />
           <Route path="stores" element={<StoresPage />} />
           <Route path="stores/:slug" element={<StorefrontPage />} />
           <Route path="search" element={<SearchPage />} />
-          <Route path="deals" element={<PlaceholderPage title="Deals" />} />
+          <Route path="deals" element={<DealsPage />} />
           <Route path="new-arrivals" element={<NewArrivalsPage />} />
           <Route path="best-sellers" element={<PlaceholderPage title="Best sellers" />} />
           <Route path="wishlist" element={<WishlistPage />} />
@@ -120,8 +124,8 @@ export function AppRouter() {
           <Route path="help" element={<HelpPage />} />
           <Route path="about" element={<WhyTomboraPage />} />
           <Route path="contact" element={<ContactPage />} />
-          <Route path="terms" element={<PlaceholderPage title="Terms" />} />
-          <Route path="privacy" element={<PlaceholderPage title="Privacy" />} />
+          <Route path="terms" element={<ContentPage slug="terms" title="Terms" />} />
+          <Route path="privacy" element={<ContentPage slug="privacy" title="Privacy" />} />
           <Route path="returns" element={<ReturnsPage />} />
           <Route path="sell" element={<SellPage />} />
           <Route path="sourcing-request" element={<SourcingRequestPage />} />

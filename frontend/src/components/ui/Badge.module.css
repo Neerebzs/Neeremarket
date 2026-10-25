@@ -5,8 +5,8 @@
   padding: 0.15rem 0.55rem;
   font-size: var(--text-3xs);
   font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-wider);
-  text-transform: uppercase;
+  letter-spacing: normal;
+  text-transform: none;
 }
 
 .brand {
@@ -20,28 +20,28 @@
 }
 
 .muted {
-  background: #eef0f3;
+  background: var(--color-surface-subtle);
   color: var(--color-ink-muted);
 }
 
 .success {
-  background: rgba(31, 122, 76, 0.15);
+  background: var(--color-success-soft);
   color: var(--color-success);
 }
 
 .warning {
-  background: #fef4e6;
+  background: var(--color-warning-soft);
   color: var(--color-warning);
 }
 
 .danger {
-  background: #fef3f2;
+  background: var(--color-danger-soft);
   color: var(--color-danger);
 }
 
 .system,
 .sage {
-  background: #edf4ed;
-  color: #547354;
-  border: 1px solid rgba(107, 143, 107, 0.28);
+  background: var(--color-brand-soft);
+  color: var(--color-brand-deep);
+  border: 1px solid var(--color-brand-border);
 }

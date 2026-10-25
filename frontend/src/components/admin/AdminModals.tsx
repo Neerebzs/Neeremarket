@@ -1,6 +1,10 @@
+import { useRef } from 'react';
+import { useModalFocus } from '@/components/ui/useModalFocus';
+import { hasAdminPermission } from '@/utils/adminAccess';
 import { Link } from 'react-router-dom';
 import {
   AuditLogItem,
+  useMe,
   useAdminProduct,
   useAdminSeller,
   useAdminUser,
@@ -25,6 +29,10 @@ export function UserDetailModal({
   onClose: () => void;
   onStatusUpdated?: () => void;
 }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useModalFocus(dialogRef, !!userId, onClose);
+  const { data: currentAdmin } = useMe();
+  const canMutate = hasAdminPermission(currentAdmin, 'sellers.suspend');
   const { data: user, isLoading, isError } = useAdminUser(userId);
   const updateStatus = useUpdateUserStatus();
   const unlockUser = useUnlockUser();
@@ -82,7 +90,7 @@ export function UserDetailModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="user-modal-title">
+      <div ref={dialogRef} tabIndex={-1} className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="user-modal-title">
         <header className={styles.modalHead}>
           <div className={styles.headTitle}>
             <p className={styles.kicker}>User Profile</p>
@@ -111,7 +119,7 @@ export function UserDetailModal({
                     padding: '0.85rem 1rem',
                     marginBottom: '1rem',
                     borderRadius: '8px',
-                    background: '#fef2f2',
+                    background: 'var(--color-danger-soft)',
                     border: '1px solid #fecaca',
                     display: 'flex',
                     alignItems: 'center',
@@ -121,7 +129,7 @@ export function UserDetailModal({
                   }}
                 >
                   <div>
-                    <strong style={{ color: '#991b1b', display: 'block', fontSize: '0.875rem' }}>
+                    <strong style={{ color: 'var(--color-danger-deep)', display: 'block', fontSize: '0.875rem' }}>
                       Account is temporarily locked
                     </strong>
                     <span style={{ color: '#7f1d1d', fontSize: '0.8125rem' }}>
@@ -133,7 +141,7 @@ export function UserDetailModal({
                     type="button"
                     size="sm"
                     variant="primary"
-                    disabled={unlockUser.isPending}
+                    disabled={!canMutate || unlockUser.isPending}
                     onClick={handleUnlock}
                   >
                     {unlockUser.isPending ? 'Unlocking...' : 'Unlock Account'}
@@ -312,7 +320,7 @@ export function UserDetailModal({
             <Button
               type="button"
               variant="secondary"
-              disabled={unlockUser.isPending}
+              disabled={!canMutate || unlockUser.isPending}
               onClick={handleUnlock}
             >
               {unlockUser.isPending ? 'Unlocking...' : 'Unlock Account'}
@@ -322,7 +330,7 @@ export function UserDetailModal({
             <Button
               type="button"
               variant={user.status === 'ACTIVE' ? 'danger' : 'primary'}
-              disabled={updateStatus.isPending}
+              disabled={!canMutate || updateStatus.isPending}
               onClick={handleToggleStatus}
             >
               {user.status === 'ACTIVE' ? 'Suspend Account' : 'Reactivate Account'}
@@ -345,6 +353,10 @@ export function SellerDetailModal({
   onClose: () => void;
   onModerated?: () => void;
 }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useModalFocus(dialogRef, !!sellerId, onClose);
+  const { data: currentAdmin } = useMe();
+  const canMutate = hasAdminPermission(currentAdmin, 'sellers.approve', 'sellers.suspend');
   const { data: seller, isLoading, isError } = useAdminSeller(sellerId);
   const moderate = useModerateSeller();
   const confirm = useConfirm();
@@ -383,7 +395,7 @@ export function SellerDetailModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="seller-modal-title">
+      <div ref={dialogRef} tabIndex={-1} className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="seller-modal-title">
         <header className={styles.modalHead}>
           <div className={styles.headTitle}>
             <p className={styles.kicker}>Seller Moderation</p>
@@ -521,7 +533,7 @@ export function SellerDetailModal({
           {seller && seller.verificationStatus !== 'VERIFIED' ? (
             <Button
               type="button"
-              disabled={moderate.isPending}
+              disabled={!canMutate || moderate.isPending}
               onClick={() => handleModerate('VERIFIED')}
             >
               Verify Seller
@@ -531,7 +543,7 @@ export function SellerDetailModal({
             <Button
               type="button"
               variant="danger"
-              disabled={moderate.isPending}
+              disabled={!canMutate || moderate.isPending}
               onClick={() => handleModerate('REJECTED')}
             >
               Reject Verification
@@ -554,6 +566,10 @@ export function ProductDetailModal({
   onClose: () => void;
   onModerated?: () => void;
 }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useModalFocus(dialogRef, !!productId, onClose);
+  const { data: currentAdmin } = useMe();
+  const canMutate = hasAdminPermission(currentAdmin, 'products.approve');
   const { data: product, isLoading, isError } = useAdminProduct(productId);
   const moderate = useModerateProduct();
   const confirm = useConfirm();
@@ -592,7 +608,7 @@ export function ProductDetailModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
+      <div ref={dialogRef} tabIndex={-1} className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
         <header className={styles.modalHead}>
           <div className={styles.headTitle}>
             <p className={styles.kicker}>Catalog Moderation</p>
@@ -637,10 +653,10 @@ export function ProductDetailModal({
                 <div className={styles.grid2}>
                   <div className={styles.field}>
                     <span className={styles.fieldLabel}>Selling Price</span>
-                    <strong className={styles.fieldValue} style={{ fontSize: '1.1rem', color: '#166534' }}>
+                    <strong className={styles.fieldValue} style={{ fontSize: '1.1rem', color: 'var(--color-success)' }}>
                       {formatRwf(product.discountPrice || product.price)}
                       {product.discountPrice ? (
-                        <span style={{ textDecoration: 'line-through', color: '#94a3b8', marginLeft: '0.4rem', fontSize: '0.85rem' }}>
+                        <span style={{ textDecoration: 'line-through', color: 'var(--color-ink-muted)', marginLeft: '0.4rem', fontSize: '0.85rem' }}>
                           {formatRwf(product.price)}
                         </span>
                       ) : null}
@@ -699,7 +715,7 @@ export function ProductDetailModal({
                           <td>
                             <strong>{v.name || 'Default'}</strong>
                             {Object.entries(v.attributes || {}).length > 0 ? (
-                              <small style={{ display: 'block', color: '#64748b' }}>
+                              <small style={{ display: 'block', color: 'var(--color-ink-muted)' }}>
                                 {Object.entries(v.attributes)
                                   .map(([k, val]) => `${k}: ${val}`)
                                   .join(', ')}
@@ -711,7 +727,7 @@ export function ProductDetailModal({
                           </td>
                           <td>{v.price ? formatRwf(v.price) : formatRwf(product.price)}</td>
                           <td>
-                            <strong>{v.inventory?.available ?? 0} units</strong>
+                            <strong>{v.inventory ? Math.max(0, v.inventory.available ?? v.inventory.quantity - v.inventory.reserved) : '—'} units</strong>
                           </td>
                         </tr>
                       ))}
@@ -746,7 +762,7 @@ export function ProductDetailModal({
           {product && product.status !== 'ACTIVE' ? (
             <Button
               type="button"
-              disabled={moderate.isPending}
+              disabled={!canMutate || moderate.isPending}
               onClick={() => handleModerate('ACTIVE')}
             >
               Approve &amp; Publish
@@ -756,7 +772,7 @@ export function ProductDetailModal({
             <Button
               type="button"
               variant="danger"
-              disabled={moderate.isPending}
+              disabled={!canMutate || moderate.isPending}
               onClick={() => handleModerate('REJECTED')}
             >
               Reject Listing
@@ -777,6 +793,8 @@ export function AuditDetailModal({
   item: AuditLogItem | null;
   onClose: () => void;
 }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useModalFocus(dialogRef, !!item, onClose);
   if (!item) return null;
 
   return (
@@ -784,6 +802,8 @@ export function AuditDetailModal({
       <div
         className={styles.modal}
         onClick={(e) => e.stopPropagation()}
+        ref={dialogRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-labelledby="audit-modal-title"
@@ -864,7 +884,7 @@ export function AuditDetailModal({
                       style={{
                         margin: 0,
                         padding: '0.75rem',
-                        background: '#f8fafc',
+                        background: 'var(--color-surface-subtle)',
                         border: '1px solid var(--color-border, #e2e8f0)',
                         borderRadius: '8px',
                         fontSize: '0.75rem',
@@ -887,7 +907,7 @@ export function AuditDetailModal({
                       style={{
                         margin: 0,
                         padding: '0.75rem',
-                        background: '#f8fafc',
+                        background: 'var(--color-surface-subtle)',
                         border: '1px solid var(--color-border, #e2e8f0)',
                         borderRadius: '8px',
                         fontSize: '0.75rem',

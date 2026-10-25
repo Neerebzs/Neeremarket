@@ -1,4 +1,3 @@
-import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -30,38 +29,8 @@ export function CartPage() {
   const navigate = useNavigate();
   const toast = useToast();
 
-  // Promo code local state
-  const [promoCode, setPromoCode] = useState('');
-  const [promoDiscountPct, setPromoDiscountPct] = useState(0);
-  const [promoFeedback, setPromoFeedback] = useState<{
-    type: 'success' | 'error';
-    text: string;
-  } | null>(null);
-
-  const subtotalNumber = Number(cart?.subtotal || '0');
-  const discountAmount = Math.round(subtotalNumber * (promoDiscountPct / 100));
-  const finalTotal = Math.max(0, subtotalNumber - discountAmount);
-
-  const hasOutOfStock = (cart?.items || []).some((item) => (item.available ?? 0) < 1);
+  const hasOutOfStock = (cart?.items || []).some((item) => item.available !== undefined && item.quantity > item.available);
   const isBusy = updateItem.isPending || removeItem.isPending;
-
-  const handleApplyPromo = (e: FormEvent) => {
-    e.preventDefault();
-    const clean = promoCode.trim().toUpperCase();
-    if (!clean) return;
-    if (clean === 'NEERE10' || clean === 'KIGALI10' || clean === 'WELCOME10') {
-      setPromoDiscountPct(10);
-      setPromoFeedback({ type: 'success', text: '10% promotional discount applied!' });
-      toast.success('Promo code applied: 10% off');
-    } else if (clean === 'RWANDA20' || clean === 'VIP20') {
-      setPromoDiscountPct(20);
-      setPromoFeedback({ type: 'success', text: '20% merchant partner discount applied!' });
-      toast.success('Promo code applied: 20% off');
-    } else {
-      setPromoDiscountPct(0);
-      setPromoFeedback({ type: 'error', text: 'Invalid or expired promotional code.' });
-    }
-  };
 
   const handleMoveToWishlist = async (item: CartLine) => {
     if (!item.variantId) {
@@ -250,9 +219,7 @@ export function CartPage() {
           </svg>
         </div>
         <div className={styles.guaranteeText}>
-          <strong>NeereMarket Buyer Protection:</strong> All orders are held safely in escrow.
-          100% refund guarantee if items are not delivered or not as described by Rwandan
-          merchants.
+          <strong>NeereMarket Buyer Protection:</strong> Payments and refund requests are managed through NeereMarket. Review the return policy before ordering.
         </div>
       </div>
 
@@ -378,7 +345,7 @@ export function CartPage() {
                       >
                         {group.storeName}
                       </Link>
-                      <span className={styles.sellerBadge}>✓ Verified Store</span>
+
                     </div>
                     <span className={styles.sellerLocation}>
                       <svg
@@ -468,41 +435,6 @@ export function CartPage() {
                 <span className={styles.freeTag}>Included (FREE)</span>
               </p>
 
-              {promoDiscountPct > 0 ? (
-                <p className={styles.summaryRow} style={{ color: '#16a34a' }}>
-                  <span>Promotional Discount ({promoDiscountPct}%)</span>
-                  <span className={styles.summaryRowValue} style={{ color: '#16a34a' }}>
-                    - {formatRwf(String(discountAmount))}
-                  </span>
-                </p>
-              ) : null}
-            </div>
-
-            <div className={styles.summaryDivider} />
-
-            {/* Promo Code Form */}
-            <div className={styles.promoWrap}>
-              <form className={styles.promoForm} onSubmit={handleApplyPromo}>
-                <input
-                  className={styles.promoInput}
-                  placeholder="Enter promo code (e.g. NEERE10)"
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value)}
-                  aria-label="Promotional Code"
-                />
-                <button type="submit" className={styles.promoBtn}>
-                  Apply
-                </button>
-              </form>
-              {promoFeedback ? (
-                <p
-                  className={`${styles.promoMessage} ${
-                    promoFeedback.type === 'success' ? styles.promoSuccess : styles.promoError
-                  }`}
-                >
-                  {promoFeedback.text}
-                </p>
-              ) : null}
             </div>
 
             <div className={styles.summaryDivider} />
@@ -511,9 +443,9 @@ export function CartPage() {
             <div className={styles.totalRow}>
               <div>
                 <p className={styles.totalLabel}>Estimated Total</p>
-                <span className={styles.totalSubtext}>VAT & local fees included</span>
+                <span className={styles.totalSubtext}>Delivery cost is shown at checkout</span>
               </div>
-              <p className={styles.totalAmount}>{formatRwf(String(finalTotal))}</p>
+              <p className={styles.totalAmount}>{formatRwf(cart.subtotal)}</p>
             </div>
 
             {/* Primary Checkout CTA */}
@@ -547,16 +479,13 @@ export function CartPage() {
               <div className={styles.paymentBadges}>
                 <span className={styles.payBadge}>MTN MoMo</span>
                 <span className={styles.payBadge}>Airtel Money</span>
-                <span className={styles.payBadge}>Visa</span>
-                <span className={styles.payBadge}>Mastercard</span>
-                <span className={styles.payBadge}>Cash on Delivery</span>
               </div>
             </div>
 
             {/* Reassurance Feature List */}
             <ul className={styles.securityNotes}>
               <li>
-                <span>🛡️</span> 100% Money-back escrow guarantee
+                <span>🛡️</span> Return requests and dispute support
               </li>
               <li>
                 <span>🚚</span> Tracked local delivery across Rwanda
@@ -574,7 +503,7 @@ export function CartPage() {
         <div className={styles.mobileBottomBar}>
           <div className={styles.mobileTotalWrap}>
             <span className={styles.mobileTotalLabel}>Total ({cart.itemCount} items)</span>
-            <span className={styles.mobileTotalAmount}>{formatRwf(String(finalTotal))}</span>
+            <span className={styles.mobileTotalAmount}>{formatRwf(cart.subtotal)}</span>
           </div>
           <button
             type="button"
@@ -591,7 +520,7 @@ export function CartPage() {
       {recommendedData?.items && recommendedData.items.length > 0 ? (
         <section className={styles.recommendSection}>
           <div className={styles.recommendHeader}>
-            <h2 className={styles.recommendTitle}>You May Also Like</h2>
+            <h2 className={styles.recommendTitle}>Popular products</h2>
             <Link to="/products" className={styles.continueLink}>
               View all products →
             </Link>

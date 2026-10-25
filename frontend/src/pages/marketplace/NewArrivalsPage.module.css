@@ -59,3 +59,5 @@
   font-size: var(--text-xs);
   color: var(--color-ink-muted);
 }
+
+.title { font-family: var(--font-display); }

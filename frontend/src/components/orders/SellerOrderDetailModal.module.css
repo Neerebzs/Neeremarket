@@ -33,7 +33,7 @@
   flex-direction: column;
   max-height: calc(100vh - 2.5rem);
   overflow: hidden;
-  font-family: var(--font-geist-sans);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   animation: modalPopIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -56,7 +56,7 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid #eef2f6;
+  border-bottom: 1px solid var(--color-border);
   background: #fafbfd;
 }
 
@@ -92,9 +92,9 @@
   width: 2.2rem;
   height: 2.2rem;
   border-radius: 10px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-border);
   background: #ffffff;
-  color: #64748b;
+  color: var(--color-ink-muted);
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -103,9 +103,9 @@
 }
 
 .closeBtn:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-  border-color: #cbd5e1;
+  background: var(--color-surface-subtle);
+  color: var(--color-ink);
+  border-color: var(--color-border-strong);
 }
 
 .closeBtn svg {
@@ -130,7 +130,7 @@
 
 .infoCard {
   background: #ffffff;
-  border: 1px solid #e8edf2;
+  border: 1px solid var(--color-border);
   border-radius: 14px;
   padding: 1.1rem 1.2rem;
   box-shadow: none;
@@ -144,7 +144,7 @@
   align-items: center;
   gap: 0.6rem;
   padding-bottom: 0.65rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--color-surface-subtle);
 }
 
 .cardIcon {
@@ -162,18 +162,18 @@
 }
 
 .cardIconCustomer {
-  background: #edf4ed;
-  color: #547354;
+  background: var(--color-brand-soft);
+  color: var(--color-brand-deep);
 }
 
 .cardIconAddress {
-  background: #eff6ff;
-  color: #2563eb;
+  background: var(--color-info-soft);
+  color: var(--color-info);
 }
 
 .cardIconItems {
-  background: #fef3c7;
-  color: #d97706;
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
 }
 
 .cardHeadTitle {
@@ -200,7 +200,7 @@
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 999px;
-  background: #6b8f6b;
+  background: var(--color-brand);
   color: #ffffff;
   display: grid;
   place-items: center;
@@ -228,18 +228,18 @@
   width: 0.95rem;
   height: 0.95rem;
   flex-shrink: 0;
-  color: #64748b;
+  color: var(--color-ink-muted);
 }
 
 .contactLink {
-  color: #6b8f6b;
+  color: var(--color-brand);
   font-weight: 600;
   text-decoration: none;
   transition: color 0.15s ease;
 }
 
 .contactLink:hover {
-  color: #4a6c4a;
+  color: var(--color-brand-deep);
   text-decoration: underline;
 }
 
@@ -267,11 +267,11 @@
 .instructionsBox {
   margin-top: 0.4rem;
   padding: 0.55rem 0.75rem;
-  background: #fefce8;
-  border: 1px solid #fef08a;
+  background: var(--color-warning-soft);
+  border: 1px solid var(--color-warning-border);
   border-radius: 8px;
   font-size: var(--text-xs);
-  color: #854d0e;
+  color: var(--color-warning);
   line-height: 1.4;
 }
 
@@ -287,8 +287,8 @@
   gap: 0.4rem;
   padding: 0.38rem 0.75rem;
   border-radius: 8px;
-  background: #f1f5f9;
-  color: #1e293b;
+  background: var(--color-surface-subtle);
+  color: var(--color-ink);
   font-size: var(--text-xs);
   font-weight: 600;
   text-decoration: none;
@@ -298,8 +298,8 @@
 }
 
 .mapsBtn:hover {
-  background: #e2e8f0;
-  color: #0f172a;
+  background: var(--color-border);
+  color: var(--color-ink);
 }
 
 .mapsBtn svg {
@@ -310,7 +310,7 @@
 /* Items Section */
 .itemsCard {
   background: #ffffff;
-  border: 1px solid #e8edf2;
+  border: 1px solid var(--color-border);
   border-radius: 14px;
   overflow: hidden;
   box-shadow: none;
@@ -318,7 +318,7 @@
 
 .itemsHead {
   padding: 0.85rem 1.2rem;
-  border-bottom: 1px solid #eef2f6;
+  border-bottom: 1px solid var(--color-border);
   background: #fafbfd;
   display: flex;
   align-items: center;
@@ -333,18 +333,18 @@
 
 .itemsTable th {
   padding: 0.65rem 1.2rem;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: var(--tracking-widest);
   text-transform: uppercase;
-  color: #94a3b8;
+  color: var(--color-ink-muted);
   background: #ffffff;
-  border-bottom: 1px solid #eef2f6;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .itemsTable td {
   padding: 0.85rem 1.2rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--color-surface-subtle);
   font-size: var(--text-sm);
   color: var(--color-ink);
 }
@@ -365,9 +365,9 @@
 }
 
 .itemSku {
-  font-family: var(--font-geist-mono);
-  font-size: 11px;
-  color: #64748b;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-ink-muted);
   margin-top: 0.15rem;
 }
 
@@ -376,8 +376,8 @@
   display: flex;
   justify-content: flex-end;
   padding: 1rem 1.2rem;
-  background: #f8fafc;
-  border-top: 1px solid #eef2f6;
+  background: var(--color-surface-subtle);
+  border-top: 1px solid var(--color-border);
 }
 
 .summaryList {
@@ -402,14 +402,14 @@
   align-items: center;
   padding-top: 0.45rem;
   margin-top: 0.2rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--color-border);
   font-size: var(--text-sm);
   font-weight: 700;
   color: var(--color-ink);
 }
 
 .earningsTag {
-  color: #15803d;
+  color: var(--color-success);
   font-weight: 700;
 }
 
@@ -420,7 +420,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 1rem 1.5rem;
-  border-top: 1px solid #eef2f6;
+  border-top: 1px solid var(--color-border);
   background: #fafbfd;
   flex-wrap: wrap;
 }

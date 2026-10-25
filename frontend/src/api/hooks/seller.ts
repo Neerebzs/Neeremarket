@@ -36,12 +36,12 @@ export type SellerProduct = Omit<ProductListItem, 'images'> & {
   videos?: { url: string }[];
 };
 
-export function useSellerProducts(status?: string, q?: string) {
+export function useSellerProducts(status?: string, q?: string, page = 1, limit = 24) {
   return useQuery({
-    queryKey: ['seller', 'products', status, q],
+    queryKey: ['seller', 'products', status, q, page, limit],
     queryFn: async () => {
       const { data } = await api.get<ApiSuccess<ProductListResponse>>('/sellers/me/products', {
-        params: { status, q },
+        params: { status, q, page, limit },
       });
       return data.data;
     },
@@ -403,9 +403,10 @@ export type SellerProfile = {
   wallet: { pendingBalance: string; availableBalance: string; currency: string } | null;
 };
 
-export function useSellerProfile() {
+export function useSellerProfile(enabled = true) {
   return useQuery({
     queryKey: ['seller', 'me'],
+    enabled,
     queryFn: async () => {
       const { data } = await api.get<ApiSuccess<{ seller: SellerProfile }>>('/sellers/me');
       return data.data.seller;

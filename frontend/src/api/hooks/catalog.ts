@@ -82,8 +82,9 @@ export type ProductListResponse = {
   pagination: { page: number; limit: number; total: number; totalPages: number };
 };
 
-export function useProducts(params: Record<string, string | number | undefined> = {}) {
+export function useProducts(params: Record<string, string | number | undefined> = {}, enabled = true) {
   return useQuery({
+    enabled,
     queryKey: ['products', params],
     queryFn: async () => {
       const { data } = await api.get<ApiSuccess<ProductListResponse>>('/products', {

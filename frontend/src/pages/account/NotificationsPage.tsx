@@ -189,13 +189,13 @@ export function NotificationsPage() {
 
       {/* ── Filter Tabs (Mobile Scrollable) ── */}
       {allItems.length > 0 ? (
-        <nav className={styles.tabsBar} role="tablist" aria-label="Notification Filters">
+        <nav className={styles.tabsBar} role="group" aria-label="Notification Filters">
           <button
             type="button"
             className={`${styles.tabBtn} ${activeTab === 'ALL' ? styles.tabBtnActive : ''}`}
             onClick={() => setActiveTab('ALL')}
-            role="tab"
-            aria-selected={activeTab === 'ALL'}
+
+            aria-pressed={activeTab === 'ALL'}
           >
             <span>All</span>
             <span className={styles.tabCount}>{counts.all}</span>
@@ -205,8 +205,8 @@ export function NotificationsPage() {
             type="button"
             className={`${styles.tabBtn} ${activeTab === 'UNREAD' ? styles.tabBtnActive : ''}`}
             onClick={() => setActiveTab('UNREAD')}
-            role="tab"
-            aria-selected={activeTab === 'UNREAD'}
+
+            aria-pressed={activeTab === 'UNREAD'}
           >
             <span>Unread</span>
             {counts.unread > 0 ? (
@@ -218,8 +218,8 @@ export function NotificationsPage() {
             type="button"
             className={`${styles.tabBtn} ${activeTab === 'ORDERS' ? styles.tabBtnActive : ''}`}
             onClick={() => setActiveTab('ORDERS')}
-            role="tab"
-            aria-selected={activeTab === 'ORDERS'}
+
+            aria-pressed={activeTab === 'ORDERS'}
           >
             <span>Orders & Delivery</span>
             {counts.orders > 0 ? (
@@ -231,8 +231,8 @@ export function NotificationsPage() {
             type="button"
             className={`${styles.tabBtn} ${activeTab === 'PAYMENTS' ? styles.tabBtnActive : ''}`}
             onClick={() => setActiveTab('PAYMENTS')}
-            role="tab"
-            aria-selected={activeTab === 'PAYMENTS'}
+
+            aria-pressed={activeTab === 'PAYMENTS'}
           >
             <span>Payments</span>
             {counts.payments > 0 ? (
@@ -244,8 +244,8 @@ export function NotificationsPage() {
             type="button"
             className={`${styles.tabBtn} ${activeTab === 'DISPUTES' ? styles.tabBtnActive : ''}`}
             onClick={() => setActiveTab('DISPUTES')}
-            role="tab"
-            aria-selected={activeTab === 'DISPUTES'}
+
+            aria-pressed={activeTab === 'DISPUTES'}
           >
             <span>Disputes</span>
             {counts.disputes > 0 ? (

@@ -2,13 +2,13 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f5f7fa;
-  color: #222;
+  background: var(--color-surface-subtle);
+  color: var(--color-ink);
 }
 
 .header {
   background: #fff;
-  border-bottom: 1px solid #e6ebf0;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .headerInner {
@@ -34,7 +34,7 @@
 }
 
 .help {
-  color: #888;
+  color: var(--color-ink-muted);
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
 }
@@ -123,3 +123,5 @@
     width: min(100%, 400px);
   }
 }
+
+.promoTitle { font-family: var(--font-display); }

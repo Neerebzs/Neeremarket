@@ -66,7 +66,7 @@ export function NewArrivalsPage() {
 
       <div className={`container ${styles.body}`}>
         {topCategories.length ? (
-          <div className={styles.chips} role="tablist" aria-label="Filter by category">
+          <div className={styles.chips} role="group" aria-label="Filter by category">
             <button
               type="button"
               className={!category ? styles.chipActive : styles.chip}

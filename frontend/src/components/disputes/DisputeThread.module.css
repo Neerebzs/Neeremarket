@@ -35,7 +35,7 @@
   font-size: var(--text-xs);
   font-weight: var(--weight-bold);
   text-transform: uppercase;
-  color: #8a97a6;
+  color: var(--color-ink-muted);
   letter-spacing: var(--tracking-label);
 }
 
@@ -60,18 +60,18 @@
 .nextStep {
   padding: 0.85rem 1rem;
   border-radius: 12px;
-  background: #eef4f8;
+  background: var(--color-surface-subtle);
   border: 1px solid #d4e2ec;
 }
 
 .nextStep[data-status='OPEN'] {
-  background: #fff8eb;
-  border-color: #f1ddb0;
+  background: var(--color-warning-soft);
+  border-color: var(--color-warning-border);
 }
 
 .nextStep[data-status='ESCALATED'] {
   background: var(--color-brand-soft);
-  border-color: #f8d2b4;
+  border-color: var(--color-brand-border);
 }
 
 .nextStep strong {
@@ -109,7 +109,7 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   padding: 0.85rem 1.05rem;
-  border-bottom: 1px solid #eef3f7;
+  border-bottom: 1px solid var(--color-surface-subtle);
 }
 
 .panelHead h2 {
@@ -147,7 +147,7 @@
   max-width: 82%;
   padding: 0.7rem 0.85rem;
   border-radius: 14px;
-  background: #f3f6f9;
+  background: var(--color-surface-subtle);
   border: 1px solid transparent;
 }
 
@@ -175,13 +175,13 @@
   letter-spacing: var(--tracking-wider);
   padding: 0.08rem 0.4rem;
   border-radius: 999px;
-  background: #e4e9ee;
+  background: var(--color-border);
   color: var(--color-ink-muted);
 }
 
 .roleChip[data-role='SELLER'] {
-  background: #e7eefc;
-  color: #2f4f99;
+  background: var(--color-border);
+  color: var(--color-info);
 }
 
 .roleChip[data-role='ADMIN'] {
@@ -217,7 +217,7 @@
   text-align: center;
   padding: 0.45rem 0.8rem;
   border-radius: 10px;
-  background: #fafbfc;
+  background: var(--color-surface-subtle);
   border: 1px dashed var(--color-border);
 }
 
@@ -242,7 +242,7 @@
   height: 72px;
   border-radius: 8px;
   object-fit: cover;
-  background: #e8eef3;
+  background: var(--color-border);
   display: grid;
   place-items: center;
   font-size: var(--text-xs);
@@ -255,7 +255,7 @@
   flex-direction: column;
   gap: 0.55rem;
   padding: 0.85rem 1rem 1rem;
-  border-top: 1px solid #eef3f7;
+  border-top: 1px solid var(--color-surface-subtle);
 }
 
 .composer textarea,
@@ -301,7 +301,7 @@
   gap: 0.3rem;
   padding: 0.2rem 0.3rem 0.2rem 0.55rem;
   border-radius: 999px;
-  background: #f3f6f9;
+  background: var(--color-surface-subtle);
   font-size: var(--text-xs);
   max-width: 220px;
 }
@@ -324,7 +324,7 @@
 .closedNote {
   margin: 0;
   padding: 0.85rem 1rem;
-  border-top: 1px solid #eef3f7;
+  border-top: 1px solid var(--color-surface-subtle);
   color: var(--color-ink-muted);
   font-size: var(--text-sm);
 }
@@ -346,17 +346,17 @@
 }
 
 .card[data-tone='ok'] {
-  background: #eef7f1;
-  border-color: #cfe6d6;
+  background: var(--color-success-soft);
+  border-color: var(--color-success-border);
 }
 
 .card[data-tone='danger'] {
-  background: #fdf2f2;
-  border-color: #f0d0d0;
+  background: var(--color-danger-soft);
+  border-color: var(--color-danger-border);
 }
 
 .card[data-tone='brand'] {
-  border-color: #f8d2b4;
+  border-color: var(--color-brand-border);
   box-shadow: 0 0 0 3px var(--color-brand-soft);
 }
 
@@ -408,7 +408,7 @@
   gap: 0.2rem;
   padding: 0.2rem;
   border-radius: 10px;
-  background: #f3f6f9;
+  background: var(--color-surface-subtle);
 }
 
 .segmented button {
@@ -440,7 +440,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.4rem 0;
-  border-bottom: 1px solid #f1f5f8;
+  border-bottom: 1px solid var(--color-surface-subtle);
   font-size: var(--text-sm);
 }
 

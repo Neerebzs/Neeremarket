@@ -7,7 +7,7 @@
 }
 
 .sidebar {
-  font-family: var(--font-geist-sans);
+  font-family: var(--font-sans);
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -135,7 +135,7 @@
   min-height: 4.5rem;
   padding: 0.65rem 1rem;
   border: 0;
-  border-bottom: 1px solid #f1f3f5;
+  border-bottom: 1px solid var(--color-surface-subtle);
   background: transparent;
   color: inherit;
   font: inherit;

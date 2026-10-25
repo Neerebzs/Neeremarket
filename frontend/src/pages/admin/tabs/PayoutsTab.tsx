@@ -1,3 +1,6 @@
+import { useMe } from '@/api/hooks';
+import { hasAdminPermission } from '@/utils/adminAccess';
+import { useTableSort } from '@/components/ui/useTableSort';
 import { useState } from 'react';
 import { useAdminPayouts, useReviewPayout, usePayoutAction } from '@/api/hooks';
 import {
@@ -20,6 +23,9 @@ import { prettyStatus, statusTone } from '@/utils/status';
 import styles from '@/pages/workspace/workspace.module.css';
 
 export function PayoutsTab() {
+  const { data: currentAdmin } = useMe();
+  const canMutate = hasAdminPermission(currentAdmin, 'payouts.approve');
+  const { sortRows, sortProps } = useTableSort();
   const [filter, setFilter] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -93,7 +99,8 @@ export function PayoutsTab() {
     : allPayouts;
 
   const totalPages = Math.ceil(displayedPayouts.length / pageSize);
-  const paginatedPayouts = displayedPayouts.slice((page - 1) * pageSize, page * pageSize);
+  const safePage = Math.min(page, Math.max(1, totalPages));
+  const paginatedPayouts = sortRows(displayedPayouts, {'Seller': (p) => p.seller.businessName, 'Amount': (p) => Number(p.amount), 'Send to': (p) => p.destination?.phone, 'Status': (p) => p.status}).slice((safePage - 1) * pageSize, safePage * pageSize);
 
   return (
     <>
@@ -153,10 +160,10 @@ export function PayoutsTab() {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <SortTh>Seller</SortTh>
-                  <SortTh>Amount</SortTh>
-                  <SortTh>Send to</SortTh>
-                  <SortTh>Status</SortTh>
+                  <SortTh {...sortProps('Seller')}>Seller</SortTh>
+                  <SortTh {...sortProps('Amount')}>Amount</SortTh>
+                  <SortTh {...sortProps('Send to')}>Send to</SortTh>
+                  <SortTh {...sortProps('Status')}>Status</SortTh>
                   <SortTh sortable={false}>Actions</SortTh>
                 </tr>
               </thead>
@@ -185,7 +192,7 @@ export function PayoutsTab() {
                             icon="send"
                             tone="success"
                             label="Approve & Send to MoMo"
-                            disabled={busy}
+                            disabled={!canMutate || busy}
                             onClick={() => approve(p.id)}
                           />
                         ) : null}
@@ -194,16 +201,14 @@ export function PayoutsTab() {
                             icon="send"
                             tone="purple"
                             label="Retry Transfer"
-                            disabled={busy}
-                            onClick={() =>
-                              payoutAction.mutate(
+                            disabled={!canMutate || busy}
+                            onClick={async () => { if (!canMutate || !await confirm({ title: 'Confirm payout action', message: 'Apply this action to the selected payout request?', tone: 'warning' })) return; payoutAction.mutate(
                                 { id: p.id, action: 'send' },
                                 {
                                   onSuccess: () => setMsg({ tone: 'success', text: 'Transfer sent to Mobile Money.' }),
                                   onError,
                                 },
-                              )
-                            }
+                              ); }}
                           />
                         ) : null}
                         {p.status === 'PROCESSING' ? (
@@ -220,16 +225,14 @@ export function PayoutsTab() {
                             icon="cross"
                             tone="danger"
                             label="Cancel Withdrawal"
-                            disabled={busy}
-                            onClick={() =>
-                              review.mutate(
+                            disabled={!canMutate || busy}
+                            onClick={async () => { if (!canMutate || !await confirm({ title: 'Confirm payout action', message: 'Apply this action to the selected payout request?', tone: 'warning' })) return; review.mutate(
                                 { id: p.id, action: 'CANCEL' },
                                 {
                                   onSuccess: () => setMsg({ tone: 'success', text: 'Payout cancelled — funds returned to the seller.' }),
                                   onError,
                                 },
-                              )
-                            }
+                              ); }}
                           />
                         ) : null}
                       </div>
@@ -241,7 +244,7 @@ export function PayoutsTab() {
           </div>
         )}
         <TablePagination
-          page={page}
+          page={safePage}
           totalPages={totalPages}
           totalItems={displayedPayouts.length}
           pageSize={pageSize}

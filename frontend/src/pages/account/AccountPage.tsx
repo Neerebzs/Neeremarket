@@ -193,14 +193,14 @@ export function AccountPage() {
       ) : null}
 
       {isAdmin ? (
-        <aside className={styles.sellerPortalCard} style={{ background: '#f8fafc', borderColor: '#cbd5e1' }} aria-label="Admin console access">
+        <aside className={styles.sellerPortalCard} style={{ background: 'var(--color-surface-subtle)', borderColor: 'var(--color-border-strong)' }} aria-label="Admin console access">
           <div className={styles.sellerPortalText}>
-            <h3 style={{ color: '#0f172a' }}>
+            <h3 style={{ color: 'var(--color-ink)' }}>
               <span aria-hidden="true">⚡</span> Platform Administration
             </h3>
-            <p style={{ color: '#475569' }}>Access system analytics, order oversight, and dispute arbitration.</p>
+            <p style={{ color: 'var(--color-ink-muted)' }}>Access system analytics, order oversight, and dispute arbitration.</p>
           </div>
-          <Link to="/admin" className={styles.sellerPortalBtn} style={{ background: '#0f172a' }}>
+          <Link to="/admin" className={styles.sellerPortalBtn} style={{ background: 'var(--color-ink)' }}>
             Open Admin Console →
           </Link>
         </aside>

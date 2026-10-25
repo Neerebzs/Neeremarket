@@ -188,9 +188,9 @@ export function AuditTab() {
                     fontSize: '0.75rem',
                     fontWeight: actionCategory === c.id ? 600 : 400,
                     border: '1px solid',
-                    borderColor: actionCategory === c.id ? 'var(--color-brand, #6b8f6b)' : '#e5e7eb',
+                    borderColor: actionCategory === c.id ? 'var(--color-brand)' : 'var(--color-border)',
                     background: actionCategory === c.id ? 'var(--color-brand-soft, #f0f5f0)' : '#fff',
-                    color: actionCategory === c.id ? 'var(--color-brand, #6b8f6b)' : 'var(--color-ink, #374151)',
+                    color: actionCategory === c.id ? 'var(--color-brand)' : 'var(--color-ink, #374151)',
                     cursor: 'pointer',
                   }}
                 >

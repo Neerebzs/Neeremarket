@@ -22,7 +22,7 @@
 }
 
 .field input:focus {
-  outline: 2px solid var(--color-brand-glow, rgba(232, 93, 4, 0.35));
+  outline: 2px solid var(--color-focus);
   border-color: var(--color-brand);
 }
 

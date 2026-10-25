@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { handleImageError } from '@/utils/images';
+import { useModalFocus } from '@/components/ui/useModalFocus';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -53,6 +55,8 @@ export function ProductDetailPage() {
   const [qty, setQty] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const lightboxRef = useRef<HTMLDivElement>(null);
+  useModalFocus(lightboxRef, previewOpen, () => setPreviewOpen(false));
   const [isZoomed, setIsZoomed] = useState(false);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchEndX, setTouchEndX] = useState<number | null>(null);
@@ -101,11 +105,8 @@ export function ProductDetailPage() {
       }
     }
     document.addEventListener('keydown', onKeyDown);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
     return () => {
       document.removeEventListener('keydown', onKeyDown);
-      document.body.style.overflow = prev;
     };
   }, [previewOpen, product?.images.length]);
 
@@ -359,11 +360,11 @@ export function ProductDetailPage() {
 
       {product ? (
         <>
-          <div className={styles.mobileTabs} role="tablist" aria-label="Product sections">
+          <div className={styles.mobileTabs} role="group" aria-label="Product sections">
             <button
               type="button"
-              role="tab"
-              aria-selected={mobileTab === 'overview'}
+
+              aria-pressed={mobileTab === 'overview'}
               className={mobileTab === 'overview' ? styles.mobileTabActive : styles.mobileTab}
               onClick={() => goMobileTab('overview')}
             >
@@ -371,8 +372,8 @@ export function ProductDetailPage() {
             </button>
             <button
               type="button"
-              role="tab"
-              aria-selected={mobileTab === 'details'}
+
+              aria-pressed={mobileTab === 'details'}
               className={mobileTab === 'details' ? styles.mobileTabActive : styles.mobileTab}
               onClick={() => goMobileTab('details')}
             >
@@ -380,8 +381,8 @@ export function ProductDetailPage() {
             </button>
             <button
               type="button"
-              role="tab"
-              aria-selected={mobileTab === 'reviews'}
+
+              aria-pressed={mobileTab === 'reviews'}
               className={mobileTab === 'reviews' ? styles.mobileTabActive : styles.mobileTab}
               onClick={() => goMobileTab('reviews')}
             >
@@ -389,8 +390,8 @@ export function ProductDetailPage() {
             </button>
             <button
               type="button"
-              role="tab"
-              aria-selected={mobileTab === 'recommended'}
+
+              aria-pressed={mobileTab === 'recommended'}
               className={mobileTab === 'recommended' ? styles.mobileTabActive : styles.mobileTab}
               onClick={() => goMobileTab('recommended')}
             >
@@ -413,7 +414,7 @@ export function ProductDetailPage() {
                     onClick={() => setPreviewOpen(true)}
                     aria-label="Open fullscreen image preview"
                   >
-                    <img src={mainImage} alt={mainAlt} />
+                    <img onError={handleImageError} src={mainImage} alt={mainAlt} />
 
                     <div className={styles.galleryTopBadges}>
                       {savingsAmount > 0 ? (
@@ -477,7 +478,7 @@ export function ProductDetailPage() {
                       >
                         ›
                       </button>
-                      <div className={styles.galleryDots} role="tablist" aria-label="Photo carousel pagination">
+                      <div className={styles.galleryDots} role="group" aria-label="Photo carousel pagination">
                         {images.map((_, dotIdx) => (
                           <button
                             key={dotIdx}
@@ -507,7 +508,7 @@ export function ProductDetailPage() {
                         }}
                         aria-label={`View photo ${index + 1}`}
                       >
-                        <img src={image.url} alt="" />
+                        <img onError={handleImageError} src={image.url} alt="" loading="lazy" decoding="async" />
                       </button>
                     ))}
                   </div>
@@ -519,7 +520,7 @@ export function ProductDetailPage() {
                   <div>
                     <h2 id="reviews-heading">Customer Reviews</h2>
                     <p className={styles.reviewsSubhead}>
-                      Ratings & feedback from verified Rwandan buyers
+                      Ratings & feedback from customers
                     </p>
                   </div>
                   {reviewItems.length > 3 ? (
@@ -853,8 +854,8 @@ export function ProductDetailPage() {
                     </svg>
                   </span>
                   <div>
-                    <strong>Swift Rwanda Delivery</strong>
-                    <p>24h delivery in Kigali, express provincial transit</p>
+                    <strong>Delivery & pickup</strong>
+                    <p>Choose an available option and review costs at checkout.</p>
                   </div>
                 </div>
 
@@ -872,8 +873,8 @@ export function ProductDetailPage() {
                     </svg>
                   </span>
                   <div>
-                    <strong>7-Day Returns</strong>
-                    <p>Protected refund if item is damaged or incorrect</p>
+                    <strong>Return support</strong>
+                    <p><Link to="/returns">Review the return policy before ordering.</Link></p>
                   </div>
                 </div>
               </div>
@@ -949,7 +950,7 @@ export function ProductDetailPage() {
                         {product.store.name}
                       </Link>
                       {product.store.seller.verificationStatus === 'VERIFIED' ? (
-                        <span className={styles.verifiedTag}>✓ Verified Seller</span>
+<span className={styles.verifiedTag}>✓ Verified seller</span>
                       ) : null}
                     </div>
                     <p className={styles.sellerLocation}>
@@ -1100,6 +1101,8 @@ export function ProductDetailPage() {
           role="dialog"
           aria-modal="true"
           aria-label="Image preview modal"
+          ref={lightboxRef}
+          tabIndex={-1}
           onClick={() => setPreviewOpen(false)}
         >
           <div
@@ -1200,7 +1203,7 @@ export function ProductDetailPage() {
                     onClick={() => setActiveImage(index)}
                     aria-label={`Jump to photo ${index + 1}`}
                   >
-                    <img src={image.url} alt="" />
+                    <img onError={handleImageError} src={image.url} alt="" loading="lazy" decoding="async" />
                   </button>
                 ))}
               </div>

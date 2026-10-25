@@ -14,7 +14,7 @@ export function SellerProfilePage() {
   const logoInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const { data: user } = useMe();
-  const { data: seller, isLoading } = useSellerProfile();
+  const { data: seller, isLoading, isError, error } = useSellerProfile();
   const update = useUpdateSellerProfile();
   const upload = useUploadMedia();
   const [msg, setMsg] = useState<string | null>(null);
@@ -109,6 +109,7 @@ export function SellerProfilePage() {
         <title>Store profile | NeereMarket</title>
       </Helmet>
       {isLoading ? <p className={styles.muted}>Loading profile…</p> : null}
+      {isError ? <Alert tone="error">{getErrorMessage(error)}</Alert> : null}
       {msg ? <Alert tone="success">{msg}</Alert> : null}
       {err ? <Alert tone="error">{err}</Alert> : null}
 

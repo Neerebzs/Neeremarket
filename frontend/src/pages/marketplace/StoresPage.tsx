@@ -1,29 +1,19 @@
+import { handleImageError } from '@/utils/images';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { useProducts, useStores } from '@/api/hooks';
-import { Alert, EmptyState, ProductGridSkeleton } from '@/components/ui';
+import { useStores } from '@/api/hooks';
+import { Alert, Badge, EmptyState, ProductGridSkeleton } from '@/components/ui';
 import { getErrorMessage } from '@/api/client';
 import { FALLBACK_CATEGORY_VISUAL } from '@/utils/categoryVisuals';
 import styles from './StoresPage.module.css';
 
-const BANNER_TINTS = [
-  '#faefe3', // Warm Sand / Wood tone (matches Tools & Hardware)
-  '#f0ebf5', // Soft Lilac / Lavender (matches Machinery card)
-  '#ebf3ee', // Gentle Sage Mint
-  '#eaf2f5', // Clean Ice Blue
-  '#f8ece6', // Soft Peach Coral
-  '#f6edf2', // Delicate Rose
-  '#f3f4f6', // Clean Pearl Gray
-  '#fdf4e9', // Warm Buttercream
-];
+const BANNER_TINTS = ['var(--color-surface-subtle)'];
 
 export function StoresPage() {
   const [page, setPage] = useState(1);
-  const { data, isLoading, isError, error } = useStores(page);
-  const { data: productsData } = useProducts({ page: 1, limit: 32 });
-
-  const globalProducts = productsData?.items ?? [];
+  const [district, setDistrict] = useState('');
+  const { data, isLoading, isError, error } = useStores(page, district || undefined);
 
   return (
     <div className={`container ${styles.page}`}>
@@ -39,11 +29,12 @@ export function StoresPage() {
         <div className={styles.headerText}>
           <h1 className={styles.heading}>Seller Stores</h1>
           <p className={styles.subheading}>
-            Discover verified boutiques, workshops, and storefronts across Rwanda.
+            Discover local boutiques, workshops, and storefronts across Rwanda.
           </p>
         </div>
       </header>
 
+      <label className={styles.locationFilter}>Store location<select value={district} onChange={e => { setDistrict(e.target.value); setPage(1); }}><option value="">All districts</option>{['Gasabo', 'Kicukiro', 'Nyarugenge'].map(value => <option key={value}>{value}</option>)}</select></label>
       {isLoading ? (
         <div className={styles.loadingStack}>
           <ProductGridSkeleton count={2} />
@@ -65,23 +56,6 @@ export function StoresPage() {
             const tint = BANNER_TINTS[storeIdx % BANNER_TINTS.length];
             const storeProducts = [...(store.products || [])];
 
-            // Fill up to 8 products from global catalog if store has fewer
-            if (storeProducts.length < 8 && globalProducts.length) {
-              const existingIds = new Set(storeProducts.map((p) => p.id));
-              for (const gp of globalProducts) {
-                if (!existingIds.has(gp.id)) {
-                  storeProducts.push({
-                    id: gp.id,
-                    name: gp.name,
-                    slug: gp.slug,
-                    imageUrl: gp.images[0]?.url || null,
-                  });
-                  existingIds.add(gp.id);
-                  if (storeProducts.length >= 8) break;
-                }
-              }
-            }
-
             const bannerImg =
               store.seller.coverUrl ||
               storeProducts[0]?.imageUrl ||
@@ -100,16 +74,17 @@ export function StoresPage() {
                   <div className={styles.showcaseBannerTop}>
                     <h2 className={styles.showcaseTitle}>{store.name}</h2>
                     <p className={styles.showcaseLocation}>{locationStr}</p>
+                    {store.seller.verificationStatus === 'VERIFIED' ? <Badge tone="success">Verified seller</Badge> : null}
                     <Link
                       to={`/stores/${store.slug}`}
                       className={styles.sourceNowBtn}
                       title={`Source from ${store.name}`}
                     >
-                      Source Now
+                      Visit store
                     </Link>
                   </div>
                   <div className={styles.showcaseBannerImgWrap}>
-                    <img src={bannerImg} alt={store.name} loading="lazy" />
+                    <img onError={handleImageError} src={bannerImg} alt={store.name} loading="lazy" />
                   </div>
                 </div>
 

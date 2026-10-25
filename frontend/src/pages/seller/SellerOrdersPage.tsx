@@ -1,3 +1,4 @@
+import { useTableSort } from '@/components/ui/useTableSort';
 import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useSellerOrders, useUpdateSellerOrderStatus, type SellerOrder } from '@/api/hooks';
@@ -29,6 +30,7 @@ const NEXT: Record<string, 'PROCESSING' | 'READY_FOR_SHIPMENT' | 'SHIPPED' | nul
 const AWAITING_RECEIPT = ['SHIPPED', 'OUT_FOR_DELIVERY'];
 
 export function SellerOrdersPage() {
+  const { sortRows, sortProps } = useTableSort();
   const { data, isLoading, isError, error } = useSellerOrders();
   const updateStatus = useUpdateSellerOrderStatus();
   const [search, setSearch] = useState('');
@@ -68,7 +70,8 @@ export function SellerOrdersPage() {
   });
 
   const totalPages = Math.ceil(filteredOrders.length / pageSize);
-  const paginatedOrders = filteredOrders.slice((page - 1) * pageSize, page * pageSize);
+  const safePage = Math.min(page, Math.max(1, totalPages));
+  const paginatedOrders = sortRows(filteredOrders, {'Order': (o) => o.sellerOrderNumber, 'Customer & Delivery': (o) => o.customer?.fullName || o.address?.fullName, 'Items': (o) => o.items.length, 'Status': (o) => o.status, 'Total': (o) => Number(o.subtotal)}).slice((safePage - 1) * pageSize, safePage * pageSize);
 
   function handleStatusUpdate(orderId: string, nextStatus: 'PROCESSING' | 'READY_FOR_SHIPMENT' | 'SHIPPED') {
     updateStatus.mutate(
@@ -145,11 +148,11 @@ export function SellerOrdersPage() {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <SortTh>Order</SortTh>
-                  <SortTh>Customer & Delivery</SortTh>
-                  <SortTh>Items</SortTh>
-                  <SortTh>Status</SortTh>
-                  <SortTh align="right">Total</SortTh>
+                  <SortTh {...sortProps('Order')}>Order</SortTh>
+                  <SortTh {...sortProps('Customer & Delivery')}>Customer & Delivery</SortTh>
+                  <SortTh {...sortProps('Items')}>Items</SortTh>
+                  <SortTh {...sortProps('Status')}>Status</SortTh>
+                  <SortTh align="right" {...sortProps('Total')}>Total</SortTh>
                   <SortTh sortable={false}>Actions</SortTh>
                 </tr>
               </thead>
@@ -301,11 +304,11 @@ export function SellerOrdersPage() {
                       </div>
                     ) : null}
 
-                    <div style={{ background: '#f8fafc', padding: '0.65rem 0.75rem', borderRadius: '8px', border: '1px solid #eef2f6', marginTop: '0.25rem' }}>
+                    <div style={{ background: 'var(--color-surface-subtle)', padding: '0.65rem 0.75rem', borderRadius: '8px', border: '1px solid #eef2f6', marginTop: '0.25rem' }}>
                       <span className={styles.mobileCardLabel} style={{ display: 'block', marginBottom: '0.25rem' }}>
                         Items ({order.items.reduce((s, i) => s + i.quantity, 0)} total)
                       </span>
-                      <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.8125rem', color: '#1e293b' }}>
+                      <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.8125rem', color: 'var(--color-ink)' }}>
                         {order.items.map((item, idx) => (
                           <li key={idx}>
                             <strong>{item.quantity}×</strong> {item.productName}
@@ -350,7 +353,7 @@ export function SellerOrdersPage() {
           </div>
 
           <TablePagination
-            page={page}
+            page={safePage}
             totalPages={totalPages}
             totalItems={filteredOrders.length}
             pageSize={pageSize}

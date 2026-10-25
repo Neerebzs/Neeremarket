@@ -88,7 +88,7 @@ export function DisputesPage() {
 
       <div className={styles.toolbar}>
         <h2>My disputes</h2>
-        <div className={styles.filters} role="tablist">
+        <div className={styles.filters} role="group">
           {(
             [
               ['active', `Active${activeCount ? ` (${activeCount})` : ''}`],
@@ -99,8 +99,8 @@ export function DisputesPage() {
             <button
               key={value}
               type="button"
-              role="tab"
-              aria-selected={filter === value}
+
+              aria-pressed={filter === value}
               className={filter === value ? styles.chipOn : styles.chip}
               onClick={() => setFilter(value)}
             >

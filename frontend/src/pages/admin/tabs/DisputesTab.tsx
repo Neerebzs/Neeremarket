@@ -1,3 +1,5 @@
+import { useMe } from '@/api/hooks';
+import { hasAdminPermission } from '@/utils/adminAccess';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -162,7 +164,10 @@ function OrderDisputesPanel() {
 }
 
 export function DisputesTab() {
-  const { data, isLoading, isError, error } = useAdminReturns();
+  const { data: currentAdmin } = useMe();
+  const canReadReturns = hasAdminPermission(currentAdmin, 'payments.refund', 'orders.read');
+  const canRefund = hasAdminPermission(currentAdmin, 'payments.refund');
+  const { data, isLoading, isError, error } = useAdminReturns(canReadReturns);
   const [returnsPage, setReturnsPage] = useState(1);
   const pageSize = 10;
   const confirm = useConfirm();
@@ -178,6 +183,7 @@ export function DisputesTab() {
   };
 
   async function onApproveReturn(id: string) {
+    if (!canRefund) return;
     const ok = await confirm({
       title: 'Approve return & refund',
       message: 'Approve this return? The refund is sent to the customer’s Mobile Money number immediately.',
@@ -199,7 +205,8 @@ export function DisputesTab() {
     );
   }
 
-  function runRefund(returnId: string, action: 'send' | 'check') {
+  async function runRefund(returnId: string, action: 'send' | 'check') {
+    if (action === 'send' && (!canRefund || !await confirm({ title: 'Retry refund transfer', message: 'Retry sending this refund to the customer’s Mobile Money account?', tone: 'warning' }))) return;
     refundAction.mutate(
       { returnId, action },
       {
@@ -221,6 +228,8 @@ export function DisputesTab() {
   const returnsList = data || [];
   const totalPages = Math.ceil(returnsList.length / pageSize);
   const paginatedReturns = returnsList.slice((returnsPage - 1) * pageSize, returnsPage * pageSize);
+
+  if (!canReadReturns) return <OrderDisputesPanel />;
 
   return (
     <>
@@ -291,7 +300,7 @@ export function DisputesTab() {
                                 tone="success"
                                 title="Approve & refund"
                                 aria-label="Approve and refund return request"
-                                disabled={busy}
+                                disabled={!canRefund || busy}
                                 onClick={() => onApproveReturn(row.id)}
                               />
                               <ActionIconButton
@@ -299,13 +308,11 @@ export function DisputesTab() {
                                 tone="danger"
                                 title="Reject return request"
                                 aria-label="Reject return request"
-                                disabled={busy}
-                                onClick={() =>
-                                  review.mutate(
+                                disabled={!canRefund || busy}
+                                onClick={async () => { if (!canRefund || !await confirm({ title: 'Reject return request', message: 'Reject this return request?', tone: 'warning' })) return; review.mutate(
                                     { id: row.id, action: 'REJECT' },
                                     { onSuccess: () => setMsg({ tone: 'success', text: 'Return rejected' }), onError },
-                                  )
-                                }
+                                  ); }}
                               />
                             </>
                           ) : null}
@@ -315,7 +322,7 @@ export function DisputesTab() {
                               tone="purple"
                               title="Retry refund"
                               aria-label="Retry refund transfer"
-                              disabled={busy}
+                              disabled={!canRefund || busy}
                               onClick={() => runRefund(row.id, 'send')}
                             />
                           ) : null}

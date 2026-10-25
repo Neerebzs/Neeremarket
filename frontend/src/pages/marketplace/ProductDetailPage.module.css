@@ -77,11 +77,11 @@
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  color: #15803d;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  color: var(--color-success);
+  background: var(--color-success-soft);
+  border: 1px solid var(--color-success-border);
   padding: 0.15rem 0.5rem;
   border-radius: 999px;
 }
@@ -116,7 +116,7 @@
 }
 
 .crumb span {
-  color: #cbd5e1;
+  color: var(--color-border-strong);
 }
 
 /* --------------------------------------------------------------------------
@@ -174,11 +174,11 @@
 .hotTag {
   display: inline-flex;
   align-items: center;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--color-brand);
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
+  background: var(--color-brand-soft);
+  border: 1px solid var(--color-brand-border);
   padding: 0.15rem 0.55rem;
   border-radius: 999px;
 }
@@ -212,9 +212,9 @@
   align-items: center;
   font-size: var(--text-xs);
   font-weight: 700;
-  color: #15803d;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  color: var(--color-success);
+  background: var(--color-success-soft);
+  border: 1px solid var(--color-success-border);
   padding: 0.25rem 0.65rem;
   border-radius: 999px;
 }
@@ -243,42 +243,42 @@
 }
 
 .stockBadgeIn {
-  color: #15803d;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  color: var(--color-success);
+  background: var(--color-success-soft);
+  border: 1px solid var(--color-success-border);
 }
 
 .stockDotIn {
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 50%;
-  background: #16a34a;
+  background: var(--color-success);
 }
 
 .stockBadgeLow {
   color: #c2410c;
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
+  background: var(--color-brand-soft);
+  border: 1px solid var(--color-brand-border);
 }
 
 .stockDotLow {
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 50%;
-  background: #ea580c;
+  background: var(--color-brand);
 }
 
 .stockBadgeOut {
-  color: #b91c1c;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  color: var(--color-danger-deep);
+  background: var(--color-danger-soft);
+  border: 1px solid var(--color-danger-border);
 }
 
 .stockDotOut {
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 50%;
-  background: #dc2626;
+  background: var(--color-danger);
 }
 
 .deliveryPromise {
@@ -297,8 +297,8 @@
   margin-bottom: 1.25rem;
   padding: 0.65rem 0.85rem;
   border-radius: var(--radius-sm);
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
+  background: var(--color-brand-soft);
+  border: 1px solid var(--color-brand-border);
   text-decoration: none;
   transition: border-color 0.15s ease;
 }
@@ -308,7 +308,7 @@
 }
 
 .promoBadge {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   color: #fff;
@@ -389,9 +389,9 @@
   align-items: center;
   justify-content: center;
   padding: 0 1.25rem;
-  background: #0f172a;
+  background: var(--color-ink);
   color: #fff;
-  border: 1px solid #0f172a;
+  border: 1px solid var(--color-ink);
   border-radius: var(--radius-sm);
   font-size: var(--text-sm);
   font-weight: 700;
@@ -400,8 +400,8 @@
 }
 
 .buyNowBtn:hover:not(:disabled) {
-  background: #1e293b;
-  border-color: #1e293b;
+  background: var(--color-ink);
+  border-color: var(--color-ink);
 }
 
 .buyNowBtn:disabled {
@@ -433,8 +433,8 @@
 }
 
 .wishlistBtnActive {
-  background: #fff7ed;
-  border-color: #fed7aa;
+  background: var(--color-brand-soft);
+  border-color: var(--color-brand-border);
   color: var(--color-brand);
 }
 
@@ -447,8 +447,8 @@
   gap: 0.75rem;
   margin-bottom: 1.75rem;
   padding: 1rem;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
 }
 
@@ -465,9 +465,9 @@
   border-radius: 6px;
   display: grid;
   place-items: center;
-  background: #fff7ed;
+  background: var(--color-brand-soft);
   color: var(--color-brand);
-  border: 1px solid #fed7aa;
+  border: 1px solid var(--color-brand-border);
 }
 
 .trustIcon svg {
@@ -485,7 +485,7 @@
 
 .trustItem p {
   margin: 0;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--color-ink-muted);
   line-height: 1.35;
 }
@@ -496,7 +496,7 @@
 .gallery {
   border-radius: var(--radius-sm);
   overflow: hidden;
-  background: #f8fafc;
+  background: var(--color-surface-subtle);
   border: 1px solid var(--color-border);
 }
 
@@ -512,7 +512,7 @@
   width: 100%;
   padding: 0;
   border: 0;
-  background: #f1f5f9;
+  background: var(--color-surface-subtle);
   cursor: zoom-in;
 }
 
@@ -537,7 +537,7 @@
 }
 
 .gallerySaleTag {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 800;
   color: #fff;
   background: var(--color-brand);
@@ -547,11 +547,11 @@
 }
 
 .galleryConditionTag {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--color-ink);
   background: rgba(255, 255, 255, 0.95);
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--color-border-strong);
   padding: 0.15rem 0.5rem;
   border-radius: 4px;
   text-transform: capitalize;
@@ -566,7 +566,7 @@
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.95);
   color: var(--color-ink);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-border);
   display: grid;
   place-items: center;
   z-index: 4;
@@ -590,7 +590,7 @@
   transform: translateY(-50%);
   width: 2.5rem;
   height: 2.5rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-border);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.95);
   color: var(--color-ink);
@@ -676,7 +676,7 @@
   gap: 0.5rem;
   padding: 0.75rem;
   background: #fff;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--color-surface-subtle);
 }
 
 .thumb,
@@ -686,7 +686,7 @@
   border-radius: 6px;
   overflow: hidden;
   cursor: pointer;
-  background: #f1f5f9;
+  background: var(--color-surface-subtle);
 }
 
 .thumbActive {
@@ -707,8 +707,8 @@
 .attrPanel {
   margin-top: 1.5rem;
   padding: 1.25rem;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
 }
 
@@ -732,7 +732,7 @@
   gap: 0.75rem;
   align-items: start;
   padding-bottom: 0.45rem;
-  border-bottom: 1px solid #edf2f7;
+  border-bottom: 1px solid var(--color-surface-subtle);
 }
 
 .attrList > div:last-child {
@@ -762,7 +762,7 @@
   width: 100%;
   margin-top: 0.85rem;
   padding: 0.55rem 0.85rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-sm);
   background: #fff;
   color: var(--color-ink);
@@ -805,7 +805,7 @@
 
 .longDesc {
   font-size: var(--text-sm);
-  color: #475569;
+  color: var(--color-ink-muted);
   line-height: 1.6;
   white-space: pre-line;
 }
@@ -863,7 +863,7 @@
   grid-template-columns: 8rem 1fr;
   gap: 0.5rem;
   padding-bottom: 0.4rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--color-surface-subtle);
 }
 
 .specs dt {
@@ -885,8 +885,8 @@
 .sellerCard {
   margin-top: 1.5rem;
   padding: 1.25rem;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
 }
 
@@ -901,7 +901,7 @@
   width: 3rem;
   height: 3rem;
   border-radius: 50%;
-  background: #e2e8f0;
+  background: var(--color-border);
   color: var(--color-ink);
   font-weight: 700;
   font-size: 1.1rem;
@@ -909,7 +909,7 @@
   place-items: center;
   overflow: hidden;
   flex-shrink: 0;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--color-border-strong);
 }
 
 .sellerLogo {
@@ -943,11 +943,11 @@
 }
 
 .verifiedTag {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  color: #15803d;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  color: var(--color-success);
+  background: var(--color-success-soft);
+  border: 1px solid var(--color-success-border);
   padding: 0.1rem 0.45rem;
   border-radius: 999px;
 }
@@ -992,8 +992,8 @@
 }
 
 .sellerChatBtn {
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
+  background: var(--color-brand-soft);
+  border: 1px solid var(--color-brand-border);
   color: var(--color-brand);
 }
 
@@ -1070,7 +1070,7 @@
   gap: 1rem;
   margin-bottom: 1.25rem;
   padding-bottom: 0.85rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--color-surface-subtle);
 }
 
 .reviewsHead h2 {
@@ -1103,8 +1103,8 @@
   gap: 1.5rem;
   align-items: center;
   padding: 1.15rem;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   margin-bottom: 1.5rem;
 }
@@ -1157,7 +1157,7 @@
 
 .barTrack {
   height: 6px;
-  background: #e2e8f0;
+  background: var(--color-border);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -1184,8 +1184,8 @@
 
 .reviewCard {
   padding: 1rem;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
 }
 
@@ -1200,7 +1200,7 @@
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 50%;
-  background: #cbd5e1;
+  background: var(--color-border-strong);
   color: var(--color-ink);
   font-size: var(--text-xs);
   font-weight: 700;
@@ -1242,22 +1242,22 @@
 .reviewBody {
   margin: 0;
   font-size: var(--text-sm);
-  color: #334155;
+  color: var(--color-ink-muted);
   line-height: 1.5;
 }
 
 .reviewsEmpty {
   text-align: center;
   padding: 2.5rem 1.5rem;
-  background: #f8fafc;
-  border: 1px dashed #cbd5e1;
+  background: var(--color-surface-subtle);
+  border: 1px dashed var(--color-border-strong);
   border-radius: var(--radius-sm);
   margin-bottom: 1.5rem;
 }
 
 .emptyStars {
   font-size: 1.5rem;
-  color: #cbd5e1;
+  color: var(--color-border-strong);
   margin: 0 0 0.5rem;
 }
 
@@ -1279,8 +1279,8 @@
    -------------------------------------------------------------------------- */
 .reviewComposer {
   padding: 1.25rem;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
 }
 
@@ -1324,7 +1324,7 @@
 }
 
 .starOff {
-  color: #cbd5e1;
+  color: var(--color-border-strong);
 }
 
 .starLabel {
@@ -1352,7 +1352,7 @@
 .alsoViewed {
   margin-top: 3rem;
   padding-top: 2rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--color-border);
 }
 
 .alsoViewedHead {
@@ -1396,8 +1396,8 @@
   padding: 2rem;
   color: var(--color-ink-muted);
   font-size: var(--text-sm);
-  background: #f8fafc;
-  border: 1px dashed #cbd5e1;
+  background: var(--color-surface-subtle);
+  border: 1px dashed var(--color-border-strong);
   border-radius: var(--radius-sm);
 }
 
@@ -1466,7 +1466,7 @@
 }
 
 .lightboxCounter {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.75);
 }
 
@@ -1669,7 +1669,7 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     background: #fff;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--color-border);
   }
 
   .mobileTab,
@@ -1766,7 +1766,7 @@
     gap: 0.5rem;
     padding: 0.65rem 0.85rem;
     background: #ffffff;
-    border-top: 1px solid #f1f5f9;
+    border-top: 1px solid var(--color-surface-subtle);
     scrollbar-width: none;
     overscroll-behavior-x: contain;
   }
@@ -1796,7 +1796,7 @@
     position: static;
     padding: 1rem 1rem 1.25rem;
     background: #fff;
-    border-bottom: 8px solid #f1f5f9;
+    border-bottom: 8px solid var(--color-surface-subtle);
   }
 
   .crumb {
@@ -1870,7 +1870,7 @@
     margin: 0;
     padding: 1.25rem 1rem;
     background: #fff;
-    border-top: 8px solid #f1f5f9;
+    border-top: 8px solid var(--color-surface-subtle);
     border-inline: 0;
     border-bottom: 0;
     border-radius: 0;
@@ -1884,7 +1884,7 @@
   }
 
   .scoreBlock {
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--color-border);
     padding-bottom: 0.85rem;
   }
 
@@ -1892,7 +1892,7 @@
     order: 4;
     margin: 0;
     padding: 1.25rem 1rem 2rem;
-    border-top: 8px solid #f1f5f9;
+    border-top: 8px solid var(--color-surface-subtle);
     background: #fff;
     scroll-margin-top: calc(var(--header-h, 4.5rem) + 2.75rem);
   }
@@ -1911,7 +1911,7 @@
     gap: 0.65rem;
     padding: 0.6rem 0.85rem;
     background: #ffffff;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid var(--color-border);
     box-shadow: none;
   }
 
@@ -1928,7 +1928,7 @@
     border: 0;
     background: transparent;
     color: var(--color-ink-muted);
-    font-size: 0.68rem;
+    font-size: 0.75rem;
     font-weight: 600;
     cursor: pointer;
     padding: 0.15rem;
@@ -1941,16 +1941,16 @@
     border-radius: 50%;
     display: grid;
     place-items: center;
-    background: #f8fafc;
+    background: var(--color-surface-subtle);
     color: var(--color-ink);
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--color-border);
     transition: all 0.15s ease;
   }
 
   .mobileChatIcon {
-    background: #fff7ed;
+    background: var(--color-brand-soft);
     color: var(--color-brand);
-    border-color: #fed7aa;
+    border-color: var(--color-brand-border);
   }
 
   .mobileChatIcon svg,
@@ -1964,9 +1964,9 @@
   }
 
   .mobileWishlistActive .mobileWishlistIcon {
-    background: #fff7ed;
+    background: var(--color-brand-soft);
     color: var(--color-brand);
-    border-color: #fed7aa;
+    border-color: var(--color-brand-border);
   }
 
   .mobileBuy {
@@ -1999,8 +1999,8 @@
 
   .mobileBuy:hover:not(:disabled),
   .mobileBuy:active:not(:disabled) {
-    background: var(--color-brand-deep, #c94b00);
-    border-color: var(--color-brand-deep, #c94b00);
+    background: var(--color-brand-deep, var(--color-brand));
+    border-color: var(--color-brand-deep, var(--color-brand));
   }
 
   .mobileBuy:disabled {
@@ -2041,4 +2041,16 @@
     width: 3rem;
     height: 3rem;
   }
+}
+
+/* Review controls retain touch targets without widening small phones. */
+.reviewsPanel, .reviewsSummary, .reviewComposer, .reviewsEmpty, .breakdown { min-width:0; }
+.starPicker, .composerActions { flex-wrap:wrap; }
+.starLabel { overflow-wrap:anywhere; }
+@media (max-width:375px) {
+  .reviewComposer { padding:12px; }
+  .starPicker { gap:0; }
+  .starLabel { flex-basis:100%; margin:4px 0 0; }
+  .breakdown li { grid-template-columns:2rem minmax(0,1fr) 1.5rem; gap:4px; }
+  .composerActions { align-items:start; }
 }

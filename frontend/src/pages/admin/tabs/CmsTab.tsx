@@ -59,7 +59,7 @@ export function CmsTab() {
   return (
     <>
 
-      {msg ? <Alert tone="success">{msg}</Alert> : null}
+      {msg ? <Alert tone={upsertBanner.isError || upsertPage.isError ? 'error' : 'success'}>{msg}</Alert> : null}
       <div className={styles.cmsGrid}>
         <article className={styles.panel}>
           <div className={styles.panelHead}>

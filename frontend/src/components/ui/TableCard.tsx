@@ -121,6 +121,7 @@ export function TableToolbar({
                   key={chip.id || 'all'}
                   type="button"
                   className={`${styles.chip} ${isActive ? styles.chipActive : ''}`}
+                  aria-pressed={isActive}
                   onClick={() => onFilterChange(chip.id)}
                 >
                   {chip.label}
@@ -131,7 +132,7 @@ export function TableToolbar({
           </div>
         ) : null}
 
-        {columnsAction ? (
+        {columnsAction?.onClick ? (
           <button
             type="button"
             className={`${styles.pillBtn} ${columnsAction.active ? styles.pillBtnActive : ''}`}
@@ -162,17 +163,15 @@ export function TableToolbar({
 export interface SortThProps extends React.ThHTMLAttributes<HTMLTableCellElement> {
   children: ReactNode;
   sortable?: boolean;
+  onSort?: () => void;
+  direction?: 'ascending' | 'descending';
 }
 
-export function SortTh({ children, sortable = true, className = '', ...props }: SortThProps) {
+export function SortTh({ children, sortable = true, onSort, direction, className = '', ...props }: SortThProps) {
+  const interactive = sortable && !!onSort;
   return (
-    <th className={`${sortable ? styles.sortTh : ''} ${className}`.trim()} {...props}>
-      {children}
-      {sortable ? (
-        <span className={styles.sortIcon} aria-hidden="true">
-          ⇅
-        </span>
-      ) : null}
+    <th scope="col" aria-sort={interactive ? direction || 'none' : undefined} className={`${interactive ? styles.sortTh : ''} ${className}`.trim()} {...props}>
+      {interactive ? <button type="button" className={styles.sortButton} onClick={onSort}>{children}<span className={styles.sortIcon} aria-hidden="true">{direction === 'ascending' ? '↑' : direction === 'descending' ? '↓' : '⇅'}</span></button> : children}
     </th>
   );
 }

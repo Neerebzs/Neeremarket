@@ -3,7 +3,7 @@
   grid-template-columns: 104px 1fr auto;
   gap: 1.25rem;
   padding: 1.25rem 0;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--color-surface-subtle);
   align-items: start;
   transition: opacity 0.2s ease;
 }
@@ -24,8 +24,8 @@
   height: 104px;
   border-radius: 10px;
   overflow: hidden;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
   display: block;
   flex-shrink: 0;
 }
@@ -46,7 +46,7 @@
   inset: 0;
   background: rgba(15, 23, 42, 0.7);
   color: #ffffff;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
   display: grid;
   place-items: center;
@@ -78,7 +78,7 @@
 .title {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-ink);
   line-height: 1.4;
   margin: 0;
   transition: color 0.15s ease;
@@ -94,11 +94,11 @@
   align-items: center;
   padding: 0.15rem 0.55rem;
   border-radius: 6px;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
   font-size: 0.75rem;
   font-weight: 500;
-  color: #475569;
+  color: var(--color-ink-muted);
   width: fit-content;
 }
 
@@ -124,7 +124,7 @@
 }
 
 .stockBadgeIn {
-  color: #15803d;
+  color: var(--color-success);
 }
 
 .stockBadgeIn .dot {
@@ -132,7 +132,7 @@
 }
 
 .stockBadgeLow {
-  color: #b45309;
+  color: var(--color-warning);
 }
 
 .stockBadgeLow .dot {
@@ -140,7 +140,7 @@
 }
 
 .stockBadgeOos {
-  color: #dc2626;
+  color: var(--color-danger);
 }
 
 .stockBadgeOos .dot {
@@ -175,14 +175,14 @@
   border: none;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #64748b;
+  color: var(--color-ink-muted);
   cursor: pointer;
   padding: 0.25rem 0;
   transition: color 0.15s ease;
 }
 
 .actionBtn:hover {
-  color: #0f172a;
+  color: var(--color-ink);
 }
 
 .actionBtn:disabled {
@@ -191,7 +191,7 @@
 }
 
 .removeBtn:hover {
-  color: #dc2626;
+  color: var(--color-danger);
 }
 
 /* Right Pricing Column */
@@ -203,14 +203,14 @@
 .lineTotal {
   font-size: 1.05rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-ink);
   margin: 0;
   letter-spacing: -0.01em;
 }
 
 .unitPrice {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--color-ink-muted);
   margin: 0.2rem 0 0;
 }
 
@@ -240,7 +240,7 @@
     grid-column: 1 / -1;
     margin-top: 0.35rem;
     padding-top: 0.5rem;
-    border-top: 1px dashed #f1f5f9;
+    border-top: 1px dashed var(--color-surface-subtle);
     justify-content: space-between;
   }
 }

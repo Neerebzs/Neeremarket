@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useModalFocus } from '@/components/ui/useModalFocus';
+import { normalizeRwandaPhone } from '@/utils/phone';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -44,9 +46,12 @@ const RWANDA_PROVINCES = [
 ] as const;
 
 export function CheckoutPage() {
-  const { data: user, isLoading: isUserLoading } = useMe();
-  const { data: cart, isLoading: isCartLoading } = useCart();
-  const { data: addresses } = useAddresses();
+  const userQuery = useMe();
+  const { data: user, isLoading: isUserLoading } = userQuery;
+  const cartQuery = useCart();
+  const { data: cart, isLoading: isCartLoading } = cartQuery;
+  const addressQuery = useAddresses();
+  const { data: addresses } = addressQuery;
   const createAddress = useCreateAddress();
   const checkout = useCheckout();
   const verifyPayment = useVerifyPayment();
@@ -61,6 +66,8 @@ export function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [pending, setPending] = useState<PendingPayment | null>(null);
+  const paymentRef = useRef<HTMLDivElement>(null);
+  useModalFocus(paymentRef, !!pending, () => { /* Keep an initiated payment visible until the user chooses an explicit action. */ });
   const [payStatus, setPayStatus] = useState<'waiting' | 'checking' | 'paid' | 'failed'>('waiting');
 
   // Address creation form states
@@ -84,7 +91,8 @@ export function CheckoutPage() {
   const sellerCount = cart?.sellerGroups.length || 1;
   const deliveryFee = deliveryMethod === 'CUSTOMER_PICKUP' ? 0 : 2000 * sellerCount;
   const total = Number(cart?.subtotal || 0) + deliveryFee;
-  const hasOutOfStock = (cart?.items || []).some((item) => (item.available ?? 0) < 1);
+  // Matches checkout.service.ts: pickup is free; delivery is 2,000 RWF per seller.
+  const hasOutOfStock = (cart?.items || []).some((item) => item.available !== undefined && item.quantity > item.available);
 
   // Poll for payment confirmation when pending payment sheet is open
   useEffect(() => {
@@ -148,6 +156,8 @@ export function CheckoutPage() {
     );
   }
 
+  if (userQuery.isError || cartQuery.isError) return <div className="container"><Alert tone="error">{getErrorMessage(userQuery.error || cartQuery.error)}</Alert><Button variant="secondary" onClick={() => { void userQuery.refetch(); void cartQuery.refetch(); }}>Retry checkout</Button></div>;
+
   // Unauthenticated Guest View
   if (!user) {
     return (
@@ -179,10 +189,12 @@ export function CheckoutPage() {
   async function saveAddress(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    const normalizedPhone = normalizeRwandaPhone(phone);
+    if (!normalizedPhone) { setError('Enter a valid Rwandan mobile number for delivery contact.'); return; }
     try {
       const address = await createAddress.mutateAsync({
         fullName,
-        phone,
+        phone: normalizedPhone,
         province,
         district,
         landmark,
@@ -208,9 +220,9 @@ export function CheckoutPage() {
       setShowAddressForm(true);
       return;
     }
-    const momoPhone = (payerPhone || selectedAddress?.phone || phone).trim();
+    const momoPhone = normalizeRwandaPhone(payerPhone || selectedAddress?.phone || phone);
     if (!momoPhone) {
-      setError('Please enter the Mobile Money phone number to authorize payment.');
+      setError('Enter a valid Rwandan Mobile Money number (07… or +2507…) to authorize payment.');
       return;
     }
     try {
@@ -246,6 +258,7 @@ export function CheckoutPage() {
         <title>{`Checkout | NeereMarket`}</title>
       </Helmet>
 
+      {addressQuery.isError ? <><Alert tone="error">{getErrorMessage(addressQuery.error)}</Alert><Button variant="secondary" onClick={() => addressQuery.refetch()}>Retry addresses</Button></> : null}
       {/* 3-Step Checkout Funnel Bar */}
       <div className={styles.stepsBar} aria-label="Checkout Progress">
         <Link to="/cart" className={`${styles.step} ${styles.stepCompleted}`} title="Back to Cart">
@@ -277,7 +290,7 @@ export function CheckoutPage() {
             strokeWidth="2.2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            style={{ color: '#15803d' }}
+            style={{ color: 'var(--color-success)' }}
           >
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
@@ -621,6 +634,7 @@ export function CheckoutPage() {
                 </div>
                 <input
                   id="momo-phone-input"
+                  type="tel" autoComplete="tel"
                   className={styles.phoneInput}
                   placeholder="0780 000 000"
                   value={payerPhone}
@@ -699,7 +713,7 @@ export function CheckoutPage() {
             <div className={styles.totalRow}>
               <div>
                 <p className={styles.totalLabel}>Grand Total</p>
-                <span className={styles.totalSubtext}>VAT & courier fees included</span>
+                <span className={styles.totalSubtext}>Includes the delivery cost shown above</span>
               </div>
               <p className={styles.totalAmount}>{formatRwf(total)}</p>
             </div>
@@ -733,7 +747,7 @@ export function CheckoutPage() {
           {/* Security Features */}
           <ul className={styles.securityList}>
             <li>
-              <span>🛡️</span> 100% money-back escrow protection
+              <span>🛡️</span> Return requests reviewed through NeereMarket
             </li>
             <li>
               <span>🔒</span> 256-bit encrypted telecom integration
@@ -749,6 +763,8 @@ export function CheckoutPage() {
       {pending ? (
         <div
           className={styles.payOverlay}
+          ref={paymentRef}
+          tabIndex={-1}
           role="dialog"
           aria-modal="true"
           aria-labelledby="pay-title"

@@ -5,16 +5,16 @@
 }
 
 .error {
-  background: #fef3f2;
+  background: var(--color-danger-soft);
   color: var(--color-danger);
 }
 
 .info {
-  background: #eef4f0;
+  background: var(--color-surface-subtle);
   color: var(--color-ink-muted);
 }
 
 .success {
-  background: #ecfdf3;
+  background: var(--color-success-soft);
   color: var(--color-success);
 }

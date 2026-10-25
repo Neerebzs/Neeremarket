@@ -1,3 +1,5 @@
+import { useMe } from '@/api/hooks';
+import { hasAdminPermission } from '@/utils/adminAccess';
 import { useState, type FormEvent } from 'react';
 import { useAdminSettings, useUpsertSetting } from '@/api/hooks';
 import {
@@ -10,6 +12,8 @@ import { getErrorMessage } from '@/api/client';
 import styles from '@/pages/workspace/workspace.module.css';
 
 export function SettingsTab() {
+  const { data: currentAdmin } = useMe();
+  const canEdit = hasAdminPermission(currentAdmin, 'settings.update');
   const { data, isLoading, isError, error } = useAdminSettings();
   const upsert = useUpsertSetting();
   const [key, setKey] = useState('return_window_days');
@@ -18,6 +22,7 @@ export function SettingsTab() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (!canEdit) return;
     try {
       let parsed: unknown = value;
       try {
@@ -43,7 +48,7 @@ export function SettingsTab() {
         </div>
         {msg ? (
           <div className={styles.panelBody}>
-            <Alert tone="success">{msg}</Alert>
+            <Alert tone={upsert.isError ? 'error' : 'success'}>{msg}</Alert>
           </div>
         ) : null}
         {isLoading ? <TableSkeleton rows={4} /> : null}
@@ -79,7 +84,7 @@ export function SettingsTab() {
           <form className={styles.form} onSubmit={onSubmit}>
             <Input label="Key" value={key} onChange={(e) => setKey(e.target.value)} required />
             <Input label="Value (JSON or number)" value={value} onChange={(e) => setValue(e.target.value)} required />
-            <Button type="submit" disabled={upsert.isPending}>
+            <Button type="submit" disabled={!canEdit || upsert.isPending}>
               Save setting
             </Button>
           </form>

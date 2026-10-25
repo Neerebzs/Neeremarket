@@ -135,12 +135,13 @@ export function SellerInventoryPage() {
 
       <section className={styles.panel}>
         <div className={styles.panelHead}>
-          <div className={styles.filters} role="tablist" aria-label="Stock status">
+          <div className={styles.filters} role="group" aria-label="Stock status">
             {FILTERS.map((filter) => (
               <button
                 key={filter.id}
                 type="button"
                 className={`${styles.chip} ${stock === filter.id ? styles.chipOn : ''}`}
+                aria-pressed={stock === filter.id}
                 onClick={() => setStockFilter(filter.id)}
               >
                 {filter.label}
@@ -166,7 +167,7 @@ export function SellerInventoryPage() {
             <Alert tone="error">{getErrorMessage(error)}</Alert>
           </div>
         ) : null}
-        {!isLoading && !data?.items.length ? (
+        {!isLoading && !isError && !data?.items.length ? (
           <div className={styles.panelBody}>
             <EmptyState
               compact
@@ -234,7 +235,7 @@ export function SellerInventoryPage() {
             page={data.pagination.page}
             totalPages={data.pagination.totalPages}
             totalItems={data.pagination.total}
-            pageSize={10}
+            pageSize={data.pagination.limit}
             onPageChange={setPage}
           />
           </>

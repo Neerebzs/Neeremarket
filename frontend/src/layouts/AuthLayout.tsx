@@ -1,3 +1,5 @@
+import { Suspense } from 'react';
+import { TableSkeleton } from '@/components/ui';
 import { Link, Navigate, Outlet, useLocation, useSearchParams } from 'react-router-dom';
 import { useMe } from '@/api/hooks';
 import { SiteFooter } from '@/components/layout/SiteFooter';
@@ -47,7 +49,7 @@ export function AuthLayout() {
             </div>
           </aside>
           <div className={styles.card}>
-            <Outlet />
+            <Suspense fallback={<TableSkeleton rows={5} />}><Outlet /></Suspense>
           </div>
         </div>
       </main>

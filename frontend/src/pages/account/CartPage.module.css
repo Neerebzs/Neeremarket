@@ -22,7 +22,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #94a3b8;
+  color: var(--color-ink-muted);
   font-size: 0.85rem;
   font-weight: 500;
 }
@@ -31,9 +31,9 @@
   width: 1.75rem;
   height: 1.75rem;
   border-radius: 999px;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  color: #64748b;
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border-strong);
+  color: var(--color-ink-muted);
   display: grid;
   place-items: center;
   font-size: 0.8rem;
@@ -41,7 +41,7 @@
 }
 
 .stepActive {
-  color: #0f172a;
+  color: var(--color-ink);
   font-weight: 700;
 }
 
@@ -54,7 +54,7 @@
 .stepLine {
   flex: 1;
   height: 2px;
-  background: #e2e8f0;
+  background: var(--color-border);
   min-width: 2rem;
 }
 
@@ -66,7 +66,7 @@
   flex-wrap: wrap;
   gap: 1rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .headerLeft {
@@ -78,13 +78,13 @@
 .headerTitle {
   font-size: 1.75rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--color-ink);
   letter-spacing: -0.02em;
   margin: 0;
 }
 
 .itemCountBadge {
-  background: #fff7ed;
+  background: var(--color-brand-soft);
   color: var(--color-brand-deep);
   border: 1px solid #ffedd5;
   font-size: 0.85rem;
@@ -114,11 +114,11 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  background: var(--color-success-soft);
+  border: 1px solid var(--color-success-border);
   border-radius: 10px;
   padding: 0.85rem 1.15rem;
-  color: #166534;
+  color: var(--color-success);
   font-size: 0.85rem;
   line-height: 1.45;
 }
@@ -129,13 +129,13 @@
   width: 1.75rem;
   height: 1.75rem;
   border-radius: 999px;
-  background: #dcfce7;
-  color: #15803d;
+  background: var(--color-success-soft);
+  color: var(--color-success);
   flex-shrink: 0;
 }
 
 .guaranteeText strong {
-  color: #14532d;
+  color: var(--color-success);
   font-weight: 700;
 }
 
@@ -146,11 +146,11 @@
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: var(--color-danger-soft);
+  border: 1px solid var(--color-danger-border);
   border-radius: 10px;
   padding: 0.85rem 1.15rem;
-  color: #991b1b;
+  color: var(--color-danger-deep);
   font-size: 0.85rem;
 }
 
@@ -164,7 +164,7 @@
 .removeOosBtn {
   background: #ffffff;
   border: 1px solid #f87171;
-  color: #b91c1c;
+  color: var(--color-danger-deep);
   border-radius: 6px;
   padding: 0.35rem 0.75rem;
   font-size: 0.8rem;
@@ -174,7 +174,7 @@
 }
 
 .removeOosBtn:hover {
-  background: #b91c1c;
+  background: var(--color-danger-deep);
   color: #ffffff;
 }
 
@@ -196,7 +196,7 @@
 /* Multi-Vendor Seller Group Card */
 .sellerCard {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   overflow: hidden;
   box-shadow: none;
@@ -209,8 +209,8 @@
   flex-wrap: wrap;
   gap: 0.75rem;
   padding: 0.95rem 1.25rem;
-  background: #f8fafc;
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--color-surface-subtle);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .sellerInfo {
@@ -225,17 +225,17 @@
   height: 1.85rem;
   border-radius: 8px;
   background: #ffffff;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--color-border-strong);
   display: grid;
   place-items: center;
-  color: #334155;
+  color: var(--color-ink-muted);
   flex-shrink: 0;
 }
 
 .sellerNameLink {
   font-size: 0.95rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--color-ink);
   text-decoration: none;
   transition: color 0.15s ease;
 }
@@ -249,10 +249,10 @@
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  background: #eff6ff;
-  color: #1d4ed8;
-  border: 1px solid #bfdbfe;
-  font-size: 0.7rem;
+  background: var(--color-info-soft);
+  color: var(--color-info);
+  border: 1px solid var(--color-info-border);
+  font-size: 0.75rem;
   font-weight: 700;
   padding: 0.15rem 0.5rem;
   border-radius: 999px;
@@ -261,7 +261,7 @@
 
 .sellerLocation {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--color-ink-muted);
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -277,23 +277,23 @@
   justify-content: space-between;
   padding: 0.85rem 1.25rem;
   background: #ffffff;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--color-surface-subtle);
   font-size: 0.85rem;
 }
 
 .sellerPkgNote {
-  color: #64748b;
+  color: var(--color-ink-muted);
   font-size: 0.775rem;
   margin: 0;
 }
 
 .sellerSubtotal {
   margin: 0;
-  color: #334155;
+  color: var(--color-ink-muted);
 }
 
 .sellerSubtotal strong {
-  color: #0f172a;
+  color: var(--color-ink);
   font-size: 0.95rem;
   font-weight: 700;
   margin-left: 0.35rem;
@@ -304,7 +304,7 @@
   position: sticky;
   top: 90px;
   background: #ffffff;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 1.35rem;
   display: flex;
@@ -319,13 +319,13 @@
   justify-content: space-between;
   margin: 0;
   padding-bottom: 0.85rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .summaryTitle {
   font-size: 1.15rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--color-ink);
   margin: 0;
 }
 
@@ -333,7 +333,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  color: #15803d;
+  color: var(--color-success);
   font-size: 0.75rem;
   font-weight: 600;
 }
@@ -349,27 +349,27 @@
   align-items: center;
   justify-content: space-between;
   font-size: 0.875rem;
-  color: #475569;
+  color: var(--color-ink-muted);
   margin: 0;
 }
 
 .summaryRowValue {
-  color: #0f172a;
+  color: var(--color-ink);
   font-weight: 600;
 }
 
 .freeTag {
-  color: #16a34a;
+  color: var(--color-success);
   font-weight: 700;
   font-size: 0.8rem;
-  background: #f0fdf4;
+  background: var(--color-success-soft);
   padding: 0.1rem 0.45rem;
   border-radius: 4px;
 }
 
 .summaryDivider {
   height: 1px;
-  background: #e5e7eb;
+  background: var(--color-border);
   margin: 0.25rem 0;
 }
 
@@ -389,13 +389,13 @@
 .promoInput {
   flex: 1;
   height: 2.25rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--color-border-strong);
   border-radius: 8px;
   padding: 0 0.75rem;
   font-size: 0.8rem;
-  color: #0f172a;
+  color: var(--color-ink);
   outline: none;
-  background: #f8fafc;
+  background: var(--color-surface-subtle);
   transition: all 0.15s ease;
 }
 
@@ -407,19 +407,19 @@
 .promoBtn {
   height: 2.25rem;
   padding: 0 0.85rem;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border-strong);
   border-radius: 8px;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #334155;
+  color: var(--color-ink-muted);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .promoBtn:hover {
-  background: #e2e8f0;
-  color: #0f172a;
+  background: var(--color-border);
+  color: var(--color-ink);
 }
 
 .promoMessage {
@@ -428,12 +428,12 @@
 }
 
 .promoSuccess {
-  color: #15803d;
+  color: var(--color-success);
   font-weight: 600;
 }
 
 .promoError {
-  color: #b91c1c;
+  color: var(--color-danger-deep);
 }
 
 /* Total Row */
@@ -447,13 +447,13 @@
 .totalLabel {
   font-size: 1.05rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--color-ink);
   margin: 0;
 }
 
 .totalSubtext {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--color-ink-muted);
   font-weight: 400;
   display: block;
 }
@@ -500,15 +500,15 @@
   flex-direction: column;
   gap: 0.5rem;
   padding-top: 0.85rem;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--color-surface-subtle);
 }
 
 .paymentTitle {
-  font-size: 0.725rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 700;
-  color: #64748b;
+  color: var(--color-ink-muted);
   margin: 0;
 }
 
@@ -522,12 +522,12 @@
   display: inline-flex;
   align-items: center;
   padding: 0.2rem 0.5rem;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: #475569;
+  color: var(--color-ink-muted);
 }
 
 /* Security Trust Items */
@@ -539,7 +539,7 @@
   flex-direction: column;
   gap: 0.4rem;
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--color-ink-muted);
 }
 
 .securityNotes li {
@@ -556,7 +556,7 @@
   left: 0;
   right: 0;
   background: rgba(255, 255, 255, 0.96);
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--color-border);
   padding: 0.75rem 1rem;
   z-index: 99;
   backdrop-filter: blur(8px);
@@ -572,7 +572,7 @@
 
 .mobileTotalLabel {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--color-ink-muted);
 }
 
 .mobileTotalAmount {
@@ -598,7 +598,7 @@
 .recommendSection {
   margin-top: 3rem;
   padding-top: 2rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--color-border);
 }
 
 .recommendHeader {
@@ -611,7 +611,7 @@
 .recommendTitle {
   font-size: 1.35rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--color-ink);
   margin: 0;
 }
 
@@ -624,7 +624,7 @@
 /* Empty State Card */
 .emptyCard {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 16px;
   padding: 3.5rem 2rem;
   text-align: center;
@@ -640,7 +640,7 @@
   width: 4.5rem;
   height: 4.5rem;
   border-radius: 999px;
-  background: #fff7ed;
+  background: var(--color-brand-soft);
   border: 1px solid #ffedd5;
   color: var(--color-brand);
   display: grid;
@@ -650,12 +650,12 @@
 .emptyTitle {
   font-size: 1.6rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--color-ink);
   margin: 0;
 }
 
 .emptyDesc {
-  color: #64748b;
+  color: var(--color-ink-muted);
   font-size: 0.95rem;
   max-width: 460px;
   line-height: 1.5;
@@ -687,9 +687,9 @@
 }
 
 .secondaryWishlistBtn {
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
-  color: #334155;
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border-strong);
+  color: var(--color-ink-muted);
   padding: 0.75rem 1.25rem;
   border-radius: 8px;
   font-weight: 600;
@@ -699,8 +699,8 @@
 }
 
 .secondaryWishlistBtn:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+  background: var(--color-surface-subtle);
+  color: var(--color-ink);
 }
 
 .categoryPillsWrap {
@@ -714,7 +714,7 @@
 .categoryPillsLabel {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #94a3b8;
+  color: var(--color-ink-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin: 0;
@@ -731,8 +731,8 @@
   display: inline-flex;
   align-items: center;
   padding: 0.35rem 0.85rem;
-  background: #f1f5f9;
-  color: #334155;
+  background: var(--color-surface-subtle);
+  color: var(--color-ink-muted);
   border-radius: 999px;
   font-size: 0.8rem;
   font-weight: 600;
@@ -741,14 +741,14 @@
 }
 
 .categoryPill:hover {
-  background: #e2e8f0;
-  color: #0f172a;
+  background: var(--color-border);
+  color: var(--color-ink);
 }
 
 /* Guest Not Signed In Card */
 .guestCard {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 16px;
   padding: 3rem 2rem;
   max-width: 640px;
@@ -769,7 +769,7 @@
   gap: 0.65rem;
   text-align: left;
   font-size: 0.875rem;
-  color: #475569;
+  color: var(--color-ink-muted);
 }
 
 .guestBenefits li {
@@ -779,7 +779,7 @@
 }
 
 .checkIcon {
-  color: #16a34a;
+  color: var(--color-success);
   font-weight: 800;
 }
 

@@ -48,3 +48,4 @@
   color: var(--color-brand);
   font-weight: var(--weight-semibold);
 }
+.storeName { font-family: var(--font-display); }

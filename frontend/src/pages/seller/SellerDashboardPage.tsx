@@ -1,3 +1,4 @@
+import { OrderValueChart } from '@/components/dashboard/OrderValueChart';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useMe, useSellerDashboard, useSellerOrders, useSellerProducts } from '@/api/hooks';
@@ -48,8 +49,10 @@ const OPEN_ORDER_STATUSES = ['PAID', 'CONFIRMED', 'PROCESSING', 'READY_FOR_SHIPM
 function SellerDashboard() {
   const navigate = useNavigate();
   const { data: dashboard, isLoading, isError, error } = useSellerDashboard();
-  const { data: products } = useSellerProducts();
-  const { data: orders } = useSellerOrders();
+  const productsQuery = useSellerProducts();
+  const products = productsQuery.data;
+  const ordersQuery = useSellerOrders();
+  const orders = ordersQuery.data;
 
   const wallet = dashboard?.wallet as
     | { pendingBalance: string; availableBalance: string; currency: string }
@@ -77,7 +80,7 @@ function SellerDashboard() {
         <div className={styles.pageHeadCopy}>
           <p className={styles.kicker}>Seller Console</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-            <h1 style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0, letterSpacing: '-0.025em', color: '#0f172a' }}>
+            <h1>
               {store?.name || seller?.businessName || 'Your Store Overview'}
             </h1>
             <Badge tone={statusTone(seller?.verificationStatus || 'PENDING')}>
@@ -85,7 +88,7 @@ function SellerDashboard() {
             </Badge>
           </div>
           <p className={styles.muted} style={{ margin: '0.2rem 0 0' }}>
-            Welcome back! Monitor your sales, fulfillment queues, and inventory health in real-time.
+            Manage your orders, review stock, and keep your store ready for customers.
           </p>
         </div>
 
@@ -163,7 +166,7 @@ function SellerDashboard() {
                 <span className={styles.kpiIcon} data-tone="ok">
                   <MetricIcon path={ICONS.wallet} />
                 </span>
-                <span>Available</span>
+                <span>Available balance</span>
               </div>
               <strong>{formatRwf(wallet?.availableBalance || 0)}</strong>
               <em>Ready to withdraw</em>
@@ -173,7 +176,7 @@ function SellerDashboard() {
                 <span className={styles.kpiIcon} data-tone="warn">
                   <MetricIcon path={ICONS.hold} />
                 </span>
-                <span>Pending</span>
+                <span>Pending balance</span>
               </div>
               <strong>{formatRwf(wallet?.pendingBalance || 0)}</strong>
               <em>Held until fulfillment</em>
@@ -200,13 +203,16 @@ function SellerDashboard() {
             </article>
           </section>
 
+          {ordersQuery.isSuccess && orders ? <OrderValueChart orders={orders.items} /> : null}
           <section className={styles.split}>
             <article className={styles.panel}>
               <div className={styles.panelHead}>
                 <h2>Recent orders</h2>
                 <Link to="/seller/orders">View all</Link>
               </div>
-              {!orders?.items.length ? (
+              {ordersQuery.isLoading ? <TableSkeleton rows={3} /> : ordersQuery.isError ? (
+                <div className={styles.panelBody}><Alert tone="error">{getErrorMessage(ordersQuery.error)}</Alert><Button variant="secondary" onClick={() => ordersQuery.refetch()}>Retry orders</Button></div>
+              ) : !orders?.items.length ? (
                 <div className={styles.panelBody}>
                   <EmptyState compact title="No orders yet" description="Paid customer orders appear here." />
                 </div>
@@ -269,7 +275,9 @@ function SellerDashboard() {
               <h2>Latest products</h2>
               <Link to="/seller/products">View catalog</Link>
             </div>
-            {!products?.items.length ? (
+            {productsQuery.isLoading ? <TableSkeleton rows={3} /> : productsQuery.isError ? (
+              <div className={styles.panelBody}><Alert tone="error">{getErrorMessage(productsQuery.error)}</Alert><Button variant="secondary" onClick={() => productsQuery.refetch()}>Retry products</Button></div>
+            ) : !products?.items.length ? (
               <div className={styles.panelBody}>
                 <EmptyState
                   compact
@@ -298,7 +306,7 @@ function SellerDashboard() {
                           <td>
                             <div className={styles.item}>
                               {p.images?.[0]?.url ? (
-                                <img className={styles.thumb} src={p.images[0].url} alt="" />
+                                <img className={styles.thumb} src={p.images[0].url} alt="" loading="lazy" width={40} height={40} />
                               ) : (
                                 <span className={styles.thumb} />
                               )}

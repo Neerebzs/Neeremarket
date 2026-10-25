@@ -1,3 +1,4 @@
+import { useTableSort } from '@/components/ui/useTableSort';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAdminOrders } from '@/api/hooks';
@@ -18,11 +19,12 @@ import { prettyStatus, statusTone } from '@/utils/status';
 import styles from '@/pages/workspace/workspace.module.css';
 
 export function OrdersTab() {
-  const { data, isLoading, isError, error } = useAdminOrders();
+  const { sortRows, sortProps } = useTableSort();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = 20;
+  const { data, isLoading, isError, error } = useAdminOrders(page);
 
   if (isLoading) return <TableSkeleton />;
   if (isError) return <Alert tone="error">{getErrorMessage(error)}</Alert>;
@@ -41,13 +43,15 @@ export function OrdersTab() {
     return matchesFilter && matchesSearch;
   });
 
-  const totalPages = Math.ceil(filteredOrders.length / pageSize);
-  const paginatedOrders = filteredOrders.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = data?.pagination.totalPages ?? 1;
+  const safePage = Math.min(page, Math.max(1, totalPages));
+  const paginatedOrders = sortRows(filteredOrders, {'Order': (o) => o.orderNumber, 'Customer': (o) => o.customer.fullName, 'Status': (o) => o.status, 'Total': (o) => Number(o.total)});
 
   return (
     <>
 
 
+      <p className={styles.muted}>Sorting and text filters apply to the current page. Use pagination to review more records.</p>
       <TableCard>
         <TableBanner
           icon={
@@ -58,8 +62,7 @@ export function OrdersTab() {
           }
           title="Marketplace Orders Queue"
           subtitle={
-            <span>
-              <strong>{pendingCount}</strong> pending · <strong>{paidCount}</strong> paid · <strong>{deliveredCount}</strong> delivered · <strong>{orders.length}</strong> total orders
+            <span>On this page: <strong>{pendingCount}</strong> pending · <strong>{paidCount}</strong> paid · <strong>{deliveredCount}</strong> delivered · <strong>{orders.length}</strong> total orders
             </span>
           }
         />
@@ -69,7 +72,7 @@ export function OrdersTab() {
             setSearch(val);
             setPage(1);
           }}
-          searchPlaceholder="Search by order #, customer..."
+          searchPlaceholder="Search this page: by order #, customer..."
           filterChips={[
             { id: '', label: 'All Orders', count: orders.length },
             { id: 'PAID', label: 'Paid', count: paidCount },
@@ -89,14 +92,15 @@ export function OrdersTab() {
           <table className={styles.table}>
             <thead>
               <tr>
-                <SortTh>Order</SortTh>
-                <SortTh>Customer</SortTh>
-                <SortTh>Status</SortTh>
-                <SortTh>Total</SortTh>
+                <SortTh {...sortProps('Order')}>Order</SortTh>
+                <SortTh {...sortProps('Customer')}>Customer</SortTh>
+                <SortTh {...sortProps('Status')}>Status</SortTh>
+                <SortTh {...sortProps('Total')}>Total</SortTh>
                 <SortTh sortable={false}>Actions</SortTh>
               </tr>
             </thead>
             <tbody>
+              {!paginatedOrders.length && !isLoading && !isError ? <tr><td colSpan={5}>No records match this view. Adjust the filters or move to another page.</td></tr> : null}
               {paginatedOrders.map((o) => (
                 <tr key={o.id}>
                   <td>
@@ -118,9 +122,9 @@ export function OrdersTab() {
           </table>
         </div>
         <TablePagination
-          page={page}
+          page={safePage}
           totalPages={totalPages}
-          totalItems={filteredOrders.length}
+          totalItems={data?.pagination.total ?? filteredOrders.length}
           pageSize={pageSize}
           onPageChange={setPage}
         />

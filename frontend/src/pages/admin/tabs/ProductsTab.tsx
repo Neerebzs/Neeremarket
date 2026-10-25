@@ -1,7 +1,11 @@
+import { useMe } from '@/api/hooks';
+import { hasAdminPermission } from '@/utils/adminAccess';
+import { useTableSort } from '@/components/ui/useTableSort';
 import { useState } from 'react';
 import { useAdminProducts, useModerateProduct } from '@/api/hooks';
 import {
   ActionIconButton,
+  useConfirm,
   Alert,
   Badge,
   EmptyState,
@@ -19,12 +23,16 @@ import { prettyStatus, statusTone } from '@/utils/status';
 import styles from '@/pages/workspace/workspace.module.css';
 
 export function ProductsTab() {
+  const { data: currentAdmin } = useMe();
+  const canMutate = hasAdminPermission(currentAdmin, 'products.approve');
+  const confirm = useConfirm();
+  const { sortRows, sortProps } = useTableSort();
   const [filter, setFilter] = useState('PENDING_APPROVAL');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = 20;
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
-  const pending = useAdminProducts(filter || undefined);
+  const pending = useAdminProducts(filter || undefined, true, page);
   const moderate = useModerateProduct();
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -39,17 +47,20 @@ export function ProductsTab() {
       )
     : allProducts;
 
-  const totalPages = Math.ceil(displayedProducts.length / pageSize);
-  const paginatedProducts = displayedProducts.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = pending.data?.pagination.totalPages ?? 1;
+  const safePage = Math.min(page, Math.max(1, totalPages));
+  const paginatedProducts = sortRows(displayedProducts, {'Product': (p) => p.name, 'Price': (p) => Number(p.price), 'Status': (p) => p.status});
 
   return (
     <>
 
 
+      {moderate.isError ? <Alert tone="error">{getErrorMessage(moderate.error)}</Alert> : null}
       {msg ? <Alert tone="success">{msg}</Alert> : null}
       {pending.isLoading ? <TableSkeleton /> : null}
       {pending.isError ? <Alert tone="error">{getErrorMessage(pending.error)}</Alert> : null}
 
+      <p className={styles.muted}>Sorting and text filters apply to the current page. Use pagination to review more records.</p>
       <TableCard>
         <TableBanner
           icon={
@@ -61,8 +72,7 @@ export function ProductsTab() {
           }
           title="Catalog Moderation Queue"
           subtitle={
-            <span>
-              <strong>{filter === 'PENDING_APPROVAL' ? allProducts.length : inReviewCount}</strong> awaiting review · <strong>{allProducts.length}</strong> listings in view
+            <span>On this page: <strong>{filter === 'PENDING_APPROVAL' ? allProducts.length : inReviewCount}</strong> awaiting review · <strong>{allProducts.length}</strong> listings in view
             </span>
           }
         />
@@ -72,7 +82,7 @@ export function ProductsTab() {
             setSearch(val);
             setPage(1);
           }}
-          searchPlaceholder="Search by product name, store..."
+          searchPlaceholder="Search this page: by product name, store..."
           filterChips={[
             { id: 'PENDING_APPROVAL', label: 'In Review' },
             { id: 'ACTIVE', label: 'Live' },
@@ -95,9 +105,9 @@ export function ProductsTab() {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <SortTh>Product</SortTh>
-                  <SortTh>Price</SortTh>
-                  <SortTh>Status</SortTh>
+                  <SortTh {...sortProps('Product')}>Product</SortTh>
+                  <SortTh {...sortProps('Price')}>Price</SortTh>
+                  <SortTh {...sortProps('Status')}>Status</SortTh>
                   <SortTh sortable={false}>Actions</SortTh>
                 </tr>
               </thead>
@@ -123,24 +133,27 @@ export function ProductsTab() {
                           icon="check"
                           tone="success"
                           label="Approve Product Listing"
-                          disabled={p.status === 'ACTIVE'}
-                          onClick={() =>
+                          disabled={!canMutate || moderate.isPending || p.status === 'ACTIVE'}
+                          onClick={async () => {
+                            if (!canMutate || !await confirm({ title: 'Confirm approval', message: 'Apply this product approval? This changes marketplace visibility.', tone: 'info' })) return;
                             moderate.mutate(
                               { id: p.id, status: 'ACTIVE' },
                               { onSuccess: () => setMsg('Product approved') },
-                            )
-                          }
+                            );
+                          }}
                         />
                         <ActionIconButton
                           icon="cross"
                           tone="danger"
                           label="Reject Product Listing"
-                          onClick={() =>
+                          disabled={!canMutate || moderate.isPending}
+                          onClick={async () => {
+                            if (!canMutate || !await confirm({ title: 'Confirm rejection', message: 'Apply this product rejection? This changes marketplace visibility.', tone: 'danger' })) return;
                             moderate.mutate(
                               { id: p.id, status: 'REJECTED', reason: 'Does not meet policy' },
                               { onSuccess: () => setMsg('Product rejected') },
-                            )
-                          }
+                            );
+                          }}
                         />
                       </div>
                     </td>
@@ -151,9 +164,9 @@ export function ProductsTab() {
           </div>
         )}
         <TablePagination
-          page={page}
+          page={safePage}
           totalPages={totalPages}
-          totalItems={displayedProducts.length}
+          totalItems={pending.data?.pagination.total ?? displayedProducts.length}
           pageSize={pageSize}
           onPageChange={setPage}
         />

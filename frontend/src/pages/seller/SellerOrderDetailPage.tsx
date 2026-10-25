@@ -159,8 +159,8 @@ export function SellerOrderDetailPage() {
                       borderRadius: '6px',
                       fontSize: '0.75rem',
                       fontWeight: 600,
-                      background: '#ecfdf5',
-                      color: '#065f46',
+                      background: 'var(--color-success-soft)',
+                      color: 'var(--color-success)',
                       textDecoration: 'none',
                       border: '1px solid #a7f3d0'
                     }}
@@ -183,8 +183,8 @@ export function SellerOrderDetailPage() {
                           borderRadius: '6px',
                           fontSize: '0.75rem',
                           fontWeight: 600,
-                          background: '#f0fdf4',
-                          color: '#15803d',
+                          background: 'var(--color-success-soft)',
+                          color: 'var(--color-success)',
                           textDecoration: 'none',
                           border: '1px solid #bbf7d0'
                         }}

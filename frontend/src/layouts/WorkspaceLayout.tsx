@@ -1,20 +1,22 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useLogout, useMe, useNotifications } from '@/api/hooks';
+import { TableSkeleton } from '@/components/ui';
+import { WorkspaceAccess } from '@/components/auth/WorkspaceAccess';
+import {
+  useLogout,
+  useMe,
+  useMessageThreads,
+  useNotifications,
+  useSellerProfile,
+} from '@/api/hooks';
 import { APP_LOGO_SRC, APP_NAME } from '@/config/brand';
-import { loginHref } from '@/utils/auth';
+import { isSellerRole, loginHref } from '@/utils/auth';
+import { canAccessAdminSection } from '@/utils/adminAccess';
 import styles from './WorkspaceLayout.module.css';
 
 const COLLAPSE_KEY = 'nm_workspace_sidebar_collapsed';
 
 type Variant = 'seller' | 'admin';
-
-type NavItem = {
-  to: string;
-  label: string;
-  end?: boolean;
-  icon: IconName;
-};
 
 type IconName =
   | 'overview'
@@ -35,75 +37,31 @@ type IconName =
   | 'inventory'
   | 'reviews';
 
-const SELLER_GROUPS: Array<{ label: string; items: NavItem[] }> = [
-  {
-    label: 'Workspace',
-    items: [
-      { to: '/seller', label: 'Overview', end: true, icon: 'overview' },
-      { to: '/seller/products', label: 'Catalog', icon: 'products' },
-      { to: '/seller/inventory', label: 'Inventory', icon: 'inventory' },
-      { to: '/seller/reviews', label: 'Reviews', icon: 'reviews' },
-      { to: '/seller/orders', label: 'Orders', icon: 'orders' },
-      { to: '/seller/finance', label: 'Finance', icon: 'finance' },
-    ],
-  },
-  {
-    label: 'Support',
-    items: [
-      { to: '/seller/messages', label: 'Messages', icon: 'messages' },
-      { to: '/seller/disputes', label: 'Disputes', icon: 'disputes' },
-      { to: '/seller/notifications', label: 'Alerts', icon: 'alerts' },
-    ],
-  },
-  {
-    label: 'Account',
-    items: [
-      { to: '/seller/onboarding', label: 'Onboarding', icon: 'onboarding' },
-      { to: '/seller/profile', label: 'Profile', icon: 'profile' },
-    ],
-  },
-];
-
-const ADMIN_GROUPS: Array<{ label: string; items: NavItem[] }> = [
-  {
-    label: 'Operations',
-    items: [
-      { to: '/admin', label: 'Overview', end: true, icon: 'overview' },
-      { to: '/admin/users', label: 'Users', icon: 'users' },
-      { to: '/admin/sellers', label: 'Sellers', icon: 'sellers' },
-      { to: '/admin/products', label: 'Products', icon: 'products' },
-      { to: '/admin/orders', label: 'Orders', icon: 'orders' },
-      { to: '/admin/payouts', label: 'Payouts', icon: 'payouts' },
-      { to: '/admin/disputes', label: 'Disputes', icon: 'disputes' },
-    ],
-  },
-  {
-    label: 'Inbox',
-    items: [
-      { to: '/admin/messages', label: 'Messages', icon: 'messages' },
-      { to: '/admin/notifications', label: 'Alerts', icon: 'alerts' },
-    ],
-  },
-  {
-    label: 'Platform',
-    items: [
-      { to: '/admin/cms', label: 'CMS', icon: 'cms' },
-      { to: '/admin/settings', label: 'Settings', icon: 'settings' },
-      { to: '/admin/audit', label: 'Audit log', icon: 'audit' },
-      { to: '/admin/profile', label: 'Profile', icon: 'profile' },
-    ],
-  },
-];
+type NavItem = {
+  to: string;
+  label: string;
+  end?: boolean;
+  icon: IconName;
+  badge?: number | string | null;
+  badgeTone?: 'brand' | 'neutral';
+};
 
 export function WorkspaceLayout({ variant }: { variant: Variant }) {
   const { data: user, isLoading } = useMe();
   const { data: notifications } = useNotifications();
+  const isSeller = variant === 'seller' && isSellerRole(user?.roles);
+  const { data: seller } = useSellerProfile(Boolean(isSeller && user));
+  const { data: messageThreads } = useMessageThreads(variant === 'admin', Boolean(user));
   const logout = useLogout();
   const navigate = useNavigate();
   const { pathname } = useLocation();
+
   const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const sidebarRef = useRef<HTMLElement>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
+
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem(COLLAPSE_KEY) === '1';
@@ -112,16 +70,144 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
     }
   });
 
-  const groups = variant === 'seller' ? SELLER_GROUPS : ADMIN_GROUPS;
-  const unread = notifications?.unreadCount || 0;
-  const initials = useMemo(() => initialsFrom(user?.email || user?.phone), [user?.email, user?.phone]);
+  // Calculate unread badge counters from real API responses
+  const unreadMessages = useMemo(() => {
+    return messageThreads?.items?.reduce((acc, t) => acc + (t.unreadCount || 0), 0) || 0;
+  }, [messageThreads]);
+
+  const unreadAlerts = notifications?.unreadCount || 0;
+
+  // Seller Navigation Architecture
+  const sellerGroups: Array<{ label: string; items: NavItem[] }> = useMemo(() => [
+    {
+      label: 'Store Operations',
+      items: [
+        { to: '/seller', label: 'Overview', end: true, icon: 'overview' },
+        { to: '/seller/orders', label: 'Orders', icon: 'orders' },
+        { to: '/seller/products', label: 'Products & Listings', icon: 'products' },
+        { to: '/seller/inventory', label: 'Inventory Stock', icon: 'inventory' },
+        { to: '/seller/reviews', label: 'Customer Reviews', icon: 'reviews' },
+        { to: '/seller/finance', label: 'Finances & Payouts', icon: 'finance' },
+      ],
+    },
+    {
+      label: 'Communication',
+      items: [
+        {
+          to: '/seller/messages',
+          label: 'Customer Messages',
+          icon: 'messages',
+          badge: unreadMessages > 0 ? (unreadMessages > 99 ? '99+' : unreadMessages) : null,
+          badgeTone: 'brand',
+        },
+        { to: '/seller/disputes', label: 'Dispute Cases', icon: 'disputes' },
+        {
+          to: '/seller/notifications',
+          label: 'Store Alerts',
+          icon: 'alerts',
+          badge: unreadAlerts > 0 ? (unreadAlerts > 99 ? '99+' : unreadAlerts) : null,
+          badgeTone: 'brand',
+        },
+      ],
+    },
+    {
+      label: 'Storefront & Account',
+      items: [
+        { to: '/seller/profile', label: 'Store Settings', icon: 'profile' },
+        { to: '/seller/onboarding', label: 'Seller Verification', icon: 'onboarding' },
+      ],
+    },
+  ], [unreadMessages, unreadAlerts]);
+
+  // Admin Navigation Architecture
+  const adminGroups: Array<{ label: string; items: NavItem[] }> = useMemo(() => [
+    {
+      label: 'Overview',
+      items: [
+        { to: '/admin', label: 'Operations Dashboard', end: true, icon: 'overview' },
+      ],
+    },
+    {
+      label: 'Marketplace',
+      items: [
+        { to: '/admin/sellers', label: 'Sellers Directory', icon: 'sellers' },
+        { to: '/admin/products', label: 'Product Moderation', icon: 'products' },
+        { to: '/admin/orders', label: 'Marketplace Orders', icon: 'orders' },
+      ],
+    },
+    {
+      label: 'Finance',
+      items: [
+        { to: '/admin/payouts', label: 'Payouts & Settlement', icon: 'payouts' },
+      ],
+    },
+    {
+      label: 'Operations',
+      items: [
+        { to: '/admin/disputes', label: 'Dispute Resolution', icon: 'disputes' },
+      ],
+    },
+    {
+      label: 'Communication',
+      items: [
+        {
+          to: '/admin/messages',
+          label: 'Inquiries & Messages',
+          icon: 'messages',
+          badge: unreadMessages > 0 ? (unreadMessages > 99 ? '99+' : unreadMessages) : null,
+          badgeTone: 'brand',
+        },
+        {
+          to: '/admin/notifications',
+          label: 'System Alerts',
+          icon: 'alerts',
+          badge: unreadAlerts > 0 ? (unreadAlerts > 99 ? '99+' : unreadAlerts) : null,
+          badgeTone: 'brand',
+        },
+      ],
+    },
+    {
+      label: 'System & Governance',
+      items: [
+        { to: '/admin/users', label: 'Users & Roles', icon: 'users' },
+        { to: '/admin/cms', label: 'Content Management', icon: 'cms' },
+        { to: '/admin/audit', label: 'Audit Trail', icon: 'audit' },
+        { to: '/admin/settings', label: 'Platform Settings', icon: 'settings' },
+        { to: '/admin/profile', label: 'Admin Profile', icon: 'profile' },
+      ],
+    },
+  ], [unreadMessages, unreadAlerts]);
+
+  // Apply RBAC filters to respect backend permission contracts
+  const groups = useMemo(() => {
+    const rawGroups = variant === 'seller' ? sellerGroups : adminGroups;
+    return rawGroups
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) =>
+          variant === 'seller'
+            ? isSellerRole(user?.roles)
+            : canAccessAdminSection(user, item.to.split('/')[2] || 'overview'),
+        ),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [variant, sellerGroups, adminGroups, user]);
+
+  const initials = useMemo(() => initialsFrom(user?.fullName || user?.email || user?.phone), [
+    user?.fullName,
+    user?.email,
+    user?.phone,
+  ]);
+
   const displayName = useMemo(
-    () => displayNameFrom(user?.email, user?.phone),
-    [user?.email, user?.phone],
+    () => user?.fullName || displayNameFrom(user?.email, user?.phone),
+    [user?.fullName, user?.email, user?.phone],
   );
+
   const profileTo = variant === 'seller' ? '/seller/profile' : '/admin/profile';
   const settingsTo = variant === 'seller' ? '/seller/profile' : '/admin/settings';
 
+  // Persist sidebar collapsed preference
   useEffect(() => {
     try {
       localStorage.setItem(COLLAPSE_KEY, collapsed ? '1' : '0');
@@ -130,24 +216,99 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
     }
   }, [collapsed]);
 
+  // Global keyboard shortcut: Ctrl+[ or Cmd+[ toggles sidebar collapse
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+      if ((e.ctrlKey || e.metaKey) && e.key === '[') {
+        e.preventDefault();
+        setCollapsed((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
+  // Close mobile drawer and menus on navigation
   useEffect(() => {
     setMenuOpen(false);
     setOpen(false);
   }, [pathname]);
 
+  // Sync mobile drawer inert state
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 980px)');
+    const sync = () => {
+      if (sidebarRef.current) sidebarRef.current.inert = media.matches && !open;
+      if (!media.matches) setOpen(false);
+    };
+    sync();
+    media.addEventListener('change', sync);
+    return () => {
+      media.removeEventListener('change', sync);
+      if (sidebarRef.current) sidebarRef.current.inert = false;
+    };
+  }, [open]);
+
+  // Mobile focus trap and escape handling
+  useEffect(() => {
+    if (!open) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const main = mainRef.current;
+    if (main) main.inert = true;
+
+    const getControls = () =>
+      Array.from(
+        sidebarRef.current?.querySelectorAll<HTMLElement>(
+          'a[href], button:not(:disabled), [tabindex="0"]',
+        ) ?? [],
+      ).filter((node) => node.getClientRects().length > 0);
+
+    getControls()[0]?.focus();
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setOpen(false);
+      }
+      if (event.key !== 'Tab') return;
+      const controls = getControls();
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      if (main) main.inert = false;
+      if (previousFocus?.isConnected) previousFocus.focus();
+    };
+  }, [open]);
+
+  // Close user dropdown on outside click or Escape
   useEffect(() => {
     if (!menuOpen) return;
-
     function onPointerDown(event: MouseEvent) {
       if (!menuRef.current?.contains(event.target as Node)) {
         setMenuOpen(false);
       }
     }
-
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setMenuOpen(false);
+      if (event.key === 'Escape') {
+        setMenuOpen(false);
+        menuRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
+      }
     }
-
     document.addEventListener('mousedown', onPointerDown);
     document.addEventListener('keydown', onKeyDown);
     return () => {
@@ -158,145 +319,353 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
 
   const pageTitle = useMemo(() => {
     if (variant === 'seller') {
-      if (pathname.startsWith('/seller/products/new')) return 'New listing';
-      if (pathname.includes('/edit') && pathname.startsWith('/seller/products/')) return 'Edit listing';
-      if (pathname.startsWith('/seller/products/') && pathname !== '/seller/products') return 'Listing details';
+      if (pathname.startsWith('/seller/products/new')) return 'New Listing';
+      if (pathname.includes('/edit') && pathname.startsWith('/seller/products/')) return 'Edit Listing';
+      if (pathname.startsWith('/seller/products/') && pathname !== '/seller/products') return 'Listing Details';
       if (pathname.startsWith('/seller/products')) return 'Catalog';
-      if (pathname.startsWith('/seller/inventory')) return 'Inventory';
-      if (pathname.startsWith('/seller/orders/') && pathname !== '/seller/orders') return 'Order details';
+      if (pathname.startsWith('/seller/reviews')) return 'Customer Reviews';
+      if (pathname.startsWith('/seller/inventory')) return 'Inventory Stock';
+      if (pathname.startsWith('/seller/orders/') && pathname !== '/seller/orders') return 'Order Details';
       if (pathname.startsWith('/seller/orders')) return 'Orders';
-      if (pathname.startsWith('/seller/finance')) return 'Finance';
+      if (pathname.startsWith('/seller/finance')) return 'Finances & Payouts';
       if (pathname.startsWith('/seller/messages')) return 'Messages';
-      if (pathname.startsWith('/seller/disputes')) return 'Disputes';
-      if (pathname.startsWith('/seller/notifications')) return 'Alerts';
-      if (pathname.startsWith('/seller/onboarding')) return 'Onboarding';
-      if (pathname.startsWith('/seller/profile')) return 'Profile';
+      if (pathname.startsWith('/seller/disputes')) return 'Dispute Cases';
+      if (pathname.startsWith('/seller/notifications')) return 'Store Alerts';
+      if (pathname.startsWith('/seller/onboarding')) return 'Seller Onboarding';
+      if (pathname.startsWith('/seller/profile')) return 'Store Settings';
       return 'Overview';
     }
-    if (pathname.startsWith('/admin/users')) return 'Users';
-    if (pathname.startsWith('/admin/sellers')) return 'Sellers';
-    if (pathname.startsWith('/admin/products')) return 'Products';
-    if (pathname.startsWith('/admin/orders')) return 'Orders';
-    if (pathname.startsWith('/admin/payouts')) return 'Payouts';
-    if (pathname.startsWith('/admin/disputes')) return 'Disputes';
-    if (pathname.startsWith('/admin/messages')) return 'Messages';
-    if (pathname.startsWith('/admin/notifications')) return 'Alerts';
-    if (pathname.startsWith('/admin/cms')) return 'CMS';
-    if (pathname.startsWith('/admin/settings')) return 'Settings';
-    if (pathname.startsWith('/admin/audit')) return 'Audit log';
-    if (pathname.startsWith('/admin/profile')) return 'Profile';
-    return 'Overview';
+    if (pathname.startsWith('/admin/users')) return 'Users & Roles';
+    if (pathname.startsWith('/admin/sellers')) return 'Sellers Directory';
+    if (pathname.startsWith('/admin/products')) return 'Product Moderation';
+    if (pathname.startsWith('/admin/orders')) return 'Marketplace Orders';
+    if (pathname.startsWith('/admin/payouts')) return 'Payouts & Settlement';
+    if (pathname.startsWith('/admin/disputes')) return 'Dispute Resolution';
+    if (pathname.startsWith('/admin/messages')) return 'Inquiries & Messages';
+    if (pathname.startsWith('/admin/notifications')) return 'System Alerts';
+    if (pathname.startsWith('/admin/cms')) return 'Content Management';
+    if (pathname.startsWith('/admin/settings')) return 'Platform Settings';
+    if (pathname.startsWith('/admin/audit')) return 'Audit Trail';
+    if (pathname.startsWith('/admin/profile')) return 'Admin Profile';
+    return 'Operations Dashboard';
   }, [pathname, variant]);
 
-  const pageHint = variant === 'seller' ? 'Seller workspace' : 'Admin console';
+  const pageHint = variant === 'seller' ? 'Seller Workspace' : 'Marketplace Admin';
 
   function toggleCollapsed() {
     setCollapsed((value) => !value);
   }
 
+  const isVerifiedSeller = seller?.verificationStatus === 'VERIFIED';
+  const liveStoreHref = seller?.store?.slug ? `/stores/${seller.store.slug}` : '/stores';
+
   return (
     <div
-      className={`${styles.shell} ${open ? styles.navOpen : ''} ${collapsed ? styles.shellCollapsed : ''}`}
+      className={`${styles.shell} ${open ? styles.navOpen : ''} ${
+        collapsed ? styles.shellCollapsed : ''
+      }`}
     >
-      <aside className={`${styles.sidebar} font-sans`} aria-label={collapsed ? 'Collapsed navigation' : 'Navigation'}>
+      <a href="#workspace-content" className="skip-link">
+        Skip to content
+      </a>
+
+      {/* ─── Modernized Sidebar ─── */}
+      <aside
+        ref={sidebarRef}
+        role={open ? 'dialog' : undefined}
+        aria-modal={open || undefined}
+        id="workspace-navigation"
+        className={`${styles.sidebar} font-sans`}
+        aria-label={collapsed ? 'Collapsed navigation' : 'Sidebar navigation'}
+      >
+        {/* Brand Bar */}
         <div className={styles.sidebarHead}>
           <div className={styles.brandRow}>
+            <button
+              type="button"
+              className={styles.drawerClose}
+              onClick={() => setOpen(false)}
+              aria-label="Close navigation"
+            >
+              ×
+            </button>
             <Link to="/" className={styles.brand} onClick={() => setOpen(false)} title={APP_NAME}>
               <img src={APP_LOGO_SRC} alt={APP_NAME} className={styles.logoImg} />
+              <div className={styles.brandText}>
+                <span className={styles.brandName}>{APP_NAME}</span>
+                <span className={styles.brandTagline}>
+                  {variant === 'seller' ? 'Merchant Portal' : 'Admin Console'}
+                </span>
+              </div>
             </Link>
             <button
               type="button"
               className={styles.collapseBtn}
               onClick={toggleCollapsed}
-              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-label={collapsed ? 'Expand sidebar (Ctrl+[)' : 'Collapse sidebar (Ctrl+[)'}
               aria-pressed={collapsed}
-              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              title={collapsed ? 'Expand sidebar (Ctrl+[)' : 'Collapse sidebar (Ctrl+[)'}
             >
               <CollapseIcon collapsed={collapsed} />
             </button>
           </div>
-          <span className={styles.workspaceTag}>
-            {variant === 'seller' ? 'Seller workspace' : 'Admin workspace'}
-          </span>
+
+          {/* Contextual Storefront / Admin Identity Banner */}
+          {variant === 'seller' ? (
+            <div className={styles.identityCard}>
+              <div className={styles.identityAvatarWrap}>
+                {seller?.logoUrl ? (
+                  <img
+                    src={seller.logoUrl}
+                    alt={seller.businessName || 'Store logo'}
+                    className={styles.identityAvatarImg}
+                  />
+                ) : (
+                  <span className={styles.identityAvatarFallback}>
+                    {(seller?.businessName || user?.fullName || 'ST').slice(0, 2).toUpperCase()}
+                  </span>
+                )}
+                {isVerifiedSeller ? (
+                  <span
+                    className={styles.verifiedDot}
+                    title="Verified Merchant"
+                    aria-label="Verified merchant"
+                  >
+                    <svg viewBox="0 0 12 12" className={styles.miniCheck} aria-hidden="true">
+                      <path
+                        d="M2.5 6.2l2.3 2.3 4.7-4.7"
+                        fill="none"
+                        stroke="#fff"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                ) : null}
+              </div>
+              <div className={styles.identityMeta}>
+                <div className={styles.identityTitleRow}>
+                  <strong className={styles.identityTitle} title={seller?.businessName || 'Store'}>
+                    {seller?.businessName || user?.fullName || 'My Storefront'}
+                  </strong>
+                </div>
+                <div className={styles.identitySubRow}>
+                  <span className={styles.identityLocation} title={seller?.marketLocation || 'Kigali, Rwanda'}>
+                    {seller?.marketLocation || 'Kigali, Rwanda'}
+                  </span>
+                  <span
+                    className={`${styles.identityStatusPill} ${
+                      isVerifiedSeller ? styles.statusVerified : styles.statusPending
+                    }`}
+                  >
+                    {isVerifiedSeller ? 'Verified' : 'In Review'}
+                  </span>
+                </div>
+                <Link
+                  to={liveStoreHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.identityStoreLink}
+                  title="View live public store in new tab"
+                >
+                  <span>View Live Store</span>
+                  <ExternalArrowIcon />
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className={`${styles.identityCard} ${styles.identityCardAdmin}`}>
+              <div className={styles.adminShieldWrap}>
+                <svg viewBox="0 0 24 24" className={styles.adminShieldIcon} aria-hidden="true">
+                  <path
+                    d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M9 12l2 2 4-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+              <div className={styles.identityMeta}>
+                <strong className={styles.identityTitle}>Marketplace Ops</strong>
+                <div className={styles.adminStatusRow}>
+                  <span className={styles.gatewayPulseDot} aria-hidden="true" />
+                  <span className={styles.adminRoleTag}>
+                    {user?.roles.includes('SUPER_ADMIN') ? 'Super Admin' : 'Operations Staff'}
+                  </span>
+                </div>
+                <Link to="/" className={styles.identityStoreLink} title="Open customer marketplace">
+                  <span>Customer Storefront</span>
+                  <ExternalArrowIcon />
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
 
+        {/* Navigation Groups */}
         <div className={styles.sidebarBody}>
           {groups.map((group) => (
             <nav key={group.label} className={styles.nav} aria-label={group.label}>
               <p className={styles.navLabel}>{group.label}</p>
-              {group.items.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.end}
-                  title={item.label}
-                  className={({ isActive }) =>
-                    `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
-                  }
-                  onClick={() => setOpen(false)}
-                >
-                  <span className={styles.iconWrap}>
-                    <NavIcon name={item.icon} />
-                  </span>
-                  <span className={styles.navText}>{item.label}</span>
-                </NavLink>
-              ))}
+              <div className={styles.navList}>
+                {group.items.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.end}
+                    className={({ isActive }) =>
+                      `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
+                    }
+                    onClick={() => setOpen(false)}
+                    aria-label={item.label}
+                  >
+                    <span className={styles.iconWrap}>
+                      <NavIcon name={item.icon} />
+                      {item.badge != null && (
+                        <span className={styles.railBadgeDot} aria-hidden="true" />
+                      )}
+                    </span>
+                    <span className={styles.navText}>{item.label}</span>
+                    {item.badge != null && (
+                      <span
+                        className={`${styles.navBadge} ${
+                          item.badgeTone === 'brand' ? styles.badgeBrand : ''
+                        }`}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+
+                    {/* Rail Floating Tooltip when collapsed */}
+                    {collapsed && (
+                      <span className={styles.railTooltip} role="tooltip">
+                        <span>{item.label}</span>
+                        {item.badge != null && (
+                          <span className={styles.railTooltipBadge}>{item.badge}</span>
+                        )}
+                      </span>
+                    )}
+                  </NavLink>
+                ))}
+              </div>
             </nav>
           ))}
         </div>
 
+        {/* Sidebar Footer */}
         <div className={styles.sideFoot}>
-          {variant === 'seller' ? (
+          {/* Quick Action for Sellers */}
+          {variant === 'seller' && isSeller ? (
             <Link
               to="/seller/products/new"
               className={styles.sideCta}
               onClick={() => setOpen(false)}
-              title="New listing"
+              title="Add New Listing"
+              aria-label="Add New Listing"
             >
               <PlusIcon />
-              <span className={styles.navText}>New listing</span>
+              <span className={styles.navText}>New Listing</span>
+              {collapsed && (
+                <span className={styles.railTooltip} role="tooltip">
+                  New Listing
+                </span>
+              )}
             </Link>
           ) : null}
-          <div className={styles.footLinks}>
-            <Link
-              to="/"
-              className={styles.marketLink}
-              onClick={() => setOpen(false)}
-              title="View marketplace"
-            >
-              <StoreIcon />
-              <span className={styles.navText}>View marketplace</span>
-            </Link>
-          </div>
+
+          {/* Customer Marketplace Link */}
+          <Link
+            to="/"
+            className={styles.marketLink}
+            onClick={() => setOpen(false)}
+            title="Customer Marketplace"
+            aria-label="Customer Marketplace"
+          >
+            <StoreIcon />
+            <span className={styles.navText}>Customer Marketplace</span>
+            {collapsed && (
+              <span className={styles.railTooltip} role="tooltip">
+                Customer Marketplace
+              </span>
+            )}
+          </Link>
+
+          {/* User Profile Summary Card */}
           {user ? (
-            <div className={styles.sidebarUser}>
+            <div className={styles.sidebarUserCard}>
               <Link
-                to={variant === 'seller' ? '/seller/profile' : '/admin/profile'}
+                to={profileTo}
+                className={styles.sidebarUserLink}
                 onClick={() => setOpen(false)}
-                aria-label="Profile"
                 title={user.email || user.phone || 'Account'}
               >
-                <b>{initials}</b>
+                <div className={styles.userAvatarWrap}>
+                  <span className={styles.userAvatar}>{initials}</span>
+                  <span className={styles.userOnlineDot} aria-hidden="true" />
+                </div>
+                <div className={styles.sidebarUserMeta}>
+                  <strong title={displayName}>{displayName}</strong>
+                  <span>{variant === 'seller' ? 'Seller Merchant' : 'Platform Staff'}</span>
+                </div>
               </Link>
-              <div className={styles.sidebarUserMeta}>
-                <strong>{user.email || user.phone || 'Account'}</strong>
-                <span>{variant === 'seller' ? 'Seller account' : 'Admin account'}</span>
+              <div className={styles.sidebarUserActions}>
+                <Link
+                  to={settingsTo}
+                  className={styles.userMiniBtn}
+                  title="Settings"
+                  aria-label="Settings"
+                >
+                  <SettingsMenuIcon />
+                </Link>
+                <button
+                  type="button"
+                  className={styles.userMiniBtn}
+                  onClick={() =>
+                    logout.mutate(undefined, {
+                      onSettled: () => navigate('/'),
+                    })
+                  }
+                  title="Log out"
+                  aria-label="Log out"
+                >
+                  <LogoutMenuIcon />
+                </button>
               </div>
             </div>
           ) : null}
+
+          {/* Desktop Collapse / Expand Toggle Button */}
           <button
             type="button"
             className={styles.collapseBtnFoot}
             onClick={toggleCollapsed}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-label={collapsed ? 'Expand sidebar (Ctrl+[)' : 'Collapse sidebar (Ctrl+[)'}
+            title={collapsed ? 'Expand sidebar (Ctrl+[)' : 'Collapse sidebar (Ctrl+[)'}
           >
             <CollapseIcon collapsed={collapsed} />
-            <span className={styles.navText}>{collapsed ? 'Expand' : 'Collapse'}</span>
+            <span className={styles.navText}>{collapsed ? 'Expand' : 'Collapse Sidebar'}</span>
+            <kbd className={styles.kbdShortcut}>Ctrl [</kbd>
+            {collapsed && (
+              <span className={styles.railTooltip} role="tooltip">
+                Expand (Ctrl+[)
+              </span>
+            )}
           </button>
         </div>
       </aside>
 
+      {/* Mobile Backdrop Overlay */}
       <button
         type="button"
         className={styles.backdrop}
@@ -304,13 +673,17 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
         onClick={() => setOpen(false)}
       />
 
-      <div className={styles.main}>
+      {/* Main Content Workspace */}
+      <div ref={mainRef} className={styles.main}>
+        {/* Sticky Topbar */}
         <header className={styles.topbar}>
           <div className={styles.topLeft}>
             <button
               type="button"
               className={styles.menuBtn}
               aria-label="Open navigation"
+              aria-expanded={open}
+              aria-controls="workspace-navigation"
               onClick={() => setOpen(true)}
             >
               <span />
@@ -332,14 +705,19 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path
-                  d="M4 6h16v10H7l-3 3V6z"
+                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="1.7"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                 />
               </svg>
+              {unreadMessages > 0 ? (
+                <span className={styles.badge}>{unreadMessages > 9 ? '9+' : unreadMessages}</span>
+              ) : null}
             </Link>
+
             <Link
               to={variant === 'seller' ? '/seller/notifications' : '/admin/notifications'}
               className={styles.iconBtn}
@@ -348,16 +726,29 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path
-                  d="M6 8a6 6 0 1 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9zm6 13a2.5 2.5 0 0 0 2.5-2.5h-5A2.5 2.5 0 0 0 12 21z"
+                  d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M13.73 21a2 2 0 0 1-3.46 0"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                 />
               </svg>
-              {unread > 0 ? <span className={styles.badge}>{unread > 9 ? '9+' : unread}</span> : null}
+              {unreadAlerts > 0 ? (
+                <span className={styles.badge}>{unreadAlerts > 9 ? '9+' : unreadAlerts}</span>
+              ) : null}
             </Link>
+
             <span className={styles.divider} aria-hidden="true" />
+
             {isLoading ? (
               <div className={styles.accountBtn} aria-hidden>
                 <b>..</b>
@@ -368,7 +759,8 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
                 <button
                   type="button"
                   className={`${styles.accountBtn} ${menuOpen ? styles.accountBtnOpen : ''}`}
-                  aria-haspopup="menu"
+                  aria-controls="workspace-account"
+                  aria-label={`${displayName} account menu`}
                   aria-expanded={menuOpen}
                   onClick={() => setMenuOpen((value) => !value)}
                 >
@@ -377,7 +769,7 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
                   <ChevronIcon open={menuOpen} />
                 </button>
                 {menuOpen ? (
-                  <div className={styles.accountDropdown} role="menu">
+                  <div id="workspace-account" className={styles.accountDropdown}>
                     <div className={styles.accountDropdownHead}>
                       <b>{initials}</b>
                       <div>
@@ -387,25 +779,22 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
                     </div>
                     <Link
                       to={profileTo}
-                      role="menuitem"
                       className={styles.accountItem}
                       onClick={() => setMenuOpen(false)}
                     >
                       <ProfileMenuIcon />
-                      Profile
+                      <span>Profile</span>
                     </Link>
                     <Link
                       to={settingsTo}
-                      role="menuitem"
                       className={styles.accountItem}
                       onClick={() => setMenuOpen(false)}
                     >
                       <SettingsMenuIcon />
-                      Settings
+                      <span>Settings</span>
                     </Link>
                     <button
                       type="button"
-                      role="menuitem"
                       className={`${styles.accountItem} ${styles.accountLogout}`}
                       onClick={() => {
                         setMenuOpen(false);
@@ -415,7 +804,7 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
                       }}
                     >
                       <LogoutMenuIcon />
-                      Log out
+                      <span>Log out</span>
                     </button>
                   </div>
                 ) : null}
@@ -428,11 +817,17 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
           </div>
         </header>
 
-        <div className={styles.content}>
-          <Outlet />
-        </div>
+        {/* Content View */}
+        <main id="workspace-content" tabIndex={-1} className={styles.content}>
+          <WorkspaceAccess variant={variant}>
+            <Suspense fallback={<TableSkeleton rows={5} />}>
+              <Outlet />
+            </Suspense>
+          </WorkspaceAccess>
+        </main>
 
-        {variant === 'seller' ? (
+        {/* Mobile Bottom Navigation for Sellers */}
+        {variant === 'seller' && isSeller ? (
           <nav className={styles.mobileNav} aria-label="Seller quick navigation">
             <NavLink
               to="/seller"
@@ -442,8 +837,10 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
               }
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                <polyline points="9 22 9 12 15 12 15 22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                <rect x="3" y="3" width="7" height="9" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+                <rect x="14" y="3" width="7" height="5" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+                <rect x="14" y="12" width="7" height="9" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+                <rect x="3" y="16" width="7" height="5" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
               </svg>
               <span>Home</span>
             </NavLink>
@@ -454,13 +851,11 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
                 `${styles.mobileNavItem} ${isActive ? styles.mobileNavActive : ''}`
               }
             >
-              <div className={styles.mobileNavIconWrap}>
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  <path d="M16 10a4 4 0 0 1-8 0" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                <rect x="8" y="2" width="8" height="4" rx="1" fill="none" stroke="currentColor" strokeWidth="1.8" />
+                <path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
               <span>Orders</span>
             </NavLink>
 
@@ -485,7 +880,7 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
               }
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">
-                <rect x="2" y="5" width="20" height="14" rx="2" fill="none" stroke="currentColor" strokeWidth="1.8" />
+                <rect x="2" y="5" width="20" height="14" rx="2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                 <line x1="2" y1="10" x2="22" y2="10" stroke="currentColor" strokeWidth="1.8" />
               </svg>
               <span>Wallet</span>
@@ -496,6 +891,8 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
               className={`${styles.mobileNavItem} ${open ? styles.mobileNavActive : ''}`}
               onClick={() => setOpen(true)}
               aria-label="Open full seller menu"
+              aria-expanded={open}
+              aria-controls="workspace-navigation"
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <circle cx="12" cy="12" r="1.5" fill="currentColor" />
@@ -514,6 +911,10 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
 function initialsFrom(value?: string | null) {
   if (!value) return 'NM';
   const name = value.includes('@') ? value.split('@')[0] : value;
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
   return (name || 'NM').slice(0, 2).toUpperCase();
 }
 
@@ -531,8 +932,20 @@ function displayNameFrom(email?: string | null, phone?: string | null) {
 
 function ChevronIcon({ open }: { open: boolean }) {
   return (
-    <svg viewBox="0 0 24 24" className={styles.chevron} aria-hidden="true" data-open={open || undefined}>
-      <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    <svg
+      viewBox="0 0 24 24"
+      className={styles.chevron}
+      aria-hidden="true"
+      data-open={open || undefined}
+    >
+      <path
+        d="M6 9l6 6 6-6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -541,13 +954,14 @@ function ProfileMenuIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path
-        d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-7 9v-1a7 7 0 0 1 14 0v1"
+        d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
         fill="none"
         stroke="currentColor"
         strokeWidth="1.7"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+      <circle cx="12" cy="7" r="4" fill="none" stroke="currentColor" strokeWidth="1.7" />
     </svg>
   );
 }
@@ -555,11 +969,12 @@ function ProfileMenuIcon() {
 function SettingsMenuIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="1.7" />
       <path
-        d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm7.4-3a7.4 7.4 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a7 7 0 0 0-1.7-1L12 2 9.8 6.1a7 7 0 0 0-1.7 1l-2.4-1-2 3.5 2 1.5a7.4 7.4 0 0 0 0 2l-2 1.5 2 3.5 2.4-1a7 7 0 0 0 1.7 1L12 22l2.2-4.1a7 7 0 0 0 1.7-1l2.4 1 2-3.5-2-1.5c.1-.3.1-.7.1-1z"
+        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
         fill="none"
         stroke="currentColor"
-        strokeWidth="1.5"
+        strokeWidth="1.7"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -571,7 +986,7 @@ function LogoutMenuIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path
-        d="M10 7V5a2 2 0 0 1 2-2h7v18h-7a2 2 0 0 1-2-2v-2M15 12H3m0 0l3-3m-3 3l3 3"
+        d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"
         fill="none"
         stroke="currentColor"
         strokeWidth="1.7"
@@ -586,7 +1001,7 @@ function CollapseIcon({ collapsed }: { collapsed: boolean }) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path
-        d={collapsed ? 'M9 6l6 6-6 6M4 4v16' : 'M15 6l-6 6 6 6M20 4v16'}
+        d={collapsed ? 'M13 17l5-5-5-5M6 17l5-5-5-5' : 'M11 17l-5-5 5-5M18 17l-5-5 5-5'}
         fill="none"
         stroke="currentColor"
         strokeWidth="1.8"
@@ -600,7 +1015,13 @@ function CollapseIcon({ collapsed }: { collapsed: boolean }) {
 function PlusIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M12 5v14M5 12h14"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -609,7 +1030,15 @@ function StoreIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path
-        d="M4 10h16v9H4v-9zm2-4h12l2 4H4l2-4z"
+        d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9 22V12h6v10"
         fill="none"
         stroke="currentColor"
         strokeWidth="1.7"
@@ -620,31 +1049,156 @@ function StoreIcon() {
   );
 }
 
-function NavIcon({ name }: { name: IconName }) {
-  const d: Record<IconName, string> = {
-    overview: 'M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-8z',
-    products: 'M4 7h16M4 12h16M4 17h10',
-    orders: 'M7 4h10l2 4H5l2-4zm-2 4h14v12H5V8zm4 4h6',
-    finance: 'M4 19V5m0 14h16M8 15l3-4 3 2 4-6',
-    users: 'M16 19v-1a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v1m12-13a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm6 13v-1a4 4 0 0 0-3-3.87',
-    sellers: 'M4 10h16v9H4v-9zm2-4h12l2 4H4l2-4z',
-    cms: 'M5 5h14v14H5V5zm3 4h8M8 13h5',
-    settings:
-      'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm7.4-3a7.4 7.4 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a7 7 0 0 0-1.7-1L12 2 9.8 6.1a7 7 0 0 0-1.7 1l-2.4-1-2 3.5 2 1.5a7.4 7.4 0 0 0 0 2l-2 1.5 2 3.5 2.4-1a7 7 0 0 0 1.7 1L12 22l2.2-4.1a7 7 0 0 0 1.7-1l2.4 1 2-3.5-2-1.5c.1-.3.1-.7.1-1z',
-    audit: 'M8 6h11M8 12h11M8 18h8M5 6h.01M5 12h.01M5 18h.01',
-    messages: 'M4 6h16v10H7l-3 3V6z',
-    disputes: 'M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4z',
-    alerts: 'M6 8a6 6 0 1 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9zm6 13a2.5 2.5 0 0 0 2.5-2.5h-5A2.5 2.5 0 0 0 12 21z',
-    profile: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-7 9v-1a7 7 0 0 1 14 0v1',
-    payouts: 'M4 7h16v10H4V7zm2 3h4m8 2h2M7 16h3',
-    onboarding: 'M8 3h8v3H8V3zM6 6h12v15H6V6zm3 6h6M9 15h4',
-    inventory: 'M4 7l8-4 8 4v13H4V7zm5 13v-6h6v6',
-    reviews: 'M12 3l2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 15.9 7.2 17.9l.9-5.4-3.9-3.8 5.4-.8L12 3z',
-  };
-
+function ExternalArrowIcon() {
   return (
-    <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
-      <path d={d[name]} fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    <svg viewBox="0 0 12 12" className={styles.externalIcon} aria-hidden="true">
+      <path
+        d="M3.5 2.5h6v6M9.5 2.5L2.5 9.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
+}
+
+function NavIcon({ name }: { name: IconName }) {
+  switch (name) {
+    case 'overview':
+      return (
+        <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
+          <rect x="3" y="3" width="7" height="9" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <rect x="14" y="3" width="7" height="5" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <rect x="14" y="12" width="7" height="9" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <rect x="3" y="16" width="7" height="5" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+        </svg>
+      );
+    case 'orders':
+      return (
+        <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
+          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <rect x="8" y="2" width="8" height="4" rx="1" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <line x1="9" y1="17" x2="15" y2="17" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      );
+    case 'products':
+      return (
+        <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <line x1="12" y1="22.08" x2="12" y2="12" stroke="currentColor" strokeWidth="1.8" />
+        </svg>
+      );
+    case 'inventory':
+      return (
+        <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
+          <rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <path d="M3 9h18M3 15h18M9 3v18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      );
+    case 'reviews':
+      return (
+        <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case 'finance':
+      return (
+        <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
+          <rect x="2" y="5" width="20" height="14" rx="2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <line x1="2" y1="10" x2="22" y2="10" stroke="currentColor" strokeWidth="1.8" />
+          <circle cx="16" cy="14" r="1.5" fill="currentColor" />
+        </svg>
+      );
+    case 'sellers':
+      return (
+        <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M9 22V12h6v10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case 'payouts':
+      return (
+        <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
+          <rect x="2" y="6" width="20" height="12" rx="2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <path d="M6 12h.01M18 12h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      );
+    case 'disputes':
+      return (
+        <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          <circle cx="12" cy="16" r="1" fill="currentColor" />
+        </svg>
+      );
+    case 'messages':
+      return (
+        <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="9" cy="10" r="1" fill="currentColor" />
+          <circle cx="12" cy="10" r="1" fill="currentColor" />
+          <circle cx="15" cy="10" r="1" fill="currentColor" />
+        </svg>
+      );
+    case 'alerts':
+      return (
+        <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case 'users':
+      return (
+        <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="9" cy="7" r="4" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case 'cms':
+      return (
+        <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <line x1="9" y1="7" x2="15" y2="7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          <line x1="9" y1="11" x2="13" y2="11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      );
+    case 'audit':
+      return (
+        <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <polyline points="14 2 14 8 20 8" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      );
+    case 'settings':
+      return (
+        <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
+          <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case 'profile':
+      return (
+        <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="12" cy="7" r="4" fill="none" stroke="currentColor" strokeWidth="1.8" />
+        </svg>
+      );
+    case 'onboarding':
+      return (
+        <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
+          <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+  }
 }

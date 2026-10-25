@@ -1,4 +1,7 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { handleImageError } from '@/utils/images';
+import { formatRwf } from '@/utils/money';
+import { useModalFocus } from '@/components/ui/useModalFocus';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
@@ -30,7 +33,6 @@ export function CategoryPage() {
   const toast = useToast();
 
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
-  const [activeTab, setActiveTab] = useState<'products' | 'suppliers' | 'audited'>('products');
 
   // Filter States
   const sort = searchParams.get('sort') || 'popular';
@@ -38,70 +40,25 @@ export function CategoryPage() {
   const maxPrice = searchParams.get('maxPrice') || '';
   const condition = searchParams.get('condition') || '';
   const inStock = searchParams.get('inStock') === 'true';
-  const auditedOnly = searchParams.get('audited') === 'true';
   const page = Number(searchParams.get('page') || '1') || 1;
-
-  // Business Type & R&D Filter dummy states (for authentic B2B look)
-  const [tradingCo, setTradingCo] = useState(false);
-  const [factory, setFactory] = useState(false);
-  const [groupCorp, setGroupCorp] = useState(false);
-  const [odm, setOdm] = useState(false);
-  const [oem, setOem] = useState(false);
-  const [ownBrand, setOwnBrand] = useState(false);
 
   // Mobile Filter Drawer Popup State
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  // Lock background scrolling when filter popup is open on mobile
+  const filterRef = useRef<HTMLElement>(null);
+  const [mobileFilters, setMobileFilters] = useState(() => window.matchMedia('(max-width: 900px)').matches);
   useEffect(() => {
-    if (filtersOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [filtersOpen]);
-
-  // Close filter drawer on Escape key
+    const media = window.matchMedia('(max-width: 900px)');
+    const sync = () => setMobileFilters(media.matches);
+    media.addEventListener('change', sync);
+    return () => media.removeEventListener('change', sync);
+  }, []);
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && filtersOpen) {
-        setFiltersOpen(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [filtersOpen]);
+    if (filterRef.current) filterRef.current.inert = mobileFilters && !filtersOpen;
+  }, [mobileFilters, filtersOpen]);
+  useModalFocus(filterRef, mobileFilters && filtersOpen, () => setFiltersOpen(false));
 
-  // Compute number of active filters for mobile badge
-  const activeFilterCount = useMemo(() => {
-    let count = 0;
-    if (minPrice || maxPrice) count += 1;
-    if (condition) count += 1;
-    if (inStock) count += 1;
-    if (auditedOnly) count += 1;
-    if (tradingCo) count += 1;
-    if (factory) count += 1;
-    if (groupCorp) count += 1;
-    if (odm) count += 1;
-    if (oem) count += 1;
-    if (ownBrand) count += 1;
-    return count;
-  }, [
-    minPrice,
-    maxPrice,
-    condition,
-    inStock,
-    auditedOnly,
-    tradingCo,
-    factory,
-    groupCorp,
-    odm,
-    oem,
-    ownBrand,
-  ]);
+  const activeFilterCount = Number(!!(minPrice || maxPrice)) + Number(!!condition) + Number(inStock);
 
   const { data: category, isLoading: categoryLoading, isError: categoryError, error: categoryErr } =
     useCategory(slug);
@@ -176,20 +133,14 @@ export function CategoryPage() {
     const next = new URLSearchParams();
     if (sort && sort !== 'popular') next.set('sort', sort);
     setSearchParams(next, { replace: true });
-    setTradingCo(false);
-    setFactory(false);
-    setGroupCorp(false);
-    setOdm(false);
-    setOem(false);
-    setOwnBrand(false);
   }
 
-  const title = category?.name || 'Electronics';
+  const title = category?.name || 'Category';
   const total = data?.pagination.total ?? 0;
   const totalPages = data?.pagination.totalPages ?? 1;
 
   const handleToggleWishlist = async (product: ProductListItem) => {
-    const variantId = product.variants?.[0]?.id;
+    const variantId = product.variants?.length === 1 ? product.variants[0].id : undefined;
     if (!variantId) {
       navigate(`/products/${product.slug}`);
       return;
@@ -209,7 +160,7 @@ export function CategoryPage() {
   };
 
   const handleAddToCart = async (product: ProductListItem) => {
-    const variantId = product.variants?.[0]?.id;
+    const variantId = product.variants?.length === 1 ? product.variants[0].id : undefined;
     if (!variantId) {
       navigate(`/products/${product.slug}`);
       return;
@@ -223,7 +174,7 @@ export function CategoryPage() {
   };
 
   const handleBuyNow = async (product: ProductListItem) => {
-    const variantId = product.variants?.[0]?.id;
+    const variantId = product.variants?.length === 1 ? product.variants[0].id : undefined;
     if (!variantId) {
       navigate(`/products/${product.slug}`);
       return;
@@ -261,28 +212,7 @@ export function CategoryPage() {
         <span>{title}</span>
       </nav>
 
-      {/* Top Tabs matching reference design */}
-      <div className={styles.topTabBar}>
-        <div className={styles.topTabs}>
-          <button
-            type="button"
-            className={`${styles.topTab} ${activeTab === 'products' ? styles.topTabActive : ''}`}
-            onClick={() => setActiveTab('products')}
-          >
-            Product List
-          </button>
-          <Link to="/stores" className={styles.topTab}>
-            Supplier List
-          </Link>
-          <button
-            type="button"
-            className={`${styles.topTab} ${auditedOnly ? styles.topTabActive : ''}`}
-            onClick={() => setParam('audited', auditedOnly ? null : 'true')}
-          >
-            Audited Factory
-          </button>
-        </div>
-      </div>
+      <nav className={styles.topTabBar} aria-label="Browse marketplace"><span className={styles.topTabActive}>Products</span><Link to="/stores" className={styles.topTab}>Discover stores</Link></nav>
 
       {/* Mobile Drawer Backdrop */}
       {filtersOpen && (
@@ -296,6 +226,10 @@ export function CategoryPage() {
       <div className={styles.layout}>
         {/* Left Filter Sidebar / Mobile Popup Drawer */}
         <aside
+          ref={filterRef}
+          role={mobileFilters && filtersOpen ? 'dialog' : undefined}
+          aria-modal={mobileFilters && filtersOpen || undefined}
+          tabIndex={-1}
           className={`${styles.filters} ${filtersOpen ? styles.filtersOpen : ''}`}
           aria-label="Product filters"
         >
@@ -318,112 +252,7 @@ export function CategoryPage() {
 
           <div className={styles.filterBody}>
 
-          {/* Top Verification Filter Badges */}
-          <div className={styles.filterSection}>
-            <ul className={styles.checkList}>
-              <li>
-                <label className={styles.checkRow}>
-                  <input
-                    type="checkbox"
-                    checked={auditedOnly}
-                    onChange={() => setParam('audited', auditedOnly ? null : 'true')}
-                  />
-                  <span className={styles.badgeAudited}>
-                    <span>A</span>udited
-                  </span>
-                </label>
-              </li>
-              <li>
-                <label className={styles.checkRow}>
-                  <input
-                    type="checkbox"
-                    checked={inStock}
-                    onChange={() => setParam('inStock', inStock ? null : 'true')}
-                  />
-                  <span className={styles.badgeSecured}>Secured Trading</span>
-                  <span className={styles.infoIcon} title="Protected transactions in RWF">
-                    ⓘ
-                  </span>
-                </label>
-              </li>
-              <li>
-                <label className={styles.checkRow}>
-                  <input
-                    type="checkbox"
-                    checked={tradingCo}
-                    onChange={(e) => setTradingCo(e.target.checked)}
-                  />
-                  <span className={styles.badgeLeading}>Verified Stores</span>
-                </label>
-              </li>
-            </ul>
-          </div>
-
-          {/* Business Type */}
-          <div className={styles.filterSection}>
-            <p className={styles.filterSectionTitle}>Business Type</p>
-            <ul className={styles.checkList}>
-              <li>
-                <label className={styles.checkRow}>
-                  <input
-                    type="checkbox"
-                    checked={tradingCo}
-                    onChange={(e) => setTradingCo(e.target.checked)}
-                  />
-                  Trading Company
-                </label>
-              </li>
-              <li>
-                <label className={styles.checkRow}>
-                  <input
-                    type="checkbox"
-                    checked={factory}
-                    onChange={(e) => setFactory(e.target.checked)}
-                  />
-                  Manufacturer/Factory
-                </label>
-              </li>
-              <li>
-                <label className={styles.checkRow}>
-                  <input
-                    type="checkbox"
-                    checked={groupCorp}
-                    onChange={(e) => setGroupCorp(e.target.checked)}
-                  />
-                  Group Corporation
-                </label>
-              </li>
-            </ul>
-          </div>
-
-          {/* R&D Capacity */}
-          <div className={styles.filterSection}>
-            <p className={styles.filterSectionTitle}>R&D Capacity</p>
-            <ul className={styles.checkList}>
-              <li>
-                <label className={styles.checkRow}>
-                  <input type="checkbox" checked={odm} onChange={(e) => setOdm(e.target.checked)} />
-                  ODM
-                </label>
-              </li>
-              <li>
-                <label className={styles.checkRow}>
-                  <input type="checkbox" checked={oem} onChange={(e) => setOem(e.target.checked)} />
-                  OEM
-                </label>
-              </li>
-              <li>
-                <label className={styles.checkRow}>
-                  <input
-                    type="checkbox"
-                    checked={ownBrand}
-                    onChange={(e) => setOwnBrand(e.target.checked)}
-                  />
-                  Own Brand
-                </label>
-              </li>
-            </ul>
-          </div>
+          <div className={styles.filterSection}><label className={styles.checkRow}><input type="checkbox" checked={inStock} onChange={() => setParam('inStock', inStock ? null : 'true')} />In stock only</label></div>
 
           {/* Condition */}
           <div className={styles.filterSection}>
@@ -454,15 +283,15 @@ export function CategoryPage() {
                 className={styles.priceInput}
                 name="minPrice"
                 placeholder="Min"
-                defaultValue={minPrice}
+                key={`min-${minPrice}`} defaultValue={minPrice} aria-label="Minimum price in RWF" type="number" min="0"
                 inputMode="numeric"
               />
-              <span style={{ color: '#94a3b8' }}>-</span>
+              <span style={{ color: 'var(--color-ink-muted)' }}>-</span>
               <input
                 className={styles.priceInput}
                 name="maxPrice"
                 placeholder="Max"
-                defaultValue={maxPrice}
+                key={`max-${maxPrice}`} defaultValue={maxPrice} aria-label="Maximum price in RWF" type="number" min="0"
                 inputMode="numeric"
               />
               <button type="submit" className={styles.priceApplyBtn}>
@@ -489,13 +318,14 @@ export function CategoryPage() {
           {/* Query Title & View Switcher */}
           <div className={styles.resultsHeader}>
             <h1 className={styles.resultsQueryTitle}>
-              "{title}"
+              {title}
               <span className={styles.resultsCount}>
-                {isLoading ? 'Searching products…' : `${total.toLocaleString()}+ results`}
+                {isLoading ? 'Searching products…' : `${total.toLocaleString()} results`}
               </span>
             </h1>
 
             <div className={styles.headerRightActions}>
+              <select className={styles.sortSelect} aria-label="Sort products" value={sort} onChange={event => setParam('sort', event.target.value)}><option value="popular">Popular</option><option value="newest">Newest</option><option value="price_asc">Price: low to high</option><option value="price_desc">Price: high to low</option><option value="best_rated">Highest rated</option></select>
               <button
                 type="button"
                 className={`${styles.mobileFilterBtn} ${activeFilterCount > 0 ? styles.mobileFilterBtnActive : ''}`}
@@ -526,7 +356,7 @@ export function CategoryPage() {
                   className={`${styles.viewBtn} ${viewMode === 'list' ? styles.viewBtnActive : ''}`}
                   onClick={() => setViewMode('list')}
                   title="List View"
-                  aria-label="List View"
+                  aria-label="List View" aria-pressed={viewMode === 'list'}
                 >
                   {/* List View Icon */}
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -543,7 +373,7 @@ export function CategoryPage() {
                   className={`${styles.viewBtn} ${viewMode === 'grid' ? styles.viewBtnActive : ''}`}
                   onClick={() => setViewMode('grid')}
                   title="Grid View"
-                  aria-label="Grid View"
+                  aria-label="Grid View" aria-pressed={viewMode === 'grid'}
                 >
                   {/* Grid View Icon */}
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -597,7 +427,6 @@ export function CategoryPage() {
                   const isWishlisted = wishlistIds.has(product.id);
                   const priceNum = Number(product.price);
                   const discountNum = product.discountPrice ? Number(product.discountPrice) : null;
-                  const displayPrice = discountNum ? discountNum.toLocaleString() : priceNum.toLocaleString();
                   const primaryImg = product.images[0]?.url || FALLBACK_CATEGORY_VISUAL.image;
 
                   return (
@@ -605,12 +434,12 @@ export function CategoryPage() {
                       {/* Left: Product Image Box */}
                       <div className={styles.imageBox}>
                         <Link to={`/products/${product.slug}`} style={{ display: 'contents' }}>
-                          <img src={primaryImg} alt={product.name} loading="lazy" />
+                          <img onError={handleImageError} src={primaryImg} alt={product.name} loading="lazy" />
                         </Link>
                         <button
                           type="button"
                           className={`${styles.wishlistBtn} ${isWishlisted ? styles.wishlistBtnActive : ''}`}
-                          aria-label="Wishlist"
+                          aria-label={`Save ${product.name}`} aria-pressed={isWishlisted}
                           onClick={() => handleToggleWishlist(product)}
                         >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill={isWishlisted ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
@@ -621,7 +450,7 @@ export function CategoryPage() {
 
                       {/* Right: Product Details & B2B Specs */}
                       <div className={styles.cardDetails}>
-                        <span className={styles.securedBadge}>Secured Trading</span>
+                        {product.store.seller.verificationStatus === 'VERIFIED' ? <span className={styles.securedBadge}>Verified seller</span> : null}
 
                         <Link to={`/products/${product.slug}`} className={styles.productTitle}>
                           {product.name}
@@ -629,9 +458,9 @@ export function CategoryPage() {
 
                         <div className={styles.priceRow}>
                           <span className={styles.priceValue}>
-                            RWF {displayPrice}
+                            {formatRwf(discountNum ?? priceNum)}
                           </span>
-                          <span className={styles.priceTag}>(FOB Price)</span>
+
                         </div>
 
                         <p className={styles.moqText}>1 Piece (MOQ) · Direct Kigali Supply</p>
@@ -652,7 +481,7 @@ export function CategoryPage() {
                           </div>
                           <div className={styles.specItem}>
                             <span className={styles.specLabel}>Feature:</span>
-                            <span className={styles.specVal}>Fast Delivery, Verified</span>
+                            <span className={styles.specVal}>See delivery options at checkout</span>
                           </div>
                           <div className={styles.specItem}>
                             <span className={styles.specLabel}>Payment:</span>

@@ -1,7 +1,11 @@
+import { useMe } from '@/api/hooks';
+import { hasAdminPermission } from '@/utils/adminAccess';
+import { useTableSort } from '@/components/ui/useTableSort';
 import { useState } from 'react';
 import { useAdminSellers, useModerateSeller } from '@/api/hooks';
 import {
   ActionIconButton,
+  useConfirm,
   Alert,
   Badge,
   SortTh,
@@ -17,12 +21,16 @@ import { prettyStatus, statusTone } from '@/utils/status';
 import styles from '@/pages/workspace/workspace.module.css';
 
 export function SellersTab() {
+  const { data: currentAdmin } = useMe();
+  const canMutate = hasAdminPermission(currentAdmin, 'sellers.approve', 'sellers.suspend');
+  const confirm = useConfirm();
+  const { sortRows, sortProps } = useTableSort();
   const [filter, setFilter] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = 20;
   const [selectedSellerId, setSelectedSellerId] = useState<string | null>(null);
-  const { data, isLoading, isError, error, refetch } = useAdminSellers(filter || undefined);
+  const { data, isLoading, isError, error, refetch } = useAdminSellers(filter || undefined, true, page);
   const moderate = useModerateSeller();
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -40,17 +48,20 @@ export function SellersTab() {
       )
     : allSellers;
 
-  const totalPages = Math.ceil(displayedSellers.length / pageSize);
-  const paginatedSellers = displayedSellers.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = data?.pagination.totalPages ?? 1;
+  const safePage = Math.min(page, Math.max(1, totalPages));
+  const paginatedSellers = sortRows(displayedSellers, {'Seller': (s) => s.businessName, 'Store': (s) => s.store?.name, 'Status': (s) => s.verificationStatus});
 
   return (
     <>
 
 
+      {moderate.isError ? <Alert tone="error">{getErrorMessage(moderate.error)}</Alert> : null}
       {msg ? <Alert tone="success">{msg}</Alert> : null}
       {isLoading ? <TableSkeleton /> : null}
       {isError ? <Alert tone="error">{getErrorMessage(error)}</Alert> : null}
 
+      <p className={styles.muted}>Sorting and text filters apply to the current page. Use pagination to review more records.</p>
       <TableCard>
         <TableBanner
           icon={
@@ -60,8 +71,7 @@ export function SellersTab() {
           }
           title="Seller Verification Directory"
           subtitle={
-            <span>
-              <strong>{inReviewCount}</strong> in review · <strong>{verifiedCount}</strong> verified · <strong>{rejectedCount}</strong> rejected · <strong>{allSellers.length}</strong> total
+            <span>On this page: <strong>{inReviewCount}</strong> in review · <strong>{verifiedCount}</strong> verified · <strong>{rejectedCount}</strong> rejected · <strong>{allSellers.length}</strong> total
             </span>
           }
         />
@@ -71,7 +81,7 @@ export function SellersTab() {
             setSearch(val);
             setPage(1);
           }}
-          searchPlaceholder="Search by business name, owner, or store..."
+          searchPlaceholder="Search this page: by business name, owner, or store..."
           filterChips={[
             { id: '', label: 'All Sellers', count: allSellers.length },
             { id: 'UNDER_REVIEW', label: 'In Review', count: inReviewCount },
@@ -91,13 +101,14 @@ export function SellersTab() {
           <table className={styles.table}>
             <thead>
               <tr>
-                <SortTh>Seller</SortTh>
-                <SortTh>Store</SortTh>
-                <SortTh>Status</SortTh>
+                <SortTh {...sortProps('Seller')}>Seller</SortTh>
+                <SortTh {...sortProps('Store')}>Store</SortTh>
+                <SortTh {...sortProps('Status')}>Status</SortTh>
                 <SortTh sortable={false}>Actions</SortTh>
               </tr>
             </thead>
             <tbody>
+              {!paginatedSellers.length && !isLoading && !isError ? <tr><td colSpan={4}>No records match this view. Adjust the filters or move to another page.</td></tr> : null}
               {paginatedSellers.map((s) => (
                 <tr key={s.id}>
                   <td>
@@ -121,29 +132,31 @@ export function SellersTab() {
                         icon="check"
                         tone="success"
                         label="Verify Seller"
-                        disabled={moderate.isPending || s.verificationStatus === 'VERIFIED'}
-                        onClick={() =>
-                          moderate.mutate(
+                        disabled={!canMutate || moderate.isPending || s.verificationStatus === 'VERIFIED'}
+                        onClick={async () => {
+                            if (!canMutate || !await confirm({ title: 'Confirm approval', message: 'Apply this seller approval? This changes marketplace visibility.', tone: 'info' })) return;
+                            moderate.mutate(
                             { id: s.id, verificationStatus: 'VERIFIED' },
                             { onSuccess: () => setMsg('Seller verified') },
-                          )
-                        }
+                          );
+                          }}
                       />
                       <ActionIconButton
                         icon="cross"
                         tone="danger"
                         label="Reject Seller"
-                        disabled={moderate.isPending || s.verificationStatus === 'REJECTED'}
-                        onClick={() =>
-                          moderate.mutate(
+                        disabled={!canMutate || moderate.isPending || s.verificationStatus === 'REJECTED'}
+                        onClick={async () => {
+                            if (!canMutate || !await confirm({ title: 'Confirm rejection', message: 'Apply this seller rejection? This changes marketplace visibility.', tone: 'danger' })) return;
+                            moderate.mutate(
                             {
                               id: s.id,
                               verificationStatus: 'REJECTED',
                               reason: 'Does not meet policy',
                             },
                             { onSuccess: () => setMsg('Seller rejected') },
-                          )
-                        }
+                          );
+                          }}
                       />
                     </div>
                   </td>
@@ -153,9 +166,9 @@ export function SellersTab() {
           </table>
         </div>
         <TablePagination
-          page={page}
+          page={safePage}
           totalPages={totalPages}
-          totalItems={displayedSellers.length}
+          totalItems={data?.pagination.total ?? displayedSellers.length}
           pageSize={pageSize}
           onPageChange={setPage}
         />

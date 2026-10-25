@@ -55,7 +55,7 @@
 }
 
 .countBadge {
-  background: #fff7ed;
+  background: var(--color-brand-soft);
   color: var(--color-brand);
   border: 1px solid #ffedd5;
   font-size: 0.75rem;
@@ -137,7 +137,7 @@
   gap: 0.45rem;
   padding: 0.5rem 0.85rem;
   min-height: 44px;
-  background: #f8faf9;
+  background: var(--color-surface-subtle);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   font-size: var(--text-xs);
@@ -151,21 +151,21 @@
 }
 
 .tabBtn:hover {
-  background: #f0f4f1;
+  background: var(--color-surface-subtle);
   color: var(--color-ink);
 }
 
 .tabBtnActive {
-  background: #fff7ed;
+  background: var(--color-brand-soft);
   border-color: var(--color-brand);
   color: var(--color-brand);
   font-weight: 700;
 }
 
 .tabCount {
-  background: #e2e8e4;
+  background: var(--color-border);
   color: var(--color-ink-muted);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
   padding: 0.1rem 0.45rem;
   border-radius: 999px;
@@ -263,7 +263,7 @@
 }
 
 .orderCard:hover {
-  border-color: #cbd5e1;
+  border-color: var(--color-border-strong);
 }
 
 /* Card Header */
@@ -272,7 +272,7 @@
   flex-direction: column;
   gap: 0.65rem;
   padding: 1rem 1.15rem;
-  background: #f8faf9;
+  background: var(--color-surface-subtle);
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -322,7 +322,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding-top: 0.4rem;
-  border-top: 1px dashed #e2e8e4;
+  border-top: 1px dashed var(--color-border);
 }
 
 @media (min-width: 600px) {
@@ -356,7 +356,7 @@
 }
 
 .packageCard {
-  background: #fbfcfb;
+  background: var(--color-surface-subtle);
   border: 1px solid #edf1ee;
   border-radius: var(--radius-sm);
   padding: 0.75rem 0.85rem;
@@ -383,7 +383,7 @@
 }
 
 .packageStatusBadge {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .itemsList {
@@ -402,7 +402,7 @@
   gap: 0.75rem;
   font-size: var(--text-xs);
   padding: 0.25rem 0;
-  border-bottom: 1px dashed #f0f3f1;
+  border-bottom: 1px dashed var(--color-surface-subtle);
 }
 
 .itemRow:last-child {
@@ -430,7 +430,7 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--color-ink-muted);
 }
 
@@ -440,7 +440,7 @@
   padding: 0.05rem 0.35rem;
   border-radius: 4px;
   font-weight: 700;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 
 .itemPrice {
@@ -459,7 +459,7 @@
   font-size: var(--text-xs);
   color: var(--color-ink-muted);
   padding-top: 0.35rem;
-  border-top: 1px solid #f0f3f1;
+  border-top: 1px solid var(--color-surface-subtle);
 }
 
 .addressPeekText {
@@ -475,7 +475,7 @@
   gap: 0.85rem;
   padding: 0.85rem 1.15rem;
   background: #ffffff;
-  border-top: 1px solid #f0f3f1;
+  border-top: 1px solid var(--color-surface-subtle);
 }
 
 @media (min-width: 600px) {
@@ -535,8 +535,8 @@
 }
 
 .detailsBtn:hover {
-  background: #334155;
-  border-color: #334155;
+  background: var(--color-ink-muted);
+  border-color: var(--color-ink-muted);
 }
 
 .payNowBtn {
@@ -572,7 +572,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
-  background: #f8faf9;
+  background: var(--color-surface-subtle);
   border: 1px solid var(--color-border);
   color: var(--color-ink-muted);
   border-radius: var(--radius-sm);
@@ -615,7 +615,7 @@
   width: 4rem;
   height: 4rem;
   border-radius: 50%;
-  background: #fff7ed;
+  background: var(--color-brand-soft);
   border: 1px solid #ffedd5;
   color: var(--color-brand);
   display: grid;

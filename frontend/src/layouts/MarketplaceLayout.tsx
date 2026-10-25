@@ -1,3 +1,5 @@
+import { Suspense } from 'react';
+import { TableSkeleton } from '@/components/ui';
 import { useState, type FormEvent } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useCart, useCategories, useLogout, useMe, useNotifications, useWishlist } from '@/api/hooks';
@@ -18,12 +20,21 @@ export function MarketplaceLayout() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [q, setQ] = useState('');
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => {
+    try { const values: unknown = JSON.parse(localStorage.getItem('nm_recent_searches') || '[]'); return Array.isArray(values) ? values.filter((value): value is string => typeof value === 'string').slice(0, 5) : []; }
+    catch { return []; }
+  });
   const [searchScope, setSearchScope] = useState('');
   const isHome = pathname === '/';
 
   function onSearch(e: FormEvent) {
     e.preventDefault();
     const query = q.trim();
+    if (query) {
+      const recent = [query, ...recentSearches.filter(value => value !== query)].slice(0, 5);
+      setRecentSearches(recent);
+      try { localStorage.setItem('nm_recent_searches', JSON.stringify(recent)); } catch { /* Storage is optional. */ }
+    }
     if (searchScope && !query) {
       navigate(`/categories/${searchScope}`);
       return;
@@ -37,12 +48,14 @@ export function MarketplaceLayout() {
 
   return (
     <div className={styles.shell}>
+      <a href="#marketplace-content" className="skip-link">Skip to content</a>
       <header className={styles.header}>
         <div className={`container ${styles.headerInner}`}>
           <Link to="/" className={styles.logo} aria-label={`${APP_NAME} home`}>
             <img src={APP_LOGO_SRC} alt={APP_NAME} className={styles.logoImg} />
           </Link>
 
+          <datalist id="marketplace-search-suggestions">{recentSearches.map(value => <option key={value} value={value} />)}{(categories || []).map(category => <option key={category.id} value={category.name} />)}</datalist>
           <form className={styles.search} onSubmit={onSearch} role="search">
             <label className="sr-only" htmlFor="search-scope">
               Search in
@@ -80,9 +93,10 @@ export function MarketplaceLayout() {
             </label>
             <input
               id="global-search"
+              list="marketplace-search-suggestions"
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Enter a keyword to search products"
+              placeholder="Search products and local stores"
             />
 
             <Link
@@ -209,20 +223,6 @@ export function MarketplaceLayout() {
               </span>
               <span className={styles.actionIconLabel}>Cart</span>
             </NavLink>
-          </nav>
-        </div>
-
-        <div className={styles.catsWrap}>
-          <nav className={`container ${styles.cats}`} aria-label="Marketplace">
-            <div className={styles.catsLeft}>
-              <CategoryMegaMenu categories={categories || []} />
-              <span className={styles.navSplit} aria-hidden="true" />
-              <NavLink to="/why-neeremarket">Why {APP_NAME}</NavLink>
-              <NavLink to="/how-it-works">How it works</NavLink>
-              <NavLink to="/sell">For sellers</NavLink>
-              <NavLink to="/stores">Stores</NavLink>
-            </div>
-
             <div className={styles.catsRight}>
               {user ? (
                 <>
@@ -261,16 +261,30 @@ export function MarketplaceLayout() {
                       strokeLinecap="round"
                     />
                   </svg>
-                  <span>Sign In / Join</span>
+                  <span>Sign in</span>
                 </Link>
               )}
+            </div>          </nav>
+        </div>
+
+        <div className={styles.catsWrap}>
+          <nav className={`container ${styles.cats}`} aria-label="Marketplace">
+            <div className={styles.catsLeft}>
+              <CategoryMegaMenu categories={categories || []} />
+              <span className={styles.navSplit} aria-hidden="true" />
+              <NavLink to="/why-neeremarket">Why {APP_NAME}</NavLink>
+              <NavLink to="/how-it-works">How it works</NavLink>
+              <NavLink to="/sell">For sellers</NavLink>
+              <NavLink to="/stores">Stores</NavLink>
             </div>
+
+            <div className={styles.catsRight}><Link to="/help">Help</Link><Link to="/sell">Sell on NeereMarket</Link><span>Rwanda · RWF</span></div>
           </nav>
         </div>
       </header>
 
-      <main className={`${styles.main} ${isHome ? styles.mainHome : ''}`}>
-        <Outlet />
+      <main id="marketplace-content" tabIndex={-1} className={`${styles.main} ${isHome ? styles.mainHome : ''}`}>
+        <Suspense fallback={<TableSkeleton rows={5} />}><Outlet /></Suspense>
       </main>
 
       <SiteFooter />

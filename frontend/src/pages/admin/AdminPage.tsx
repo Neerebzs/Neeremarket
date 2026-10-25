@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { useMe } from '@/api/hooks';
 import { EmptyState } from '@/components/ui';
 import { isAdminRole } from '@/utils/auth';
+import { canAccessAdminSection } from '@/utils/adminAccess';
 import styles from '@/pages/workspace/workspace.module.css';
 import { OverviewTab } from './tabs/OverviewTab';
 import { UsersTab } from './tabs/UsersTab';
@@ -63,6 +64,10 @@ export function AdminPage() {
 
   if (!isAdminRole(user.roles)) {
     return <Navigate to="/" replace />;
+  }
+
+  if (!canAccessAdminSection(user, section)) {
+    return <EmptyState title="Access restricted" description="Your account does not have permission to open this section." actionLabel="My profile" onAction={() => navigate('/admin/profile')} />;
   }
 
   return (

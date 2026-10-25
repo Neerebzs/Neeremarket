@@ -1,3 +1,4 @@
+import { normalizeRwandaPhone } from '@/utils/phone';
 import { useState, type FormEvent } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useRequestPayout, useSellerFinance } from '@/api/hooks';
@@ -23,8 +24,12 @@ export function SellerFinancePage() {
     e.preventDefault();
     setMsg(null);
     setErr(null);
+    const normalizedPhone = normalizeRwandaPhone(phone);
+    const requestedAmount = Number(amount);
+    if (!normalizedPhone) { setErr('Enter a valid Rwandan mobile number, such as 0780 000 000 or +250780000000.'); return; }
+    if (!Number.isInteger(requestedAmount) || requestedAmount < 100 || requestedAmount > Number(finance?.wallet.availableBalance || 0)) { setErr('Enter a whole RWF amount within your available balance (minimum 100 RWF).'); return; }
     try {
-      await requestPayout.mutateAsync({ amount: Number(amount), destination: { phone } });
+      await requestPayout.mutateAsync({ amount: Number(amount), destination: { phone: normalizedPhone } });
       setMsg('Withdrawal requested. Once NeereMarket approves it, the money is sent to your Mobile Money wallet.');
       setAmount('');
     } catch (ex) {
@@ -38,6 +43,7 @@ export function SellerFinancePage() {
         <title>Seller finance | NeereMarket</title>
       </Helmet>
 
+      <header className={styles.pageHead}><div><p className={styles.kicker}>Seller finances</p><h1>Finances & payouts</h1><p className={styles.muted}>Review lifetime earnings, balances, and withdrawal history.</p></div></header>
       {isLoading ? <TableSkeleton rows={4} /> : null}
       {isError ? <Alert tone="error">{getErrorMessage(error)}</Alert> : null}
       {msg ? <Alert tone="success">{msg}</Alert> : null}
@@ -45,13 +51,13 @@ export function SellerFinancePage() {
 
       {finance ? (
         <>
-          <section className={styles.kpis} aria-label="Wallet">
+          <section className={styles.kpis} aria-label="Wallet and lifetime earnings">
             <article className={styles.kpi}>
               <div className={styles.kpiHead}>
                 <span className={styles.kpiIcon} data-tone="ok">
                   <MetricIcon path={ICONS.wallet} />
                 </span>
-                <span>Available</span>
+                <span>Available balance</span>
               </div>
               <strong>{formatRwf(finance.wallet.availableBalance)}</strong>
               <em>Can request payout</em>
@@ -71,7 +77,7 @@ export function SellerFinancePage() {
                 <span className={styles.kpiIcon} data-tone="brand">
                   <MetricIcon path={ICONS.trend} />
                 </span>
-                <span>Earnings</span>
+                <span>Net earnings</span>
               </div>
               <strong>{formatRwf(finance.totals.earnings)}</strong>
               <em>{finance.totals.orders} paid orders</em>
@@ -88,6 +94,7 @@ export function SellerFinancePage() {
             </article>
           </section>
 
+          <p className={styles.muted}>Lifetime gross sales: <strong>{formatRwf(finance.totals.sales)}</strong>. Available and pending balances are distinct from sales revenue.</p>
           <section className={styles.split}>
             <article className={styles.panel}>
               <div className={styles.panelHead}>
@@ -106,12 +113,13 @@ export function SellerFinancePage() {
                   />
                   <Input
                     label="MTN MoMo or Airtel Money number"
+                    type="tel" inputMode="tel" autoComplete="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="0780 000 000"
                     required
                   />
-                  <Button type="submit" disabled={requestPayout.isPending}>
+                  <Button type="submit" disabled={requestPayout.isPending || Number(finance.wallet.availableBalance) < 100}>
                     {requestPayout.isPending ? 'Submitting…' : 'Request withdrawal'}
                   </Button>
                 </form>
@@ -243,7 +251,7 @@ export function SellerFinancePage() {
                           <span
                             className={styles.mobileCardPrice}
                             style={{
-                              color: Number(e.amount) < 0 ? '#b91c1c' : '#15803d',
+                              color: Number(e.amount) < 0 ? 'var(--color-danger-deep)' : 'var(--color-success)',
                               fontSize: '0.95rem',
                             }}
                           >

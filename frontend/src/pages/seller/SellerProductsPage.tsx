@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useTableSort } from '@/components/ui/useTableSort';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useDeleteProduct, useMe, useSellerProducts, useUpdateProduct } from '@/api/hooks';
@@ -35,6 +36,7 @@ const FILTERS = [
 ];
 
 export function SellerProductsPage() {
+  const { sortRows, sortProps } = useTableSort();
   const navigate = useNavigate();
   const { data: user } = useMe();
   const confirm = useConfirm();
@@ -45,7 +47,10 @@ export function SellerProductsPage() {
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
   const pageSize = 10;
-  const { data, isLoading, isError, error } = useSellerProducts(status || undefined, search || undefined);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  useEffect(() => setSelectedIds([]), [page, status, search]);
+  const { data, isLoading, isError, error } = useSellerProducts(status || undefined, search || undefined, page, pageSize);
   const updateProduct = useUpdateProduct();
   const deleteProduct = useDeleteProduct();
   const [banner, setBanner] = useState<string | null>(null);
@@ -53,8 +58,21 @@ export function SellerProductsPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const allProducts = data?.items || [];
-  const totalPages = Math.ceil(allProducts.length / pageSize);
-  const paginatedProducts = allProducts.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = data?.pagination.totalPages ?? 1;
+  const safePage = Math.min(page, Math.max(1, totalPages));
+  const paginatedProducts = sortRows(allProducts, {'Product': (p) => p.name, 'Category': (p) => p.category?.name, 'Price': (p) => Number(p.discountPrice || p.price), 'Stock': (p) => p.variants?.reduce((sum, v) => sum + (v.inventory?.available ?? Math.max(0, (v.inventory?.quantity ?? 0) - (v.inventory?.reserved ?? 0))), 0), 'Status': (p) => p.status});
+
+  async function unpublishSelected() {
+    const selected = allProducts.filter(product => selectedIds.includes(product.id) && ['ACTIVE', 'OUT_OF_STOCK'].includes(product.status || ''));
+    if (!selected.length || !await confirm({ title: 'Remove selected listings', message: `Remove ${selected.length} selected listings from the marketplace? They remain in your catalog.`, confirmText: 'Remove listings', tone: 'warning' })) return;
+    setBulkBusy(true);
+    const results = await Promise.allSettled(selected.map(product => updateProduct.mutateAsync({ id: product.id, unpublish: true })));
+    const failures = results.filter(result => result.status === 'rejected').length;
+    setBulkBusy(false);
+    setSelectedIds([]);
+    if (failures) setActionError(`${failures} listings could not be removed. Review their status and try again.`);
+    else { setActionError(null); setBanner(`${selected.length} listings removed from the marketplace.`); }
+  }
 
   async function unpublish(id: string, name: string) {
     const ok = await confirm({
@@ -184,6 +202,12 @@ export function SellerProductsPage() {
             label: 'Columns',
           }}
         />
+        <p className={styles.muted} style={{ paddingInline: '24px' }}>Search covers your catalog. Column sorting applies to this page.</p>
+        <div className={styles.bulkBar} role="group" aria-label="Bulk listing actions">
+          <label><input type="checkbox" checked={allProducts.length > 0 && allProducts.every(product => selectedIds.includes(product.id))} onChange={event => setSelectedIds(event.target.checked ? allProducts.map(product => product.id) : [])} />Select this page</label>
+          <span>{selectedIds.length} selected</span>
+          <Button variant="secondary" disabled={!selectedIds.length || bulkBusy} onClick={() => void unpublishSelected()}>{bulkBusy ? 'Updating…' : 'Remove selected live listings'}</Button>
+        </div>
         {banner ? (
           <div className={styles.panelBody}>
             <Alert tone="success">{banner}</Alert>
@@ -204,7 +228,7 @@ export function SellerProductsPage() {
             <Alert tone="error">{getErrorMessage(error)}</Alert>
           </div>
         ) : null}
-        {!isLoading && !allProducts.length ? (
+        {!isLoading && !isError && !allProducts.length ? (
           <div className={styles.panelBody}>
             <EmptyState
               compact
@@ -222,11 +246,12 @@ export function SellerProductsPage() {
               <table className={styles.table}>
                 <thead>
                   <tr>
-                    <SortTh>Product</SortTh>
-                    <SortTh>Category</SortTh>
-                    <SortTh align="right">Price</SortTh>
-                    <SortTh>Stock</SortTh>
-                    <SortTh>Status</SortTh>
+                    <th scope="col">Select</th>
+                    <SortTh {...sortProps('Product')}>Product</SortTh>
+                    <SortTh {...sortProps('Category')}>Category</SortTh>
+                    <SortTh align="right" {...sortProps('Price')}>Price</SortTh>
+                    <SortTh {...sortProps('Stock')}>Stock</SortTh>
+                    <SortTh {...sortProps('Status')}>Status</SortTh>
                     <SortTh sortable={false}>Actions</SortTh>
                   </tr>
                 </thead>
@@ -250,6 +275,7 @@ export function SellerProductsPage() {
                     const rowBusy = busyId === p.id;
                     return (
                       <tr key={p.id}>
+                        <td><input type="checkbox" aria-label={`Select ${p.name}`} checked={selectedIds.includes(p.id)} onChange={event => setSelectedIds(ids => event.target.checked ? [...ids, p.id] : ids.filter(id => id !== p.id))} /></td>
                         <td>
                           <div className={styles.item}>
                             {p.images?.[0]?.url ? (
@@ -356,6 +382,7 @@ export function SellerProductsPage() {
 
                 return (
                   <article key={p.id} className={styles.mobileCard}>
+                    <label style={{ display: 'flex', gap: '8px', fontSize: '0.75rem', marginBottom: '12px' }}><input type="checkbox" checked={selectedIds.includes(p.id)} onChange={event => setSelectedIds(ids => event.target.checked ? [...ids, p.id] : ids.filter(id => id !== p.id))} />Select {p.name}</label>
                     <div style={{ display: 'flex', gap: '0.85rem' }}>
                       {p.images?.[0]?.url ? (
                         <img
@@ -376,12 +403,12 @@ export function SellerProductsPage() {
                             width: '4.5rem',
                             height: '4.5rem',
                             borderRadius: '10px',
-                            background: '#f1f5f9',
+                            background: 'var(--color-surface-subtle)',
                             border: '1px solid #e2e8f0',
                             display: 'grid',
                             placeItems: 'center',
                             flexShrink: 0,
-                            color: '#94a3b8',
+                            color: 'var(--color-ink-muted)',
                             fontSize: '0.75rem',
                           }}
                         >
@@ -406,7 +433,7 @@ export function SellerProductsPage() {
                           <Badge tone={statusTone(rowStatus)}>{prettyStatus(rowStatus)}</Badge>
                         </div>
 
-                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--color-ink-muted)' }}>
                           {categoryPath(p.category)}
                         </span>
 
@@ -461,9 +488,9 @@ export function SellerProductsPage() {
           </>
         ) : null}
         <TablePagination
-          page={page}
+          page={safePage}
           totalPages={totalPages}
-          totalItems={allProducts.length}
+          totalItems={data?.pagination.total ?? 0}
           pageSize={pageSize}
           onPageChange={setPage}
         />

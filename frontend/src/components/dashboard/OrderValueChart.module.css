@@ -1,0 +1,17 @@
+.panel { border:1px solid var(--color-border); border-radius:12px; padding:24px; background:white; }
+.head { display:flex; flex-wrap:wrap; justify-content:space-between; gap:16px; align-items:start; }
+.head h2 { font-size:1.25rem; }
+.head p, .hint { font-size:0.8125rem; color:var(--color-ink-muted); margin-bottom:8px; }
+.head label { display:grid; gap:4px; font-size:0.75rem; }
+.head select { min-height:40px; border:1px solid var(--color-border); padding:8px; border-radius:8px; background:white; color:var(--color-ink); }
+.total { display:block; font-size:1.75rem; margin-block:12px 4px; font-variant-numeric:tabular-nums; }
+.chart { height:160px; display:flex; gap:4px; align-items:end; border-bottom:1px solid var(--color-border); margin-top:24px; }
+.column { height:100%; flex:1; display:flex; align-items:end; min-width:0; }
+.column span { width:100%; background:var(--color-brand); border-radius:3px 3px 0 0; }
+.axis { display:flex; justify-content:space-between; font-size:0.75rem; color:var(--color-ink-muted); margin-top:8px; }
+.details { margin-top:16px; font-size:0.875rem; }
+.details summary { cursor:pointer; color:var(--color-brand); }
+.tableWrap { overflow:auto; margin-top:12px; }
+.details table { width:100%; border-collapse:collapse; text-align:left; }
+.details th, .details td { padding:8px; border-bottom:1px solid var(--color-border); }
+@media(max-width:375px) { .panel { padding:16px; } }

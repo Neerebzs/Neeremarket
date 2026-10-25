@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useResponsiveDrawer } from '@/components/ui/useResponsiveDrawer';
+import { useMemo, useRef, useState, type FormEvent } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useProducts, useStore } from '@/api/hooks';
@@ -10,7 +11,7 @@ import browseStyles from './CategoryPage.module.css';
 import styles from './StorefrontPage.module.css';
 
 const SORT_OPTIONS = [
-  { value: 'popular', label: 'Recommend' },
+  { value: 'popular', label: 'Popular' },
   { value: 'newest', label: 'Newest' },
   { value: 'price_asc', label: 'Price: low to high' },
   { value: 'price_desc', label: 'Price: high to low' },
@@ -28,6 +29,8 @@ export function StorefrontPage() {
   const { slug = '' } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const filterRef = useRef<HTMLElement>(null);
+  const modalFilters = useResponsiveDrawer(filterRef, filtersOpen, () => setFiltersOpen(false));
   const [openSections, setOpenSections] = useState({
     category: true,
     price: true,
@@ -103,19 +106,6 @@ export function StorefrontPage() {
     Boolean,
   ).length;
 
-  useEffect(() => {
-    if (!filtersOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setFiltersOpen(false);
-    };
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', onKey);
-    return () => {
-      document.body.style.overflow = prev;
-      window.removeEventListener('keydown', onKey);
-    };
-  }, [filtersOpen]);
   const location = [store?.seller.marketLocation, store?.seller.district, store?.seller.province]
     .filter(Boolean)
     .join(' · ');
@@ -180,10 +170,12 @@ export function StorefrontPage() {
             />
           ) : null}
           <aside
+            ref={filterRef}
+            tabIndex={-1}
             className={`${browseStyles.filters} ${filtersOpen ? browseStyles.filtersOpen : ''}`}
             aria-label="Product filters"
-            aria-modal={filtersOpen || undefined}
-            role={filtersOpen ? 'dialog' : undefined}
+            aria-modal={modalFilters || undefined}
+            role={modalFilters ? 'dialog' : undefined}
           >
             <div className={browseStyles.filterHead}>
               <h2>Filter</h2>

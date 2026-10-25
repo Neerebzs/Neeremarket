@@ -1,0 +1,136 @@
+/* NeereMarket brand and semantic design tokens. */
+:root {
+  /* Semantic foundation; legacy aliases keep existing modules compatible. */
+  --color-surface: #FFFFFF;
+  --color-surface-subtle: #FAF9F6;
+  --color-focus: #171717;
+  --color-info: #1D4ED8;
+  --color-info-soft: #EFF6FF;
+  --color-info-border: #BFDBFE;
+  --color-success-soft: #EAF6F0;
+  --color-success-border: #B7DDD0;
+  --color-warning-soft: #FFFBEB;
+  --color-warning-border: #FDE68A;
+  --color-danger-soft: #FEF2F2;
+  --color-danger-border: #FECACA;
+  --color-danger-deep: #B91C1C;
+  --color-border-strong: #D6D3D1;
+  --color-brand-border: #F0C7A8;
+  --color-rating: #92400E;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --text-3xs: 0.75rem;
+  --text-2xs: 0.75rem;
+  --text-nav: 0.875rem;
+  --color-bg: #FFFFFF;
+  --color-bg-elevated: #ffffff;
+  --color-ink: #171717;
+  --color-ink-muted: #57534E;
+  --color-ink-subtle: #78716C;
+  --color-foreground: #171717;
+  --color-muted-foreground: #57534E;
+
+  /* Brand Colors from Guide */
+  --color-brand-sage: var(--color-brand);
+  --color-brand-sage-alt: var(--color-brand);
+  --color-dark-brand: var(--color-ink);
+
+  /* CTAs & Secondary Accents - Ecommerce Primary Orange */
+  --color-brand: #FA6700;
+  --color-on-brand: #171717;
+  --color-brand-deep: #9E3E00;
+  --color-brand-soft: #FFF5EE;
+  --color-brand-glow: rgba(197, 77, 0, 0.16);
+  --color-accent: var(--color-brand);
+  --color-accent-soft: var(--color-brand-soft);
+  --color-gold: #f5b700;
+  --color-border: #E7E5E4;
+  --color-success: #16805D;
+  --color-danger: #dc2626;
+  --color-warning: #92400E;
+  --shadow-soft: none;
+  --shadow-lift: none;
+  --radius: 12px;
+  --radius-sm: 8px;
+
+  /* Inter for UI; Manrope for marketing. Legacy aliases remain compatible. */
+  --font-sans: 'Alibaba_B2B_Sans', 'Inter Variable', Inter, 'SF Pro Text', Roboto, 'Helvetica Neue', Helvetica, Tahoma, Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-display: var(--font-sans);
+  --font-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
+  --font-geist-sans: var(--font-sans);
+  --font-geist-mono: var(--font-mono);
+  --font-serif: var(--font-display);
+  --font-outfit: var(--font-display);
+  --font-system-ui: var(--font-sans);
+
+  /* Typography scale, based on a 16px root. */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+  --text-6xl: 3.75rem;
+  --text-7xl: 4.5rem;
+  --text-8xl: 6rem;
+  --text-9xl: 8rem;
+
+  /* Typography System Guide - Custom Micro Sizes */
+  --text-6px: 0.75rem;
+  --text-7px: 0.75rem;
+  --text-8px: 0.75rem;
+  --text-10px: 0.75rem;
+  --text-11px: 0.75rem;
+  --text-15px: 15px;
+  --text-22px: 22px;
+  --font-thin: 100;
+  --font-extralight: 200;
+  --font-light: 300;
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  --font-extrabold: 800;
+  --font-black: 900;
+
+  /* Weight aliases for backwards compatibility */
+  --weight-light: 300;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-extrabold: 800;
+  --weight-black: 900;
+
+  /* Typography System Guide - Letter Spacing (Tracking) */
+  --tracking-tighter: -0.05em;
+  --tracking-tight: -0.025em;
+  --tracking-snug: -0.015em;
+  --tracking-normal: 0em;
+  --tracking-wide: 0.025em;
+  --tracking-wider: 0.05em;
+  --tracking-widest: 0.1em;
+  --tracking-label: 0.08em;
+  --tracking-200: 0.2em;
+  --tracking-250: 0.25em;
+
+  /* Typography System Guide - Line Height (Leading) */
+  --leading-none: 1;
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+  --leading-loose: 2;
+
+  --header-h: 72px;
+  --bottom-nav-h: 3.65rem;
+  --max: 1280px;
+}

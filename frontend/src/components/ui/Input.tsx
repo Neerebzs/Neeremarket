@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes } from 'react';
+import { useId, type InputHTMLAttributes } from 'react';
 import styles from './Input.module.css';
 
 type Props = InputHTMLAttributes<HTMLInputElement> & {
@@ -7,13 +7,16 @@ type Props = InputHTMLAttributes<HTMLInputElement> & {
 };
 
 export function Input({ label, error, id, className = '', ...rest }: Props) {
-  const inputId = id || rest.name || label.replace(/\s+/g, '-').toLowerCase();
+  const generatedId = useId();
+  const inputId = id || generatedId;
+  const errorId = `${inputId}-error`;
+  const describedBy = [rest['aria-describedby'], error ? errorId : null].filter(Boolean).join(' ') || undefined;
   return (
     <label className={`${styles.field} ${className}`} htmlFor={inputId}>
       <span>{label}</span>
-      <input id={inputId} aria-invalid={!!error} {...rest} />
+      <input {...rest} id={inputId} aria-invalid={error ? true : rest['aria-invalid']} aria-describedby={describedBy} />
       {error ? (
-        <em className={styles.error} role="alert">
+        <em id={errorId} className={styles.error} role="alert">
           {error}
         </em>
       ) : null}

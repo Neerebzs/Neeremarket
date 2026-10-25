@@ -56,7 +56,7 @@ export function SellerReviewsPage() {
 
       <section className={styles.panel}>
         <div className={styles.panelHead}>
-          <div className={styles.filters} role="tablist" aria-label="Review type">
+          <div className={styles.filters} role="group" aria-label="Review type">
             {FILTERS.map((f) => (
               <button
                 key={f.id}
