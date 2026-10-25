@@ -39,6 +39,16 @@ export function SellerReviewsPage() {
         <title>Reviews | NeereMarket</title>
       </Helmet>
 
+      <header className={styles.pageHead}>
+        <div className={styles.pageHeadCopy}>
+          <p className={styles.kicker}>Customer Feedback</p>
+          <h1>Store & Product Reviews</h1>
+          <p className={styles.muted}>
+            Verified customer ratings, purchase feedback, and review scores across your marketplace listings.
+          </p>
+        </div>
+      </header>
+
       <div className={styles.kpis}>
         <article className={styles.kpi}>
           <strong>{summary?.total ?? 0}</strong>

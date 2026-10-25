@@ -49,6 +49,8 @@ export function HomePage() {
   const newArrivals = newArrivalsData?.items ?? [];
   const arrivalsRef = useRef<HTMLDivElement>(null);
   const [arrivalEdges, setArrivalEdges] = useState({ start: true, end: true });
+  const [arrivalsAutoPaused, setArrivalsAutoPaused] = useState(false);
+  
   useEffect(() => {
     const row = arrivalsRef.current;
     if (!row) return;
@@ -59,6 +61,29 @@ export function HomePage() {
     observer.observe(row);
     return () => { row.removeEventListener('scroll', sync); observer.disconnect(); };
   }, [newArrivals.length]);
+  
+  // Auto-scroll effect for new arrivals
+  useEffect(() => {
+    if (arrivalsAutoPaused || !newArrivals.length) return;
+    
+    const interval = setInterval(() => {
+      const row = arrivalsRef.current;
+      if (!row) return;
+      
+      // If we're at the end, scroll back to start
+      if (row.scrollLeft + row.clientWidth >= row.scrollWidth - 2) {
+        row.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        // Otherwise scroll one card forward
+        const card = row.firstElementChild as HTMLElement | null;
+        const distance = (card?.offsetWidth ?? 240) + 12;
+        row.scrollBy({ left: distance, behavior: 'smooth' });
+      }
+    }, 3000); // Auto-scroll every 3 seconds
+    
+    return () => clearInterval(interval);
+  }, [newArrivals.length, arrivalsAutoPaused]);
+  
   function scrollArrivals(direction: number) {
     const row = arrivalsRef.current;
     if (!row) return;
@@ -294,15 +319,30 @@ export function HomePage() {
           <h2 id="new-arrivals-heading">New arrivals</h2>
           <div className={styles.arrivalsControls}>
             <Link to="/new-arrivals">View all new arrivals <span aria-hidden="true">›</span></Link>
-            <button type="button" aria-label="Previous new arrivals" aria-controls="new-arrivals-track" disabled={arrivalEdges.start} onClick={() => scrollArrivals(-1)}>‹</button>
-            <button type="button" aria-label="Next new arrivals" aria-controls="new-arrivals-track" disabled={arrivalEdges.end} onClick={() => scrollArrivals(1)}>›</button>
+            <button type="button" aria-label="Previous new arrivals" aria-controls="new-arrivals-track" disabled={arrivalEdges.start} onClick={() => { setArrivalsAutoPaused(true); scrollArrivals(-1); }}>‹</button>
+            <button type="button" aria-label="Next new arrivals" aria-controls="new-arrivals-track" disabled={arrivalEdges.end} onClick={() => { setArrivalsAutoPaused(true); scrollArrivals(1); }}>›</button>
           </div>
         </div>
         {newArrivals.length ? (
-          <div id="new-arrivals-track" ref={arrivalsRef} className={styles.arrivalsGrid} role="region" aria-label="Swipe through new arrivals" tabIndex={0} onKeyDown={event => {
-            if (event.target !== event.currentTarget) return;
-            if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); scrollArrivals(event.key === 'ArrowLeft' ? -1 : 1); }
-          }}>
+          <div
+            id="new-arrivals-track"
+            ref={arrivalsRef}
+            className={styles.arrivalsGrid}
+            role="region"
+            aria-label="Swipe through new arrivals"
+            tabIndex={0}
+            onMouseEnter={() => setArrivalsAutoPaused(true)}
+            onMouseLeave={() => setArrivalsAutoPaused(false)}
+            onTouchStart={() => setArrivalsAutoPaused(true)}
+            onKeyDown={event => {
+              if (event.target !== event.currentTarget) return;
+              if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                event.preventDefault();
+                setArrivalsAutoPaused(true);
+                scrollArrivals(event.key === 'ArrowLeft' ? -1 : 1);
+              }
+            }}
+          >
             {newArrivals.map(product => (
               <Link key={product.id} to={`/products/${product.slug}`} className={styles.arrivalCard}>
                 <h3 className={styles.arrivalLabel}>{product.name}</h3>

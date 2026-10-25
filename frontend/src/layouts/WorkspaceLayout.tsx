@@ -691,12 +691,60 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
               <span />
             </button>
             <div className={styles.context}>
-              <p className={styles.contextHint}>{pageHint}</p>
+              <div className={styles.breadcrumbRow}>
+                <span className={styles.contextHint}>{pageHint}</span>
+                <span className={styles.breadcrumbSep}>/</span>
+                <span className={styles.liveIndicator}>
+                  <span className={styles.liveIndicatorDot} aria-hidden="true" />
+                  {variant === 'seller' ? 'Kigali Live' : 'Operations Active'}
+                </span>
+              </div>
               <h1 className={styles.contextTitle}>{pageTitle}</h1>
             </div>
           </div>
 
+          {/* Quick Header Search Bar */}
+          <div className={styles.headerSearch}>
+            <svg viewBox="0 0 24 24" className={styles.headerSearchIcon} aria-hidden="true">
+              <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="1.8" />
+              <path d="M16 16l4.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+            <input
+              type="search"
+              placeholder={
+                variant === 'seller'
+                  ? 'Search orders, listings, inventory...'
+                  : 'Search sellers, products, orders...'
+              }
+              aria-label="Search workspace"
+              className={styles.headerSearchInput}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const val = (e.target as HTMLInputElement).value.trim();
+                  if (val) {
+                    navigate(
+                      variant === 'seller'
+                        ? `/seller/products?q=${encodeURIComponent(val)}`
+                        : `/admin/sellers?q=${encodeURIComponent(val)}`,
+                    );
+                  }
+                }
+              }}
+            />
+          </div>
+
           <div className={styles.topActions}>
+            {variant === 'seller' && isSeller ? (
+              <Link to="/seller/products/new" className={styles.headerCtaBtn}>
+                <PlusIcon />
+                <span>New Listing</span>
+              </Link>
+            ) : variant === 'admin' ? (
+              <Link to="/" target="_blank" rel="noopener noreferrer" className={styles.headerLiveBtn}>
+                <StoreIcon />
+                <span>Storefront ↗</span>
+              </Link>
+            ) : null}
             <Link
               to={variant === 'seller' ? '/seller/messages' : '/admin/messages'}
               className={styles.iconBtn}

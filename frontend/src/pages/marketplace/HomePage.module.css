@@ -1478,7 +1478,8 @@
 }
 
 /* Native touch/trackpad swipe with keyboard and button alternatives. */
-.arrivalsGrid { display:flex; gap:12px; overflow-x:auto; overscroll-behavior-x:contain; scroll-snap-type:x mandatory; scrollbar-width:thin; padding-bottom:14px; }
+.arrivalsGrid { display:flex; gap:12px; overflow-x:auto; overscroll-behavior-x:contain; scroll-snap-type:x mandatory; scrollbar-width:none; padding-bottom:14px; }
+.arrivalsGrid::-webkit-scrollbar { display:none; }
 .arrivalCard { flex:0 0 calc((100% - 48px) / 5); scroll-snap-align:start; }
 .arrivalsControls { display:flex; align-items:center; gap:8px; }
 .arrivalsControls a { margin-right:12px; }
