@@ -12,7 +12,8 @@ const SORTS = [
   ['best_selling', 'Best selling'], ['discount', 'Discounts'],
 ] as const;
 
-export function CatalogBrowser({ search = false, defaultSort = 'newest' }: { search?: boolean; defaultSort?: string }) {
+export function CatalogBrowser({ search = false, defaultSort = 'newest', compact = false, collectionTitle }: { search?: boolean; defaultSort?: string; compact?: boolean; collectionTitle?: string }) {
+  const ResultsHeading = compact ? 'h1' : 'h2';
   const [params, setParams] = useSearchParams();
   const q = params.get('q')?.trim() || '';
   const category = params.get('category') || '';
@@ -63,14 +64,14 @@ export function CatalogBrowser({ search = false, defaultSort = 'newest' }: { sea
   }
 
   return <div className={`container ${styles.page}`}>
-    <nav className={styles.breadcrumb} aria-label="Breadcrumb"><Link to="/">Home</Link><span aria-hidden="true">/</span><span aria-current="page">{search ? 'Search' : defaultSort === 'discount' ? 'Deals' : 'Products'}</span></nav>
-    <header className={styles.heading}>
+    <nav className={styles.breadcrumb} aria-label="Breadcrumb"><Link to="/">Home</Link><span aria-hidden="true">/</span><span aria-current="page">{collectionTitle ? 'All categories' : search ? 'Search' : defaultSort === 'discount' ? 'Deals' : 'Products'}</span></nav>
+    {!compact ? <header className={styles.heading}>
       <div><p className={styles.eyebrow}>GOOD FINDS. LOCAL STORES.</p>
         <h1>{search ? 'Search results' : defaultSort === 'discount' ? 'Marketplace deals' : 'Find something you’ll love.'}</h1>
         <p>{search ? (q ? `Results for “${q}”` : 'Search products from the header to get started.') : 'Everyday essentials and unexpected favorites, from stores across Rwanda.'}</p>
       </div>
       <Link to="/stores" className={styles.storeLink}>Discover stores ↗</Link>
-    </header>
+    </header> : null}
     {!search && categories?.length ? <nav className={styles.categoryShortcuts} aria-label="Shop by category"><button type="button" aria-pressed={!category} className={!category ? styles.shortcutActive : ''} onClick={() => update('category', '')}>All finds</button>{categories.slice(0, 7).map((item) => <button type="button" key={item.id} className={category === item.slug ? styles.shortcutActive : ''} aria-pressed={category === item.slug} onClick={() => update('category', item.slug)}>{item.name}</button>)}</nav> : null}
     <div className={styles.catalogLayout}>
     <aside className={styles.filterColumn}>
@@ -92,7 +93,7 @@ export function CatalogBrowser({ search = false, defaultSort = 'newest' }: { sea
     </aside>
     <section className={styles.results} aria-label="Product results">
       <div className={styles.resultsToolbar}>
-        <div><p className={styles.resultsEyebrow}>THE MARKETPLACE COLLECTION</p><h2>{category ? (categories || []).flatMap((item) => [item, ...(item.children || [])]).find((item) => item.slug === category)?.name || 'Your finds' : search ? 'Your search results' : defaultSort === 'discount' ? 'Discover the deals' : 'All the good finds'}</h2></div>
+        <div><p className={styles.resultsEyebrow}>THE MARKETPLACE COLLECTION</p><ResultsHeading>{category ? (categories || []).flatMap((item) => [item, ...(item.children || [])]).find((item) => item.slug === category)?.name || 'Your finds' : collectionTitle || (search ? 'Your search results' : defaultSort === 'discount' ? 'Discover the deals' : 'All the good finds')}</ResultsHeading></div>
       <label>Sort by<select aria-label="Sort by" value={sort} onChange={e => update('sort', e.target.value)}>
         {search ? <option value="relevance">Relevance</option> : null}
         {SORTS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
@@ -104,7 +105,7 @@ export function CatalogBrowser({ search = false, defaultSort = 'newest' }: { sea
     {isLoading ? <ProductGridSkeleton /> : null}
     {isError ? <div className={styles.error}><Alert tone="error">{getErrorMessage(error)}</Alert><Button variant="secondary" onClick={() => result.refetch()}>Retry products</Button></div> : null}
     {!isLoading && !isError && data?.items.length === 0 ? <EmptyState title="No products match these filters" description="Try a wider price range or another category." actionLabel="Clear filters" onAction={clearFilters} /> : null}
-    {data?.items.length ? <><ProductGrid products={data.items} className={styles.productGrid} /><TablePagination page={page} pageSize={24} totalItems={data.pagination.total} totalPages={data.pagination.totalPages} onPageChange={next => update('page', String(next))} /></> : null}
+    {data?.items.length ? <><ProductGrid products={data.items} compact={compact} className={`${styles.productGrid} ${compact ? styles.fiveColumnGrid : ''}`} /><TablePagination page={page} pageSize={24} totalItems={data.pagination.total} totalPages={data.pagination.totalPages} onPageChange={next => update('page', String(next))} /></> : null}
     </section>
     </div>
   </div>;

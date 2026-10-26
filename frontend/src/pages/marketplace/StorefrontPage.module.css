@@ -55,6 +55,11 @@
 .emptyCard h2 { font-family: var(--font-sans); color: #374d2d; font-size: 1.15rem; }
 .emptyLink { display: inline-flex; gap: .8rem; margin-top: 1rem; padding: .75rem 1rem; border: 1px solid #dce5d3; background: #fff; border-radius: 8px; color: #4d6a3c; font-size: .76rem; font-weight: 600; text-decoration: none; }
 .productGrid { gap: 1rem; }
+.productGrid.fiveColumnGrid { grid-template-columns:repeat(5,minmax(0,1fr)); gap:0.8rem; }
+.productGrid.fiveColumnGrid > article { min-width:0; }
+@media(max-width:1199px) { .productGrid.fiveColumnGrid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media(max-width:650px) { .productGrid.fiveColumnGrid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:0.65rem; } }
+@media(max-width:359px) { .productGrid.fiveColumnGrid { grid-template-columns:minmax(0,1fr); } }
 .productGrid > article { background: #fff; border-color: #e5e9e1; border-radius: 12px; }
 .productGrid > article > a { background: #f7f9f4; }
 .aboutCard { margin-top: 2rem; scroll-margin-top: 160px; display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem; padding: 1.8rem; border: 1px solid #e5e9e1; border-radius: 14px; background: #f8faf5; }

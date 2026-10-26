@@ -6,9 +6,9 @@ import { PriceDisplay } from './PriceDisplay';
 import { discountPercent } from '@/utils/money';
 import styles from './ProductCard.module.css';
 
-type Props = { product: ProductListItem };
+type Props = { product: ProductListItem; compact?: boolean };
 
-export function ProductCard({ product }: Props) {
+export function ProductCard({ product, compact = false }: Props) {
   const pct = discountPercent(product.price, product.discountPrice);
 
   const activeVariants = product.variants?.filter((variant) => variant.isActive !== false);
@@ -17,7 +17,7 @@ export function ProductCard({ product }: Props) {
     : undefined;
 
   return (
-    <article className={styles.card}>
+    <article className={`${styles.card} ${compact ? styles.compact : ''}`}>
       <Link to={`/products/${product.slug}`} className={styles.media}>
         {pct ? <span className={styles.badge}>{pct}% OFF</span> : null}
         {product.images[0]?.url ? <img onError={handleImageError} src={product.images[0].url} alt={product.name} loading="lazy" decoding="async" width={600} height={600} /> : <span className={styles.placeholder}>Image unavailable</span>}
@@ -28,14 +28,14 @@ export function ProductCard({ product }: Props) {
         </Link>
         <Rating value={product.ratingAvg} count={product.ratingCount} />
         <PriceDisplay price={product.price} discountPrice={product.discountPrice} />
-        <p className={styles.seller}>
+        {!compact ? <p className={styles.seller}>
           <Link to={`/stores/${product.store.slug}`}>{product.store.name}</Link>
           {product.store.seller.verificationStatus === 'VERIFIED' ? <span className={styles.verified}>Verified seller</span> : null}
           {product.store.seller.district ? (
             <span className={styles.loc}>{product.store.seller.district}</span>
           ) : null}
-        </p>
-        {available !== undefined ? <p className={styles.stock}>{available > 0 ? 'In stock' : 'Out of stock'}</p> : null}
+        </p> : null}
+        {!compact && available !== undefined ? <p className={styles.stock}>{available > 0 ? 'In stock' : 'Out of stock'}</p> : null}
       </div>
     </article>
   );

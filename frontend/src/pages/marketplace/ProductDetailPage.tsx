@@ -17,7 +17,6 @@ import {
 } from '@/api/hooks';
 import { Alert, Badge, Button, ProductGridSkeleton, useToast } from '@/components/ui';
 import { PriceDisplay, ProductGrid, QuantitySelector, VariantSelector } from '@/components/product';
-import gridStyles from '@/components/product/ProductGrid.module.css';
 import { getErrorMessage } from '@/api/client';
 import { loginHref } from '@/utils/auth';
 import { formatRwf } from '@/utils/money';
@@ -40,18 +39,12 @@ export function ProductDetailPage() {
   const { data: user } = useMe();
   const { data: reviews } = useProductReviews(product?.id);
   const { data: wishlist } = useWishlist();
-  const categorySlug = product?.category.slug;
-  const { data: relatedData, isLoading: relatedLoading } = useProducts({
+  const { data: supplierData, isLoading: supplierLoading, isError: supplierError } = useProducts({
     page: 1,
-    limit: 12,
-    ...(categorySlug ? { category: categorySlug } : {}),
+    limit: 15,
+    seller: product?.store.slug,
     sort: 'popular',
-  });
-  const { data: popularData } = useProducts({
-    page: 1,
-    limit: 12,
-    sort: 'popular',
-  });
+  }, !!product?.store.slug);
   const addToCart = useAddToCart();
   const addWishlist = useAddToWishlist();
   const removeWishlist = useRemoveFromWishlist();
@@ -146,16 +139,9 @@ export function ProductDetailPage() {
   }
 
   const reviewItems = reviews?.items || [];
-  const relatedProducts = useMemo(() => {
-    const currentId = product?.id;
-    const fromCategory = (relatedData?.items || []).filter((item) => item.id !== currentId);
-    if (fromCategory.length >= 4) return fromCategory.slice(0, 8);
-
-    const seen = new Set(fromCategory.map((item) => item.id));
-    if (currentId) seen.add(currentId);
-    const fillers = (popularData?.items || []).filter((item) => !seen.has(item.id));
-    return [...fromCategory, ...fillers].slice(0, 8);
-  }, [relatedData?.items, popularData?.items, product?.id]);
+  const supplierProducts = useMemo(() => (supplierData?.items || [])
+    .filter(item => item.id !== product?.id && item.store.slug === product?.store.slug)
+    .slice(0, 14), [supplierData?.items, product?.id, product?.store.slug]);
 
   const ratingBreakdown = useMemo(() => {
     const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
@@ -1021,26 +1007,20 @@ export function ProductDetailPage() {
             <div className={styles.alsoViewedHead}>
               <div>
                 <p className={styles.reviewsKicker}>Explore More</p>
-                <h2 id="also-viewed-heading">Customers Also Viewed</h2>
+                <h2 id="also-viewed-heading">Supplier’s popular products</h2>
               </div>
               <Link
-                to={
-                  product.category?.slug
-                    ? `/categories/${product.category.slug}`
-                    : '/products'
-                }
+                to={`/stores/${product.store.slug}?sort=popular`}
                 className={styles.alsoViewedLink}
               >
-                {product.category?.name
-                  ? `See more in ${product.category.name} ›`
-                  : 'Browse all products ›'}
+                View all from {product.store.name} ›
               </Link>
             </div>
-            {relatedLoading && !relatedProducts.length ? <ProductGridSkeleton count={4} /> : null}
-            {relatedProducts.length ? (
-              <ProductGrid products={relatedProducts} className={gridStyles.dense} />
-            ) : !relatedLoading ? (
-              <p className={styles.alsoViewedEmpty}>More recommendations will appear here soon.</p>
+            {supplierLoading && !supplierProducts.length ? <ProductGridSkeleton count={7} /> : null}
+            {supplierProducts.length ? (
+              <ProductGrid products={supplierProducts} compact className={styles.supplierProductGrid} />
+            ) : !supplierLoading ? (
+              <p className={styles.alsoViewedEmpty}>{supplierError ? 'Unable to load this supplier’s products. Please refresh to try again.' : 'This supplier has no other products available yet.'}</p>
             ) : null}
           </section>
 

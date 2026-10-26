@@ -27,6 +27,11 @@ export async function getProduct(req: Request, res: Response) {
   return success(res, { product });
 }
 
+export async function getProductFacets(req: Request, res: Response) {
+  const { category } = productListQuerySchema.pick({ category: true }).parse(req.query);
+  return success(res, await catalogService.getProductFacets(category));
+}
+
 export async function search(req: Request, res: Response) {
   const query = searchQuerySchema.parse(req.query);
   const data = await catalogService.listProducts({ ...query, sort: query.sort || 'relevance' });

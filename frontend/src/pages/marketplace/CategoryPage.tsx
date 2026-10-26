@@ -10,6 +10,7 @@ import {
   useCategories,
   useCategory,
   useProducts,
+  useProductFacets,
   useRemoveFromWishlist,
   useWishlist,
   type ProductListItem,
@@ -39,6 +40,9 @@ export function CategoryPage() {
   const minPrice = searchParams.get('minPrice') || '';
   const maxPrice = searchParams.get('maxPrice') || '';
   const condition = searchParams.get('condition') || '';
+  const brand = searchParams.get('brand') || '';
+  const color = searchParams.get('color') || '';
+  const { data: facets, isLoading: facetsLoading, isError: facetsError } = useProductFacets(slug);
   const inStock = searchParams.get('inStock') === 'true';
   const page = Number(searchParams.get('page') || '1') || 1;
 
@@ -58,7 +62,7 @@ export function CategoryPage() {
   }, [mobileFilters, filtersOpen]);
   useModalFocus(filterRef, mobileFilters && filtersOpen, () => setFiltersOpen(false));
 
-  const activeFilterCount = Number(!!(minPrice || maxPrice)) + Number(!!condition) + Number(inStock);
+  const activeFilterCount = Number(!!(minPrice || maxPrice)) + Number(!!condition) + Number(inStock) + Number(!!brand) + Number(!!color);
 
   const { data: category, isLoading: categoryLoading, isError: categoryError, error: categoryErr } =
     useCategory(slug);
@@ -70,12 +74,14 @@ export function CategoryPage() {
       limit: 24,
       category: slug,
       sort,
+      ...(brand ? { brand } : {}),
+      ...(color ? { color } : {}),
       ...(minPrice ? { minPrice: Number(minPrice) } : {}),
       ...(maxPrice ? { maxPrice: Number(maxPrice) } : {}),
       ...(condition ? { condition } : {}),
       ...(inStock ? { inStock: 'true' as const } : {}),
     }),
-    [page, slug, sort, minPrice, maxPrice, condition, inStock],
+    [page, slug, sort, minPrice, maxPrice, condition, inStock, brand, color],
   );
 
   const { data, isLoading, isError, error } = useProducts(productParams);
@@ -136,7 +142,6 @@ export function CategoryPage() {
   }
 
   const title = category?.name || (slug === 'fashion-womens-wear' ? "Women's wear" : 'Category');
-  const isFashion = slug.startsWith('fashion');
   const total = data?.pagination.total ?? 0;
   const totalPages = data?.pagination.totalPages ?? 1;
 
@@ -213,20 +218,6 @@ export function CategoryPage() {
         <span>{title}</span>
       </nav>
 
-      <section className={styles.categoryHero} aria-labelledby="category-title">
-        <div className={styles.heroCopy}>
-          <span className={styles.heroEyebrow}>{isFashion ? 'THE STYLE EDIT' : 'DISCOVER YOUR NEXT FIND'}</span>
-          <h1 id="category-title">{isFashion ? <>Everyday style.<br /><em>Entirely you.</em></> : title}</h1>
-          <p>{isFashion ? 'Make room for your next favourite. Explore women’s wear, fresh looks, and wardrobe staples from sellers across Rwanda.' : `Explore ${title.toLowerCase()} and find something you love from sellers across Rwanda.`}</p>
-          <div className={styles.heroActions}><a href="#category-products" className={styles.heroPrimary}>Explore {title.toLowerCase()} <span aria-hidden="true">↗</span></a><Link to="/stores">Meet the stores <span aria-hidden="true">→</span></Link></div>
-          <div className={styles.heroNotes}><span>Local stores, more choice</span><span>Pay with Mobile Money</span></div>
-        </div>
-        <div className={styles.heroVisual}>
-          <img src={isFashion ? '/neeremarket-auth-boutique.png' : category?.imageUrl || FALLBACK_CATEGORY_VISUAL.image} alt={isFashion ? 'A boutique filled with clothing and accessories' : title} onError={handleImageError} />
-          <div className={styles.heroImageNote}><span>{isFashion ? 'A little wardrobe inspiration' : 'Find your favourites'}</span><strong>{isFashion ? 'Your next look starts here.' : 'Good finds. Close to home.'}</strong></div>
-        </div>
-      </section>
-
       <nav className={styles.topTabBar} aria-label="Browse marketplace"><span className={styles.topTabActive}>Products</span><Link to="/stores" className={styles.topTab}>Discover stores</Link></nav>
 
       {/* Mobile Drawer Backdrop */}
@@ -266,6 +257,24 @@ export function CategoryPage() {
           </div>
 
           <div className={styles.filterBody}>
+
+          <div className={styles.filterSection}>
+            <label className={styles.filterSectionTitle} htmlFor="category-brand">Brand</label>
+            <select id="category-brand" className={styles.facetSelect} value={brand} onChange={event => setParam('brand', event.target.value || null)}>
+              <option value="">All brands</option>
+              {brand && !facets?.brands.some(item => item.slug === brand) ? <option value={brand}>{brand}</option> : null}
+              {facets?.brands.map(item => <option value={item.slug} key={item.slug}>{item.name}</option>)}
+            </select>
+          </div>
+          <div className={styles.filterSection}>
+            <label className={styles.filterSectionTitle} htmlFor="category-color">Color</label>
+            <select id="category-color" className={styles.facetSelect} value={color} onChange={event => setParam('color', event.target.value || null)}>
+              <option value="">All colors</option>
+              {color && !facets?.colors.includes(color) ? <option value={color}>{color}</option> : null}
+              {facets?.colors.map(item => <option value={item} key={item}>{item}</option>)}
+            </select>
+            {facetsLoading ? <p className={styles.facetHint}>Loading available options…</p> : facetsError ? <p className={styles.facetHint}>Filter options could not be loaded. Please refresh to retry.</p> : !facets?.colors.length ? <p className={styles.facetHint}>No colors listed in this category yet.</p> : null}
+          </div>
 
           <div className={styles.filterSection}><label className={styles.checkRow}><input type="checkbox" checked={inStock} onChange={() => setParam('inStock', inStock ? null : 'true')} />In stock only</label></div>
 
@@ -332,12 +341,12 @@ export function CategoryPage() {
         <div className={styles.main}>
           {/* Query Title & View Switcher */}
           <div className={styles.resultsHeader}>
-            <h2 id="category-products" className={styles.resultsQueryTitle}>
+            <h1 id="category-products" className={styles.resultsQueryTitle}>
               {title}
               <span className={styles.resultsCount}>
                 {isLoading ? 'Searching products…' : `${total.toLocaleString()} results`}
               </span>
-            </h2>
+            </h1>
 
             <div className={styles.headerRightActions}>
               <select className={styles.sortSelect} aria-label="Sort products" value={sort} onChange={event => setParam('sort', event.target.value)}><option value="popular">Popular</option><option value="newest">Newest</option><option value="price_asc">Price: low to high</option><option value="price_desc">Price: high to low</option><option value="best_rated">Highest rated</option></select>
@@ -422,6 +431,8 @@ export function CategoryPage() {
           </div>
 
           {activeFilterCount > 0 ? <div className={styles.activeFilters} aria-label="Active filters">
+            {brand ? <button type="button" onClick={() => setParam('brand', null)}>Brand: {facets?.brands.find(item => item.slug === brand)?.name || brand} <span aria-hidden="true">×</span></button> : null}
+            {color ? <button type="button" onClick={() => setParam('color', null)}>Color: {color} <span aria-hidden="true">×</span></button> : null}
             {minPrice || maxPrice ? <button type="button" onClick={() => { const next = new URLSearchParams(searchParams); next.delete('minPrice'); next.delete('maxPrice'); next.delete('page'); setSearchParams(next, { replace: true }); }}>Price: {minPrice || '0'} – {maxPrice || 'Any'} RWF <span aria-hidden="true">×</span></button> : null}
             {condition ? <button type="button" onClick={() => setParam('condition', null)}>{CONDITIONS.find(item => item.value === condition)?.label} <span aria-hidden="true">×</span></button> : null}
             {inStock ? <button type="button" onClick={() => setParam('inStock', null)}>In stock <span aria-hidden="true">×</span></button> : null}
@@ -537,7 +548,7 @@ export function CategoryPage() {
                 })}
               </div>
             ) : (
-              <ProductGrid products={data.items} />
+              <ProductGrid products={data.items} compact className={styles.fiveColumnGrid} />
             )
           ) : null}
 

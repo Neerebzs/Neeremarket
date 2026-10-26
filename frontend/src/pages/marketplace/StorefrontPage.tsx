@@ -28,6 +28,7 @@ const CONDITIONS = [
 
 export function StorefrontPage() {
   const { slug = '' } = useParams();
+  const compactProducts = slug === 'downtown-fashion-kigali';
   const [searchParams, setSearchParams] = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filterRef = useRef<HTMLElement>(null);
@@ -383,7 +384,7 @@ export function StorefrontPage() {
               />{!activeFilterCount && !query ? <Link to="/stores" className={styles.emptyLink}>Explore other stores <span aria-hidden="true">&#8594;</span></Link> : null}</div>
             ) : null}
             {data?.items.length ? (
-              <ProductGrid products={data.items} className={`${gridStyles.dense} ${styles.productGrid}`} />
+              <ProductGrid products={data.items} compact={compactProducts} className={`${gridStyles.dense} ${styles.productGrid} ${compactProducts ? styles.fiveColumnGrid : ''}`} />
             ) : null}
 
             {totalPages > 1 ? (

@@ -5,6 +5,7 @@ export const productListQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(48).default(24),
   category: z.string().optional(),
   brand: z.string().optional(),
+  color: z.string().trim().min(1).max(80).optional(),
   seller: z.string().optional(),
   district: z.string().optional(),
   minPrice: z.coerce.number().optional(),

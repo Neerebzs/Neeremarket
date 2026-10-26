@@ -109,6 +109,15 @@ export async function listProducts(query: ListQuery, opts?: { status?: ProductSt
   if (query.brand) {
     where.brand = { slug: query.brand };
   }
+  if (query.color) {
+    const matches = await prisma.$queryRaw<Array<{ product_id: string }>>(Prisma.sql`
+      SELECT DISTINCT v.product_id FROM product_variants v
+      CROSS JOIN LATERAL jsonb_each_text(v.attributes) a
+      WHERE v.is_active = true AND lower(trim(a.key)) IN ('color', 'colour')
+        AND lower(trim(a.value)) = lower(${query.color.trim()})
+    `);
+    where.id = { in: matches.map(row => row.product_id) };
+  }
   if (query.seller || query.district) {
     where.store = {
       ...(query.seller ? { slug: query.seller } : {}),
@@ -162,6 +171,25 @@ export async function listProducts(query: ListQuery, opts?: { status?: ProductSt
       totalPages: Math.ceil(total / query.limit) || 1,
     },
   };
+}
+
+export async function getProductFacets(category?: string) {
+  const product: Prisma.ProductWhereInput = {
+    status: 'ACTIVE', deletedAt: null,
+    ...(category ? { category: { OR: [{ slug: category }, { parent: { slug: category } }] } } : {}),
+  };
+  const [brands, variants] = await Promise.all([
+    prisma.brand.findMany({ where: { products: { some: product } }, select: { name: true, slug: true }, orderBy: { name: 'asc' } }),
+    prisma.productVariant.findMany({ where: { isActive: true, product }, select: { attributes: true }, distinct: ['attributes'] }),
+  ]);
+  const colors = new Map<string, string>();
+  for (const variant of variants) {
+    for (const [key, value] of Object.entries(variant.attributes as Record<string, unknown>)) {
+      if (!['color', 'colour'].includes(key.trim().toLowerCase()) || typeof value !== 'string' || !value.trim()) continue;
+      colors.set(value.trim().toLowerCase(), value.trim());
+    }
+  }
+  return { brands, colors: [...colors.values()].sort((a, b) => a.localeCompare(b)) };
 }
 
 export async function getProductBySlug(slug: string) {

@@ -29,7 +29,7 @@
 .mobileFilterToggle { display: none; }
 .results { min-width: 0; }
 .resultsToolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: .8rem; }
-.resultsToolbar h2 { margin: 0; color: #344c2b; font-family: var(--font-sans); font-size: 1.2rem; font-weight: 650; letter-spacing: -.025em; }
+.resultsToolbar :is(h1,h2) { margin: 0; color: #344c2b; font-family: var(--font-sans); font-size: 1.2rem; font-weight: 650; letter-spacing: -.025em; }
 .resultsEyebrow { margin: 0 0 .45rem; font-size: .55rem; font-weight: 700; letter-spacing: .13em; color: #8a765d; }
 .resultsToolbar label { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
 .resultsToolbar select { width: auto; max-width: 180px; }
@@ -45,10 +45,17 @@
 .page a:focus-visible, .page button:focus-visible, .page select:focus-visible, .page input:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 3px; }
 @media (min-width: 1500px) { .productGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 1050px) { .catalogLayout { grid-template-columns: 210px minmax(0, 1fr); gap: 1rem; } .productGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .filters { padding: 1rem; } .resultsToolbar label { gap: .4rem; } }
-@media (max-width: 760px) { .heading { padding: 1.4rem; align-items: flex-start; flex-direction: column; gap: 1rem; } .catalogLayout { grid-template-columns: minmax(0, 1fr); } .filterColumn { position: static; } .mobileFilterToggle { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: .85rem 1rem; border: 1px solid #dfe7d5; border-radius: 8px; background: #f8faf5; color: #4d663d; font: inherit; font-size: .78rem; font-weight: 600; cursor: pointer; } .filters { display: none; margin-top: .6rem; } .filtersOpen { display: flex; } .resultsToolbar { align-items: flex-start; } .resultsToolbar h2 { font-size: 1rem; } .resultsToolbar label { font-size: .65rem; flex-direction: column; align-items: flex-start; } .resultsToolbar select { max-width: 145px; min-height: 38px; font-size: .68rem; } .productGrid { gap: .65rem; } .productGrid > article > a img { padding: .5rem; } }
+@media (max-width: 760px) { .heading { padding: 1.4rem; align-items: flex-start; flex-direction: column; gap: 1rem; } .catalogLayout { grid-template-columns: minmax(0, 1fr); } .filterColumn { position: static; } .mobileFilterToggle { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: .85rem 1rem; border: 1px solid #dfe7d5; border-radius: 8px; background: #f8faf5; color: #4d663d; font: inherit; font-size: .78rem; font-weight: 600; cursor: pointer; } .filters { display: none; margin-top: .6rem; } .filtersOpen { display: flex; } .resultsToolbar { align-items: flex-start; } .resultsToolbar :is(h1,h2) { font-size: 1rem; } .resultsToolbar label { font-size: .65rem; flex-direction: column; align-items: flex-start; } .resultsToolbar select { max-width: 145px; min-height: 38px; font-size: .68rem; } .productGrid { gap: .65rem; } .productGrid > article > a img { padding: .5rem; } }
 .categoryGrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr)); gap:24px; }
 .categoryCard { border:1px solid var(--color-border); border-radius:12px; padding:24px; }
 .categoryCard h2 { font-family:var(--font-display); font-size:1.25rem; }
 .categoryCard p { color:var(--color-ink-muted); font-size:0.875rem; }
 .categoryCard ul { padding-left:20px; line-height:2; font-size:0.875rem; }
 .categoryCard a:hover { color:var(--color-brand); text-decoration:underline; }
+
+.results .fiveColumnGrid { grid-template-columns:repeat(5,minmax(0,1fr)); gap:0.8rem; }
+.results .fiveColumnGrid > article { min-width:0; }
+.results .fiveColumnGrid > article > a img { padding:0.65rem; }
+@media(max-width:1199px) { .results .fiveColumnGrid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media(max-width:650px) { .results .fiveColumnGrid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:0.65rem; } }
+@media(max-width:359px) { .results .fiveColumnGrid { grid-template-columns:minmax(0,1fr); } }

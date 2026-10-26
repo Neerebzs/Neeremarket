@@ -2188,3 +2188,11 @@
 .detailsSupportGrid .trustStrip,.detailsSupportGrid .sellerCard { margin:0; height:100%; }
 .detailsSupportGrid .sellerCard { display:flex; flex-direction:column; justify-content:space-between; gap:1.5rem; }
 @media(max-width:700px) { .detailsSupportGrid { grid-template-columns:1fr; } }
+
+.alsoViewed .supplierProductGrid { grid-template-columns:repeat(7,minmax(0,1fr)); gap:0.8rem; }
+.supplierProductGrid > article { min-width:0; }
+@media(max-width:1199px) { .alsoViewed .supplierProductGrid { grid-template-columns:repeat(5,minmax(0,1fr)); } }
+@media(max-width:950px) { .alsoViewed .supplierProductGrid { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+@media(max-width:700px) { .alsoViewed .supplierProductGrid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media(max-width:520px) { .alsoViewed .supplierProductGrid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:0.65rem; } }
+@media(max-width:359px) { .alsoViewed .supplierProductGrid { grid-template-columns:minmax(0,1fr); } }

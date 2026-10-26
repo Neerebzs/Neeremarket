@@ -106,6 +106,17 @@ export function useSearch(params: Record<string, string | number | undefined>) {
   });
 }
 
+export function useProductFacets(category: string) {
+  return useQuery({
+    queryKey: ['product-facets', category],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data } = await api.get<ApiSuccess<{ brands: Array<{ name: string; slug: string }>; colors: string[] }>>('/products/facets', { params: { category } });
+      return data.data;
+    },
+  });
+}
+
 export function useProduct(slug: string) {
   return useQuery({
     queryKey: ['product', slug],

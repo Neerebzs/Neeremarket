@@ -276,12 +276,7 @@ export function HomePage() {
             </div>
           </div>
 
-          <nav className={styles.heroServices} aria-label="Shopping services">
-            <Link to="/how-it-works"><strong>Mobile Money</strong><span>MTN MoMo &amp; Airtel</span></Link>
-            <Link to="/stores"><strong>Verified stores</strong><span>Discover local sellers</span></Link>
-            <Link to="/sell"><strong>Start selling</strong><span>Grow your business</span></Link>
-            <Link to="/help"><strong>Buyer support</strong><span>Here to help you shop</span></Link>
-          </nav>
+
         </div>
 
         <aside className={styles.trendPanel} aria-labelledby="trending-heading">

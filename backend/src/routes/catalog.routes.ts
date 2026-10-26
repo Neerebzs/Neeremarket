@@ -8,6 +8,7 @@ export const catalogRouter = Router();
 catalogRouter.get('/categories', asyncHandler(catalogController.listCategories));
 catalogRouter.get('/categories/:slug', asyncHandler(catalogController.getCategory));
 catalogRouter.get('/products', asyncHandler(catalogController.listProducts));
+catalogRouter.get('/products/facets', asyncHandler(catalogController.getProductFacets));
 catalogRouter.get('/products/:slug', asyncHandler(catalogController.getProduct));
 catalogRouter.get('/search', asyncHandler(catalogController.search));
 catalogRouter.get('/stores', asyncHandler(sellerController.listStores));
