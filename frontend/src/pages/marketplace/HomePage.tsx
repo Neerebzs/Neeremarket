@@ -5,6 +5,7 @@ import { Helmet } from 'react-helmet-async';
 import { useCategories, useProducts, useStores, useStore, type ProductListItem } from '@/api/hooks';
 import { Alert } from '@/components/ui';
 import { PriceDisplay } from '@/components/product';
+import { HomeQuickActions } from '@/components/navigation/HomeQuickActions';
 import {
   categoryImage,
   FALLBACK_CATEGORY_VISUAL,
@@ -575,6 +576,7 @@ export function HomePage() {
           ))}
         </section>
       ) : null}
+      <HomeQuickActions />
     </div>
   );
 }

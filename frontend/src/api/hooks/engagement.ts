@@ -149,6 +149,7 @@ export function useMessageThreads(scopeAll = false, enabled = true) {
             id: string;
             sellerId: string;
             sellerName?: string;
+            isSupport?: boolean;
             sellerLogoUrl: string | null;
             customerName?: string;
             updatedAt: string;
@@ -188,10 +189,11 @@ export function useMessageableSellers(q = '', enabled = true) {
   });
 }
 
-export function useThread(threadId: string, scopeAll = false) {
+export function useThread(threadId: string, scopeAll = false, live = false) {
   return useQuery({
     queryKey: ['messages', 'thread', threadId, scopeAll],
     enabled: !!threadId,
+    refetchInterval: live ? 5000 : false,
     queryFn: async () => {
       const { data } = await api.get<
         ApiSuccess<{
@@ -215,6 +217,7 @@ export function useSendMessage() {
   return useMutation({
     mutationFn: async (body: {
       threadId?: string;
+      support?: boolean;
       sellerId?: string;
       productId?: string;
       body: string;

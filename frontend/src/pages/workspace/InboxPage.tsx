@@ -69,6 +69,7 @@ export function InboxPage({
               className={threadId === t.id ? styles.threadOn : undefined}
             >
               <strong>{t.customerName || t.sellerName || 'Conversation'}</strong>
+              {t.isSupport ? <span>NeereMarket support</span> : null}
               <p>{t.lastMessage?.body || 'No messages yet'}</p>
             </Link>
           ))}

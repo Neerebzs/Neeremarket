@@ -18,9 +18,10 @@ export const createReviewSchema = z
   });
 
 export const sendMessageSchema = z.object({
+  support: z.boolean().optional(),
   threadId: z.string().uuid().optional(),
   sellerId: z.string().uuid().optional(),
   productId: z.string().uuid().optional(),
   orderId: z.string().uuid().optional(),
-  body: z.string().min(1).max(2000),
+  body: z.string().trim().min(1).max(2000),
 });

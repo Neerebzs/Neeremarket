@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { SupportChatModal } from '@/components/navigation/SupportChatModal';
 import { useMe } from '@/api/hooks';
 import { APP_LOGO_SRC, APP_NAME, APP_TAGLINE } from '@/config/brand';
 import { hasSellerAccount } from '@/utils/auth';
@@ -6,9 +8,10 @@ import styles from './SiteFooter.module.css';
 
 export function SiteFooter() {
   const { data: user } = useMe();
+  const [chatOpen, setChatOpen] = useState(false);
 
   return (
-    <footer className={styles.footer}>
+    <><footer className={styles.footer}>
       <div className={`container ${styles.footerGrid}`}>
         <div>
           <img src={APP_LOGO_SRC} alt={APP_NAME} className={styles.footerLogo} />
@@ -37,10 +40,10 @@ export function SiteFooter() {
             <Link to="/returns">Returns</Link>
             <Link to="/terms">Terms</Link>
             <Link to="/privacy">Privacy</Link>
-            <Link to="/contact">Contact</Link>
+            <button type="button" className={styles.contactButton} aria-haspopup="dialog" aria-expanded={chatOpen} onClick={() => setChatOpen(true)}>Contact</button>
           </div>
         </div>
       </div>
-    </footer>
+    </footer><SupportChatModal open={chatOpen} onClose={() => setChatOpen(false)} returnTo="/contact" /></>
   );
 }

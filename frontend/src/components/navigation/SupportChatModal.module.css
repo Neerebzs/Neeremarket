@@ -1,0 +1,32 @@
+.backdrop { position:fixed; inset:0; z-index:1200; background:#1b241e55; display:flex; align-items:flex-end; justify-content:flex-end; padding:24px; }
+.dialog { width:min(100%,420px); height:min(640px,calc(100dvh - 48px)); background:white; border-radius:20px; box-shadow:0 16px 70px #16201433; display:flex; flex-direction:column; overflow:hidden; }
+.header { display:flex; align-items:center; gap:12px; padding:20px; background:#fbf4ee; border-bottom:1px solid #eee3d9; }
+.avatar { flex-shrink:0; width:42px; height:42px; border-radius:13px; display:grid; place-items:center; background:var(--color-brand); color:var(--color-on-brand); font-size:23px; font-weight:750; }
+.header h2 { margin:0; font-size:16px; letter-spacing:-.03em; }
+.header p { margin:5px 0 0; color:var(--color-ink-muted); font-size:11px; line-height:1.5; }
+.close { margin-left:auto; flex-shrink:0; width:34px; height:34px; border:1px solid #e4d9ce; border-radius:50%; background:white; color:var(--color-ink); font-size:23px; cursor:pointer; }
+.conversation { flex:1; overflow-y:auto; min-height:0; padding:20px; background:#fafbf9; display:flex; flex-direction:column; gap:14px; }
+.greeting { background:white; border:1px solid #e8ece5; border-radius:4px 15px 15px; padding:16px; font-size:13px; line-height:1.65; }
+.greeting p { margin:8px 0; color:#626b5c; }
+.greeting > span { font-size:10px; color:#757d70; }
+.incoming,.outgoing { max-width:88%; padding:11px 13px; border-radius:14px 14px 14px 3px; align-self:flex-start; border:1px solid #e4e9df; background:white; }
+.outgoing { align-self:flex-end; background:#fff0e3; border-color:#f2d8c1; border-radius:14px 14px 3px 14px; }
+.author { font-size:10px; color:#68745d; }
+.incoming p,.outgoing p { font-size:13px; white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.65; margin:5px 0; }
+.incoming time,.outgoing time { display:block; text-align:right; font-size:9px; color:#757d70; }
+.status,.hint { color:var(--color-ink-muted); font-size:11px; }
+.error,.sendError { font-size:12px; color:var(--color-danger); }
+.error button { border:1px solid currentColor; border-radius:6px; color:inherit; background:white; padding:7px 12px; cursor:pointer; }
+.sendError { margin:0; padding:10px 20px; }
+.signIn { padding:15px; background:#fff; border:1px solid #e4e9df; border-radius:12px; font-size:13px; line-height:1.65; }
+.signIn p { margin:0 0 12px; }
+.signIn a { display:inline-flex; padding:8px 13px; border-radius:8px; background:var(--color-brand); color:var(--color-on-brand); text-decoration:none; font-weight:600; }
+.composer { padding:15px 20px; border-top:1px solid #e8ece3; }
+.composer label { display:block; font-size:11px; font-weight:600; margin-bottom:7px; }
+.inputRow { display:flex; align-items:end; gap:8px; }
+.inputRow textarea { min-width:0; flex:1; resize:none; max-height:120px; border:1px solid #dce2d6; border-radius:10px; padding:10px; font:inherit; font-size:13px; }
+.inputRow button { height:44px; border:0; border-radius:9px; padding:0 13px; font:inherit; font-size:12px; font-weight:600; background:var(--color-brand); color:var(--color-on-brand); cursor:pointer; }
+.inputRow button:disabled { opacity:.5; cursor:not-allowed; }
+.hint { display:block; margin-top:9px; font-size:10px; line-height:1.5; }
+.dialog :is(button,textarea,a):focus-visible { outline:2px solid var(--color-brand); outline-offset:2px; }
+@media(max-width:600px) { .backdrop { padding:12px; } .dialog { width:100%; height:min(620px,calc(100dvh - 24px)); border-radius:16px; } .header,.conversation { padding:16px; } .composer { padding:12px 16px max(12px,env(safe-area-inset-bottom)); } }

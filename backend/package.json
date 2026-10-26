@@ -2,7 +2,7 @@
   "name": "tombora-hub-backend",
   "version": "0.1.0",
   "private": true,
-  "description": "Tombora Hub marketplace API — modular monolith",
+  "description": "Tombora Hub marketplace API \u2014 modular monolith",
   "scripts": {
     "dev": "node api.js && tsx watch src/server.ts",
     "build": "node api.js && tsc -p tsconfig.json",

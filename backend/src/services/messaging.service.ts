@@ -3,6 +3,9 @@ import { Errors } from '../shared/errors';
 import { notifyUser } from './notification.service';
 
 const INBOX_ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN', 'CUSTOMER_SUPPORT', 'ORDER_ADMIN'];
+// MessageThread sellerId is a routing identifier, without a seller foreign key.
+// Reserve the nil UUID for marketplace support instead of a seller account.
+export const SUPPORT_INBOX_ID = '00000000-0000-0000-0000-000000000000';
 
 export function canManageInbox(roles: string[]) {
   return roles.some((r) => INBOX_ADMIN_ROLES.includes(r));
@@ -45,10 +48,21 @@ export async function sendMessage(
     productId?: string;
     orderId?: string;
     body: string;
+    support?: boolean;
   },
   asAdmin = false,
 ) {
   let threadId = input.threadId;
+
+  if (!threadId && input.support) {
+    const thread = await prisma.$transaction(async tx => {
+      // Serialize creation for each customer to prevent duplicate support threads.
+      await tx.$queryRaw`SELECT id FROM users WHERE id = ${senderId}::uuid FOR UPDATE`;
+      return await tx.messageThread.findFirst({ where: { customerId: senderId, sellerId: SUPPORT_INBOX_ID } })
+        ?? tx.messageThread.create({ data: { customerId: senderId, sellerId: SUPPORT_INBOX_ID } });
+    });
+    threadId = thread.id;
+  }
 
   if (!threadId) {
     if (!input.sellerId) throw Errors.validation('sellerId or threadId is required');
@@ -75,12 +89,17 @@ export async function sendMessage(
   });
   if (!thread) throw Errors.notFound('Message thread');
 
-  const sellerUserId = (
+  const isSupport = thread.sellerId === SUPPORT_INBOX_ID;
+  const sellerUserId = isSupport ? null : (
     await prisma.sellerProfile.findUniqueOrThrow({ where: { id: thread.sellerId } })
   ).userId;
 
   const isParticipant = senderId === thread.customerId || senderId === sellerUserId;
   if (!isParticipant && !asAdmin) throw Errors.forbidden();
+
+  const recipients = isSupport && senderId === thread.customerId
+    ? (await prisma.user.findMany({ where: { status: 'ACTIVE', deletedAt: null, roles: { some: { role: { code: { in: INBOX_ADMIN_ROLES } } } } }, select: { id: true } })).map(user => user.id).filter(id => id !== senderId)
+    : [senderId === thread.customerId ? sellerUserId : thread.customerId].filter((id): id is string => !!id);
 
   const message = await prisma.$transaction(async (tx) => {
     const msg = await tx.message.create({
@@ -97,14 +116,14 @@ export async function sendMessage(
     return msg;
   });
 
-  const recipientId = senderId === thread.customerId ? sellerUserId : thread.customerId;
-  await notifyUser({
-    userId: recipientId,
+  // Delivery is already committed; notification failures must not cause duplicate retries.
+  await Promise.allSettled(recipients.map(userId => notifyUser({
+    userId,
     type: 'NEW_MESSAGE',
-    title: 'New message',
+    title: isSupport ? 'NeereMarket support message' : 'New message',
     body: input.body.slice(0, 120),
     data: { threadId: thread.id, messageId: message.id },
-  });
+  })));
 
   return { threadId: thread.id, message };
 }
@@ -144,7 +163,8 @@ export async function listThreads(userId: string, all = false) {
           productId: t.productId,
           orderId: t.orderId,
           updatedAt: t.updatedAt,
-          sellerName: sellerProfile?.businessName,
+          sellerName: t.sellerId === SUPPORT_INBOX_ID ? 'NeereMarket support' : sellerProfile?.businessName,
+          isSupport: t.sellerId === SUPPORT_INBOX_ID,
           sellerLogoUrl: sellerProfile?.logoUrl ?? null,
           customerName: customer?.fullName,
           lastMessage: t.messages[0] || null,
