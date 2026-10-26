@@ -645,3 +645,88 @@
   justify-content: center;
   width: 100%;
 }
+
+/* Customer order hub */
+.page { max-width: 1140px; padding-top: .5rem; gap: 1.5rem; }
+.breadcrumb { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; color: #7b886e; font-size: .69rem; }
+.breadcrumb a { color: #687e5a; text-decoration: none; }
+.breadcrumb span:last-child { color: #49633b; }
+.eyebrow { margin: 0 0 .7rem; color: #8f7452; font-size: .56rem; letter-spacing: .13em; font-weight: 700; line-height: 1.6; }
+.header { padding: 1.6rem 1.8rem; border: 1px solid #e4e9da; border-radius: 14px; background: #f5f7f0; }
+.title { font-family: var(--font-sans); font-size: clamp(1.5rem, 2.7vw, 2.2rem); font-weight: 650; letter-spacing: -.04em; color: #374f2e; }
+.titleArea { gap: .45rem; }
+.titleArea .eyebrow { margin-bottom: .25rem; }
+.subtitle { color: #708364; font-size: .79rem; line-height: 1.8; }
+.countBadge { border-color: #dfe8d1; background: #ebf2e0; color: #718c57; border-radius: 5px; font-size: .62rem; font-weight: 600; }
+.shopLink, .secondaryLink { display: inline-flex; align-items: center; justify-content: center; gap: 1rem; min-height: 44px; padding: .75rem 1rem; border-radius: 8px; font-size: .76rem; font-weight: 600; text-decoration: none; }
+.shopLink { color: #fff; background: var(--color-brand); }
+.shopLink:hover { color: #fff; background: var(--color-brand-deep); }
+.secondaryLink { background: #fff; color: #657e50; border: 1px solid #dfe8d4; }
+.controlsRow { padding: 1rem 1.2rem; background: #fff; border: 1px solid #e6ebde; border-radius: 12px; align-items: stretch; flex-direction: column; }
+.tabsBar { gap: .4rem; min-width: 0; scrollbar-width: thin; }
+.tabBtn { background: #f8faf4; border: 1px solid #e6ecdc; color: #718667; border-radius: 7px; font-size: .7rem; font-weight: 550; min-height: 38px; padding: .6rem .85rem; flex-shrink: 0; }
+.tabBtnActive { background: #edf4e2; border-color: #c9dcb8; color: #4d6b37; font-weight: 650; }
+.tabCount { background: #eaf0e0; color: #7b9464; border-radius: 4px; font-size: .59rem; }
+.tabBtnActive .tabCount { background: #dceacb; color: #5f7c46; }
+.searchBox { width: 100%; max-width: 420px; border-radius: 8px; border-color: #e0e8d4; background: #fafcf6; min-height: 42px; }
+.searchInput { font-size: .76rem; color: #506b3e; background: transparent; }
+.searchIcon { color: #889d75; }
+.resultsCount { font-size: .7rem; color: #74866a; margin: -.5rem 0 -.6rem; }
+.ordersList { gap: 1.2rem; }
+.orderCard { border: 1px solid #e4e9da; border-radius: 13px; overflow: hidden; background: #fff; box-shadow: none; }
+.orderCard:hover { border-color: #cbdabf; box-shadow: none; }
+.cardHeader { padding: 1.2rem 1.4rem; background: #f8faf4; border-bottom: 1px solid #e8eede; gap: 1rem; }
+.orderNumberLink { color: #4c6939; font-size: .8rem; font-weight: 650; }
+.orderDate { color: #7a8a6e; font-size: .66rem; }
+.headerRight { gap: .8rem; }
+.orderTotalAmount { color: #946a3c; font-size: 1.1rem; font-weight: 650; letter-spacing: -.025em; }
+.cardBody { padding: 1.3rem; }
+.packagesGrid { gap: .85rem; }
+.packageCard { background: #fff; border: 1px solid #e6ecdc; border-radius: 9px; padding: 1rem; }
+.packageHead { padding-bottom: .7rem; border-bottom-color: #edf1e5; }
+.packageSeller { color: #536f41; font-size: .76rem; font-weight: 600; }
+.itemRow { padding-block: .8rem; border-bottom-color: #edf1e5; gap: .8rem; }
+.itemName { color: #4c663b; font-size: .76rem; font-weight: 550; }
+.itemMeta { color: #7a8d6d; font-size: .64rem; flex-wrap: wrap; }
+.itemQtyBadge { border-radius: 4px; background: #f3f7ec; border-color: #e4ecd8; color: #788e66; font-size: .61rem; }
+.itemPrice { color: #8d683e; font-size: .75rem; font-weight: 600; white-space: nowrap; }
+.addressPeek { background: #f8faf4; border: 1px solid #e6edda; border-radius: 7px; padding: .7rem .85rem; }
+.addressPeekText { color: #77896b; font-size: .67rem; line-height: 1.7; }
+.cardFooter { padding: 1rem 1.3rem; background: #fff; border-top: 1px solid #eaf0df; gap: 1rem; }
+.footerInfo { color: #7a8d6c; font-size: .63rem; }
+.footerActions { gap: .6rem; flex-wrap: wrap; }
+.detailsBtn, .payNowBtn, .helpBtn { min-height: 40px; border-radius: 7px; font-size: .69rem; font-weight: 600; }
+.detailsBtn { background: #f0f6e7; border: 1px solid #d9e7ca; color: #597842; }
+.detailsBtn:hover { background: #e5efd9; color: #45632e; }
+.helpBtn { color: #7b8c6c; border-color: #e3ebd7; background: #fff; }
+.payNowBtn { background: var(--color-brand); color: #fff; }
+.emptyCard { background: #f9fbf5; border: 1px dashed #dce7ce; border-radius: 14px; padding: 2.5rem 1.5rem; }
+.emptyIconCircle { border-radius: 15px; background: #ecf3df; color: #89a271; border-color: #e0ebd1; }
+.emptyTitle { font-family: var(--font-sans); color: #4d6b38; font-weight: 650; font-size: 1.4rem; letter-spacing: -.03em; }
+.emptyDesc { color: #718565; font-size: .8rem; line-height: 1.85; max-width: 440px; }
+.guestCard { display: grid; grid-template-columns: 1.1fr 1fr; gap: 2rem; padding: 1.5rem; border: 1px solid #e6e9dd; border-radius: 18px; background: #f7f5ee; }
+.guestCopy { align-self: center; padding: 1.3rem; }
+.guestIcon { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 12px; background: #eee9db; color: #9f7e50; margin-bottom: 1.4rem; }
+.guestIcon svg { width: 24px; height: 24px; }
+.guestCopy h1 { font-family: var(--font-sans); font-size: clamp(1.8rem, 3vw, 2.7rem); font-weight: 650; letter-spacing: -.045em; line-height: 1.15; color: #344b2e; margin: 0 0 1rem; }
+.guestCopy h1 > span { color: #9a784f; }
+.guestCopy > p:last-of-type { font-size: .82rem; color: #718367; line-height: 1.85; margin: 0; max-width: 380px; }
+.guestActions { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 1.5rem; }
+.guestImage { position: relative; min-height: 360px; border-radius: 12px; overflow: hidden; background: #ddc8aa; }
+.guestImage img { position: absolute; width: 100%; height: 100%; object-fit: cover; }
+.guestImage > div { position: absolute; bottom: 15px; left: 15px; right: 15px; background: #fffef5ed; border: 1px solid #ffffff80; border-radius: 9px; padding: 1rem; }
+.guestImage span { display: block; font-size: .52rem; font-weight: 650; letter-spacing: .12em; color: #92794f; margin-bottom: .5rem; }
+.guestImage strong { display: block; font-size: .84rem; color: #667e50; font-weight: 600; }
+.guestBenefits { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.guestBenefits article { padding: 1.4rem; border: 1px solid #e6ebdd; border-radius: 12px; background: #fff; }
+.guestBenefits article > span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 7px; background: #f0f5e7; color: #81996a; font-size: .64rem; font-weight: 650; margin-bottom: 1rem; }
+.guestBenefits h2 { font-family: var(--font-sans); font-size: .96rem; color: #536f3e; font-weight: 650; margin: 0 0 .65rem; }
+.guestBenefits p { font-size: .76rem; color: #708465; line-height: 1.8; margin: 0; }
+.supportCard { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1.4rem 1.6rem; background: #f6f9f0; border: 1px solid #e1e9d5; border-radius: 12px; }
+.supportCard h2 { font-family: var(--font-sans); font-size: .93rem; color: #587541; font-weight: 650; margin: 0 0 .5rem; }
+.supportCard p { font-size: .74rem; color: #778b6b; line-height: 1.8; margin: 0; }
+.supportCard > a { display: inline-flex; align-items: center; gap: 1rem; white-space: nowrap; border-radius: 7px; border: 1px solid #dbe7ce; padding: .7rem 1rem; background: #fff; color: #67834f; font-size: .73rem; font-weight: 600; text-decoration: none; }
+.error { display: grid; justify-items: start; gap: .8rem; }
+.page a:focus-visible, .page button:focus-visible, .page input:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 3px; }
+@media (max-width: 1000px) { .guestCopy { padding: .6rem; } .controlsRow { flex-direction: column; } .tabsBar { width: 100%; } .searchBox { max-width: none; } }
+@media (max-width: 700px) { .header { padding: 1.3rem; } .guestCard { grid-template-columns: minmax(0, 1fr); padding: 1.2rem; gap: 1.3rem; } .guestCopy { padding: .3rem; } .guestImage { min-height: 0; aspect-ratio: 4/3; } .guestBenefits { grid-template-columns: minmax(0, 1fr); } .supportCard { align-items: flex-start; flex-direction: column; padding: 1.3rem; } .cardHeader, .cardBody, .cardFooter { padding: 1rem; } .headerRight { flex-wrap: wrap; } .footerActions { width: 100%; } .detailsBtn { flex: 1; } .controlsRow { padding: 1rem; } }

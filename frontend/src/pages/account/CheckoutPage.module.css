@@ -992,3 +992,69 @@
   .placeOrderBtn { white-space:normal; flex-wrap:wrap; }
   .summaryRow { gap:8px; }
 }
+
+/* Clear address, delivery, and payment review surfaces. */
+.page { padding-top: .6rem; }
+.pageHeader { border: 1px solid #e6e9dc; border-radius: 14px; background: #f6f7f0; padding: 1.6rem 1.8rem; }
+.headerTitle { font-family: var(--font-sans); font-size: clamp(1.5rem, 2.7vw, 2.2rem); font-weight: 650; letter-spacing: -.04em; color: #344c2d; }
+.headerSubtitle { max-width: 600px; color: #718365; font-size: .81rem; line-height: 1.85; margin-top: .6rem; }
+.trustStrip { gap: .65rem 1.2rem; flex-wrap: wrap; }
+.trustItem { color: #718566; font-size: .65rem; }
+.trustItemCheck { color: #81976b; }
+.layout { grid-template-columns: minmax(0, 1fr) minmax(0, 350px); gap: 1.5rem; }
+.sections { gap: 1.3rem; }
+.sectionCard { border-color: #e4e9da; border-radius: 12px; padding: 1.5rem; box-shadow: none; }
+.sectionHeader { padding-bottom: 1rem; border-bottom-color: #edf0e5; }
+.sectionBadge { width: 28px; height: 28px; border-radius: 8px; background: #eef3e4; color: #7e9566; border: 1px solid #e0e8d3; font-size: .7rem; font-weight: 650; }
+.sectionTitle { font-family: var(--font-sans); font-size: .95rem; color: #425e33; font-weight: 650; }
+.addressCard { background: #fff; border: 1px solid #e1e7d5; border-radius: 9px; padding: 1rem; }
+.addressCardSelected { background: #f5f9ee; border-color: #9db887; box-shadow: inset 0 0 0 1px #9db887; }
+.addressRadio { accent-color: #7e9963; }
+.addressName { color: #516a40; font-size: .78rem; font-weight: 600; }
+.addressPhone, .addressLocation, .addressLandmark { color: #73856a; font-size: .7rem; line-height: 1.75; }
+.defaultBadge { border-radius: 4px; background: #e8f0dc; color: #718c57; font-size: .58rem; }
+.newAddressBtn { border-radius: 7px; font-size: .7rem; color: #896b43; }
+.addressForm { background: #fafbf7; border-color: #e7ecde; border-radius: 10px; padding: 1.3rem; }
+.fieldLabel { font-size: .72rem; color: #657e53; font-weight: 550; }
+.fieldInput, .fieldSelect { background: #fff; border-color: #dfe7d3; border-radius: 7px; min-height: 44px; font-size: .79rem; color: #4c673c; }
+.deliveryCard { border-color: #e2e8d7; border-radius: 10px; padding: 1rem; background: #fff; }
+.deliveryCardSelected { background: #f5f9ef; border-color: #9db887; box-shadow: inset 0 0 0 1px #9db887; }
+.deliveryIcon { background: #edf3e3; color: #829c69; border-radius: 9px; }
+.deliveryTitle { font-size: .78rem; font-weight: 600; color: #4c683c; }
+.deliveryPrice { font-size: .72rem; color: #916c40; font-weight: 600; }
+.deliveryDesc { font-size: .7rem; line-height: 1.8; color: #728466; }
+.paymentGrid { gap: .8rem; }
+.paymentCard { min-width: 0; padding: 1rem; border-radius: 10px; border-color: #e1e8d5; background: #fff; }
+.paymentCardSelected { background: #f7faef; border-color: #9db887; box-shadow: inset 0 0 0 1px #9db887; }
+.paymentLogoBox { width: 46px; height: 46px; border-radius: 9px; font-size: .8rem; flex-shrink: 0; }
+.paymentMethodName { color: #4b663b; font-size: .79rem; font-weight: 650; }
+.paymentMethodPrefixes { color: #7b8b6e; font-size: .62rem; }
+.paymentMethodDesc { color: #748569; font-size: .68rem; line-height: 1.8; }
+.phoneInputBox { border-radius: 10px; background: #fafbf6; border: 1px solid #e6ecdc; padding: 1rem; }
+.phoneInputLabel { color: #597247; font-size: .75rem; font-weight: 600; }
+.phoneInput { border-color: #dfe8d2; border-radius: 7px; color: #4a653a; font-size: .85rem; min-height: 44px; }
+.countryCode { border-color: #e0e8d5; color: #7c8e6c; background: #fff; border-radius: 7px; }
+.phoneHint { color: #76876c; font-size: .67rem; line-height: 1.8; }
+.summaryCard { top: 150px; border-color: #e2e9d6; border-radius: 14px; padding: 1.4rem; background: #fff; box-shadow: none; }
+.summaryTitle { font-family: var(--font-sans); font-size: 1rem; font-weight: 650; color: #4c673a; }
+.summaryItemsCount { background: #eff4e6; color: #718a59; border-radius: 5px; font-size: .62rem; }
+.miniThumb { border-radius: 8px; border-color: #e6ecdc; background: #f7faf2; object-fit: contain; }
+.miniItemName { color: #4a6539; font-size: .73rem; font-weight: 550; }
+.miniItemStore { color: #788b6c; font-size: .63rem; }
+.miniItemPrice { color: #8f663b; font-size: .72rem; font-weight: 600; }
+.summaryRow { color: #748768; font-size: .73rem; gap: .7rem; line-height: 1.8; }
+.summaryRowValue { color: #536e41; font-weight: 550; text-align: right; }
+.summaryDivider { background: #e9eedf; }
+.totalLabel { color: #4b663a; font-weight: 650; font-size: .85rem; }
+.totalSubtext { color: #7a8a6d; font-size: .64rem; line-height: 1.7; }
+.totalAmount { color: #926638; font-size: 1.65rem; font-weight: 650; letter-spacing: -.035em; }
+.placeOrderBtn { border-radius: 8px; min-height: 48px; font-size: .79rem; font-weight: 600; }
+.securityList li { color: #728668; font-size: .66rem; line-height: 1.8; }
+.freeTag { border-radius: 4px; background: #edf4e3; color: #68864e; font-size: .62rem; }
+.paySheet { border-radius: 16px; border-color: #e6eada; }
+.payTitle { color: #476434; font-family: var(--font-sans); font-weight: 650; }
+.payKicker { color: #987547; font-size: .6rem; letter-spacing: .12em; }
+.payMetaList { border-color: #e3ead7; border-radius: 10px; background: #f9fbf4; }
+.page a:focus-visible, .page button:focus-visible, .page input:focus-visible, .page select:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 3px; }
+@media (max-width: 960px) { .layout { grid-template-columns: minmax(0, 1fr); } .summaryCard { position: static; } }
+@media (max-width: 600px) { .pageHeader { padding: 1.2rem; } .sectionCard, .summaryCard { padding: 1.1rem; } .addressGrid, .paymentGrid, .deliveryGrid { grid-template-columns: minmax(0, 1fr); } .sectionHeader { gap: .7rem; flex-wrap: wrap; } .sectionTitle { font-size: .9rem; } .formGrid { grid-template-columns: minmax(0, 1fr); } .addressForm { padding: 1rem; } }

@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import styles from './MobileBottomNav.module.css';
 
 type Props = {
@@ -7,17 +7,19 @@ type Props = {
 };
 
 export function MobileBottomNav({ unreadNotifications = 0, wishlistCount = 0 }: Props) {
+  const { pathname } = useLocation();
+  const shopActive = pathname === '/' || ['/products', '/categories', '/search', '/deals', '/new-arrivals'].some((path) => pathname === path || pathname.startsWith(`${path}/`));
   return (
-    <nav className={styles.bar} aria-label="Primary">
-      <NavLink
+    <nav className={styles.bar} aria-label="Mobile navigation">
+      <Link
         to="/products"
-        end
-        className={({ isActive }) => (isActive ? `${styles.item} ${styles.active}` : styles.item)}
+        aria-current={shopActive ? 'page' : undefined}
+        className={shopActive ? `${styles.item} ${styles.active}` : styles.item}
       >
         <span className={styles.iconWrap}>
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path
-              d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5.2v-6.2H10.2V21H5a1 1 0 0 1-1-1v-9.5z"
+              d="M5 7h14l1 14H4L5 7ZM9 8V6a3 3 0 0 1 6 0v2"
               fill="none"
               stroke="currentColor"
               strokeWidth="1.7"
@@ -25,8 +27,8 @@ export function MobileBottomNav({ unreadNotifications = 0, wishlistCount = 0 }: 
             />
           </svg>
         </span>
-        <span className={styles.label}>Market</span>
-      </NavLink>
+        <span className={styles.label}>Shop</span>
+      </Link>
 
       <NavLink
         to="/stores"
@@ -44,7 +46,7 @@ export function MobileBottomNav({ unreadNotifications = 0, wishlistCount = 0 }: 
             <path d="M9 21v-6h6v6" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
           </svg>
         </span>
-        <span className={styles.label}>Store</span>
+        <span className={styles.label}>Stores</span>
       </NavLink>
 
       <NavLink
@@ -63,10 +65,10 @@ export function MobileBottomNav({ unreadNotifications = 0, wishlistCount = 0 }: 
             />
           </svg>
           {wishlistCount > 0 ? (
-            <span className={styles.badge}>{wishlistCount > 9 ? '9+' : wishlistCount}</span>
+            <span className={styles.badge} aria-hidden="true">{wishlistCount > 9 ? '9+' : wishlistCount}</span>
           ) : null}
         </span>
-        <span className={styles.label}>Wishlist</span>
+        <span className={styles.label}>Saved</span>
       </NavLink>
 
       <NavLink
@@ -103,7 +105,7 @@ export function MobileBottomNav({ unreadNotifications = 0, wishlistCount = 0 }: 
             />
           </svg>
         </span>
-        <span className={styles.label}>Message</span>
+        <span className={styles.label}>Inbox</span>
       </NavLink>
 
       <NavLink
@@ -126,7 +128,7 @@ export function MobileBottomNav({ unreadNotifications = 0, wishlistCount = 0 }: 
             />
           </svg>
           {unreadNotifications > 0 ? (
-            <span className={styles.badge}>
+            <span className={styles.badge} aria-hidden="true">
               {unreadNotifications > 9 ? '9+' : unreadNotifications}
             </span>
           ) : null}

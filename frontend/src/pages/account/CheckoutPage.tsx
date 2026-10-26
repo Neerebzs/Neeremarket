@@ -1,7 +1,7 @@
 import { useModalFocus } from '@/components/ui/useModalFocus';
 import { normalizeRwandaPhone } from '@/utils/phone';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
   useAddresses,
@@ -11,9 +11,9 @@ import {
   useMe,
   useVerifyPayment,
 } from '@/api/hooks';
-import { Alert, Button, EmptyState, ProductGridSkeleton } from '@/components/ui';
+import { Alert, Button, ProductGridSkeleton } from '@/components/ui';
 import { getErrorMessage } from '@/api/client';
-import { loginHref } from '@/utils/auth';
+import { ShoppingJourney, ShoppingState } from '@/components/product/ShoppingJourney';
 import { formatRwf } from '@/utils/money';
 import styles from './CheckoutPage.module.css';
 
@@ -135,22 +135,7 @@ export function CheckoutPage() {
         <Helmet>
           <title>{`Checkout | NeereMarket`}</title>
         </Helmet>
-        <div className={styles.stepsBar} aria-label="Checkout Progress">
-          <div className={`${styles.step} ${styles.stepCompleted}`}>
-            <span className={styles.stepNum}>✓</span>
-            <span className={styles.stepLabel}>Shopping Cart</span>
-          </div>
-          <div className={`${styles.stepLine} ${styles.stepLineCompleted}`} />
-          <div className={`${styles.step} ${styles.stepActive}`}>
-            <span className={styles.stepNum}>2</span>
-            <span className={styles.stepLabel}>Shipping & Payment</span>
-          </div>
-          <div className={styles.stepLine} />
-          <div className={styles.step}>
-            <span className={styles.stepNum}>3</span>
-            <span className={styles.stepLabel}>Confirmation</span>
-          </div>
-        </div>
+        <ShoppingJourney step="checkout" />
         <ProductGridSkeleton count={2} />
       </div>
     );
@@ -158,33 +143,8 @@ export function CheckoutPage() {
 
   if (userQuery.isError || cartQuery.isError) return <div className="container"><Alert tone="error">{getErrorMessage(userQuery.error || cartQuery.error)}</Alert><Button variant="secondary" onClick={() => { void userQuery.refetch(); void cartQuery.refetch(); }}>Retry checkout</Button></div>;
 
-  // Unauthenticated Guest View
-  if (!user) {
-    return (
-      <div className="container">
-        <EmptyState
-          title="Sign in to checkout"
-          description="Your delivery addresses and order history are securely tied to your NeereMarket account."
-          actionLabel="Log In"
-          onAction={() => navigate(loginHref('/checkout'))}
-        />
-      </div>
-    );
-  }
-
-  // Empty Cart View
-  if (!cart || cart.items.length === 0) {
-    return (
-      <div className="container">
-        <EmptyState
-          title="Nothing to checkout"
-          description="Your cart is currently empty. Explore verified Rwandan merchants to start shopping."
-          actionLabel="Go to Cart"
-          onAction={() => navigate('/cart')}
-        />
-      </div>
-    );
-  }
+  if (!user) return <ShoppingState mode="checkout-signin" />;
+  if (!cart || cart.items.length === 0) return <ShoppingState mode="checkout-empty" />;
 
   async function saveAddress(e: FormEvent) {
     e.preventDefault();
@@ -260,27 +220,12 @@ export function CheckoutPage() {
 
       {addressQuery.isError ? <><Alert tone="error">{getErrorMessage(addressQuery.error)}</Alert><Button variant="secondary" onClick={() => addressQuery.refetch()}>Retry addresses</Button></> : null}
       {/* 3-Step Checkout Funnel Bar */}
-      <div className={styles.stepsBar} aria-label="Checkout Progress">
-        <Link to="/cart" className={`${styles.step} ${styles.stepCompleted}`} title="Back to Cart">
-          <span className={styles.stepNum}>✓</span>
-          <span className={styles.stepLabel}>Shopping Cart</span>
-        </Link>
-        <div className={`${styles.stepLine} ${styles.stepLineCompleted}`} />
-        <div className={`${styles.step} ${styles.stepActive}`}>
-          <span className={styles.stepNum}>2</span>
-          <span className={styles.stepLabel}>Shipping & Payment</span>
-        </div>
-        <div className={styles.stepLine} />
-        <div className={styles.step}>
-          <span className={styles.stepNum}>3</span>
-          <span className={styles.stepLabel}>Confirmation</span>
-        </div>
-      </div>
+      <ShoppingJourney step="checkout" />
 
       {/* Page Header */}
       <div className={styles.pageHeader}>
         <div className={styles.headerTitleRow}>
-          <h1 className={styles.headerTitle}>Secure Checkout</h1>
+          <h1 className={styles.headerTitle}>A little closer to your order.</h1>
           <svg
             width="20"
             height="20"
@@ -297,19 +242,18 @@ export function CheckoutPage() {
           </svg>
         </div>
         <p className={styles.headerSubtitle}>
-          Unified multi-vendor checkout for Rwandan boutiques and merchants. One single payment with
-          Mobile Money.
+          Choose where your order goes, review the total, and pay with Mobile Money.
         </p>
 
         <div className={styles.trustStrip}>
           <span className={styles.trustItem}>
-            <span className={styles.trustItemCheck}>✓</span> Escrow Payment Protection
+            <span className={styles.trustItemCheck}>✓</span> Review your order total
           </span>
           <span className={styles.trustItem}>
-            <span className={styles.trustItemCheck}>✓</span> Instant MoMo / Airtel Prompt
+            <span className={styles.trustItemCheck}>✓</span> MTN MoMo & Airtel Money
           </span>
           <span className={styles.trustItem}>
-            <span className={styles.trustItemCheck}>✓</span> Verified Rwandan Merchants
+            <span className={styles.trustItemCheck}>✓</span> Delivery or store pickup
           </span>
         </div>
       </div>
@@ -591,6 +535,7 @@ export function CheckoutPage() {
                 className={`${styles.paymentCard} ${
                   paymentMethod === 'MTN_MOMO' ? styles.paymentCardSelected : ''
                 }`}
+                aria-pressed={paymentMethod === 'MTN_MOMO'}
                 onClick={() => setPaymentMethod('MTN_MOMO')}
               >
                 <div className={`${styles.paymentLogoBox} ${styles.mtnLogo}`}>MoMo</div>
@@ -609,6 +554,7 @@ export function CheckoutPage() {
                 className={`${styles.paymentCard} ${
                   paymentMethod === 'AIRTEL_MONEY' ? styles.paymentCardSelected : ''
                 }`}
+                aria-pressed={paymentMethod === 'AIRTEL_MONEY'}
                 onClick={() => setPaymentMethod('AIRTEL_MONEY')}
               >
                 <div className={`${styles.paymentLogoBox} ${styles.airtelLogo}`}>airtel</div>

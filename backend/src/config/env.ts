@@ -1,6 +1,7 @@
 import { config as loadEnv } from 'dotenv';
 import path from 'node:path';
 import { z } from 'zod';
+import { authPolicySchema } from './auth-policy';
 
 loadEnv();
 loadEnv({ path: path.resolve(process.cwd(), '../.env') });
@@ -17,8 +18,7 @@ const envSchema = z.object({
   REDIS_URL: z.string().default('redis://localhost:6379'),
   JWT_SECRET: z.string().min(32),
   JWT_REFRESH_SECRET: z.string().min(32),
-  JWT_ACCESS_TTL: z.string().default('15m'),
-  JWT_REFRESH_TTL: z.string().default('7d'),
+  ...authPolicySchema.shape,
   BCRYPT_ROUNDS: z.coerce.number().default(12),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
   COMMISSION_DEFAULT_RATE_BPS: z.coerce.number().default(1000),

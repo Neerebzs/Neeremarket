@@ -244,3 +244,13 @@
     justify-content: space-between;
   }
 }
+
+.row { border-bottom-color: #edf0e6; gap: 1rem; }
+.media { background: #f7faf2; border-color: #e5ebda; border-radius: 9px; }
+.media img { object-fit: contain; padding: .3rem; }
+.title { color: #465f35; font-weight: 600; font-size: .84rem; }
+.variantBadge { background: #f3f6ec; border-color: #e2e9d5; border-radius: 5px; color: #728568; font-size: .64rem; }
+.lineTotal { color: #89643b; font-weight: 650; font-size: 1rem; }
+.unitPrice { color: #778b6b; font-size: .65rem; }
+.actionBtn { font-weight: 550; font-size: .69rem; min-height: 36px; }
+@media (max-width: 680px) { .row { gap: .75rem; } .media { width: 80px; height: 80px; } .title { font-size: .79rem; } }

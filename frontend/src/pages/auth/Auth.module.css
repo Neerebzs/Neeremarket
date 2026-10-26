@@ -333,3 +333,8 @@
 .googleHit { position: static; opacity: 1; overflow: visible; min-height: 44px; width: 100%; display: flex; justify-content: center; }
 .roleOption { border-radius: 8px; min-height: 44px; }
 @media (max-width: 520px) { .form { padding: 0; } .intro h1 { font-size: 1.8rem; } }
+
+.lockNotice { margin-bottom: 1.2rem; padding: 1rem; border: 1px solid #ebdcbf; border-radius: 9px; background: #fff9ee; color: #8c6230; }
+.lockNotice strong { font-size: .78rem; font-weight: 650; }
+.lockNotice p { margin: .45rem 0; font-size: .73rem; line-height: 1.7; }
+.lockNotice > span { font-size: .69rem; font-weight: 600; font-variant-numeric: tabular-nums; }

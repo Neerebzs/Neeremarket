@@ -38,7 +38,6 @@ export function AccountPage() {
   const unread = notifications?.unreadCount || 0;
   const messageCount = threads?.items.length || 0;
 
-  const hasToken = Boolean(localStorage.getItem('th_access_token'));
   const isSeller = isSellerRole(user?.roles);
   const isAdmin = isAdminRole(user?.roles);
 
@@ -53,7 +52,7 @@ export function AccountPage() {
   }
 
   // Loading state while verifying user session on page refresh
-  if (userLoading || (hasToken && !user)) {
+  if (userLoading) {
     return (
       <div className={`container ${styles.page}`}>
         <Helmet>
@@ -81,16 +80,22 @@ export function AccountPage() {
   // Unauthenticated Guest View
   if (!user) {
     return (
-      <div className={`container ${styles.page}`} style={{ paddingTop: '2rem' }}>
-        <Helmet>
-          <title>{pageTitle('Account')}</title>
-        </Helmet>
-        <EmptyState
-          title="Sign in to your account"
-          description={`Track orders, save addresses, and manage your ${APP_NAME} profile.`}
-          actionLabel="Sign in"
-          onAction={() => navigate(loginHref('/account'))}
-        />
+      <div className={`container ${styles.page}`}>
+        <Helmet><title>{pageTitle('Account')}</title></Helmet>
+        <nav className={styles.breadcrumb} aria-label="Breadcrumb"><Link to="/">Home</Link><span aria-hidden="true">/</span><span aria-current="page">My account</span></nav>
+        <section className={styles.guestCard} aria-labelledby="guest-account-title">
+          <div className={styles.guestCopy}>
+            <span className={styles.guestIcon}><AccountIcon name="profile" /></span>
+            <p className={styles.kicker}>A LITTLE MORE PERSONAL</p>
+            <h1 id="guest-account-title">Your finds.<br /><span>Your own little corner.</span></h1>
+            <p>Sign in to {APP_NAME} to keep your orders, saved favorites, and conversations together.</p>
+            <div className={styles.guestActions}><Link className={styles.primaryLink} to={loginHref('/account')}>Sign in to your account <span aria-hidden="true">&#8594;</span></Link><Link className={styles.secondaryLink} to="/register?next=%2Faccount">Create an account</Link></div>
+            <p className={styles.guestNote}>Just browsing? <Link to="/products">Explore the marketplace</Link></p>
+          </div>
+          <div className={styles.guestImage}><img src="/neeremarket-delivery.png" alt="A shopper receiving an order from a local delivery courier" width="1448" height="1086" /><div><span>LOCAL FINDS. ALL IN ONE PLACE.</span><strong>Good things, closer to you.</strong></div></div>
+        </section>
+        <div className={styles.guestBenefits}>{[{icon:'orders',title:'Follow your orders',text:'Keep your purchases and delivery updates in view.'},{icon:'saved',title:'Save what you love',text:'Come back to the products that caught your eye.'},{icon:'messages',title:'Stay in the conversation',text:'Keep your questions and seller replies together.'}].map((item) => <article key={item.icon}><span className={styles.benefitIcon}><AccountIcon name={item.icon} /></span><h2>{item.title}</h2><p>{item.text}</p></article>)}</div>
+        <aside className={styles.supportCard}><div><h2>A question before you sign in?</h2><p>Find shopping support and answers in our help center.</p></div><Link to="/help">Get help <span aria-hidden="true">&#8594;</span></Link></aside>
       </div>
     );
   }
@@ -101,6 +106,7 @@ export function AccountPage() {
         <title>{pageTitle('My Account')}</title>
       </Helmet>
 
+      <nav className={styles.breadcrumb} aria-label="Breadcrumb"><Link to="/">Home</Link><span aria-hidden="true">/</span><span aria-current="page">My account</span></nav>
       {/* ── User Profile Hero Card ── */}
       <section className={styles.hero} aria-labelledby="account-heading">
         <div className={styles.heroProfile}>
@@ -122,17 +128,14 @@ export function AccountPage() {
         </div>
 
         <div className={styles.heroActions}>
-          <Link to="/products" className={styles.actionBtn}>
-            <Button type="button" size="sm" variant="secondary" style={{ width: '100%', minHeight: '44px' }}>
-              Continue shopping
-            </Button>
-          </Link>
+          <Link to="/products" className={styles.primaryLink}>Continue shopping <span aria-hidden="true">&#8594;</span></Link>
           <Button
             type="button"
             size="sm"
             variant="ghost"
             className={styles.actionBtn}
             onClick={() => void handleLogout()}
+            disabled={logout.isPending}
             style={{ minHeight: '44px' }}
           >
             Log out
@@ -144,6 +147,7 @@ export function AccountPage() {
       <ul className={styles.stats} aria-label="Account overview statistics">
         <li>
           <Link to="/orders" className={styles.statCard} title="View all orders">
+            <span className={styles.statIcon}><AccountIcon name="orders" /></span>
             <div className={styles.statNumberRow}>
               <span className={styles.statNumber}>{orderCount}</span>
             </div>
@@ -152,6 +156,7 @@ export function AccountPage() {
         </li>
         <li>
           <Link to="/wishlist" className={styles.statCard} title="View saved wishlist">
+            <span className={styles.statIcon}><AccountIcon name="saved" /></span>
             <div className={styles.statNumberRow}>
               <span className={styles.statNumber}>{wishCount}</span>
             </div>
@@ -160,6 +165,7 @@ export function AccountPage() {
         </li>
         <li>
           <Link to="/messages" className={styles.statCard} title="View seller messages">
+            <span className={styles.statIcon}><AccountIcon name="messages" /></span>
             <div className={styles.statNumberRow}>
               <span className={styles.statNumber}>{messageCount}</span>
             </div>
@@ -168,6 +174,7 @@ export function AccountPage() {
         </li>
         <li>
           <Link to="/notifications" className={styles.statCard} title="View notification alerts">
+            <span className={styles.statIcon}><AccountIcon name="alerts" /></span>
             <div className={styles.statNumberRow}>
               <span className={styles.statNumber}>{unread}</span>
               {unread > 0 ? <span className={styles.statDot} aria-label="Unread alerts" /> : null}
@@ -182,7 +189,7 @@ export function AccountPage() {
         <aside className={styles.sellerPortalCard} aria-label="Merchant portal access">
           <div className={styles.sellerPortalText}>
             <h3>
-              <span aria-hidden="true">🏬</span> Merchant Dashboard
+              <span aria-hidden="true"><AccountIcon name="store" /></span> Merchant Dashboard
             </h3>
             <p>Manage your inventory, fulfill orders, review payouts, and message customers.</p>
           </div>
@@ -196,7 +203,7 @@ export function AccountPage() {
         <aside className={styles.sellerPortalCard} style={{ background: 'var(--color-surface-subtle)', borderColor: 'var(--color-border-strong)' }} aria-label="Admin console access">
           <div className={styles.sellerPortalText}>
             <h3 style={{ color: 'var(--color-ink)' }}>
-              <span aria-hidden="true">⚡</span> Platform Administration
+              <span aria-hidden="true"><AccountIcon name="dashboard" /></span> Platform Administration
             </h3>
             <p style={{ color: 'var(--color-ink-muted)' }}>Access system analytics, order oversight, and dispute arbitration.</p>
           </div>
@@ -207,18 +214,19 @@ export function AccountPage() {
       ) : null}
 
       {/* ── Grouped Mobile Navigation Menu ── */}
+      <div className={styles.menuGrid}>
       <section className={styles.menuSection} aria-label="Purchases and delivery">
-        <h2 className={styles.menuSectionHeader}>Purchases & Delivery</h2>
+        <h2 className={styles.menuSectionHeader}>Shopping & orders</h2>
         <ul className={styles.menuList}>
           <li className={styles.menuItem}>
             <Link to="/orders" className={styles.menuLink}>
               <div className={styles.menuLeft}>
                 <span className={styles.menuIcon} aria-hidden="true">
-                  📦
+                  <AccountIcon name="orders" />
                 </span>
                 <div className={styles.menuText}>
                   <p className={styles.menuTitle}>My Orders</p>
-                  <p className={styles.menuSubtitle}>Track live shipments & verify delivery receipts</p>
+                  <p className={styles.menuSubtitle}>Follow purchases and delivery updates</p>
                 </div>
               </div>
               <div className={styles.menuRight}>
@@ -234,7 +242,7 @@ export function AccountPage() {
             <Link to="/wishlist" className={styles.menuLink}>
               <div className={styles.menuLeft}>
                 <span className={styles.menuIcon} aria-hidden="true">
-                  ❤️
+                  <AccountIcon name="saved" />
                 </span>
                 <div className={styles.menuText}>
                   <p className={styles.menuTitle}>Saved Wishlist</p>
@@ -254,7 +262,7 @@ export function AccountPage() {
             <Link to="/cart" className={styles.menuLink}>
               <div className={styles.menuLeft}>
                 <span className={styles.menuIcon} aria-hidden="true">
-                  🛒
+                  <AccountIcon name="cart" />
                 </span>
                 <div className={styles.menuText}>
                   <p className={styles.menuTitle}>Shopping Cart</p>
@@ -272,17 +280,17 @@ export function AccountPage() {
       </section>
 
       <section className={styles.menuSection} aria-label="Messages and support">
-        <h2 className={styles.menuSectionHeader}>Communication & Support</h2>
+        <h2 className={styles.menuSectionHeader}>Messages & support</h2>
         <ul className={styles.menuList}>
           <li className={styles.menuItem}>
             <Link to="/messages" className={styles.menuLink}>
               <div className={styles.menuLeft}>
                 <span className={styles.menuIcon} aria-hidden="true">
-                  💬
+                  <AccountIcon name="messages" />
                 </span>
                 <div className={styles.menuText}>
                   <p className={styles.menuTitle}>Seller Messages</p>
-                  <p className={styles.menuSubtitle}>Direct chat with Rwandan merchants</p>
+                  <p className={styles.menuSubtitle}>Keep your seller conversations together</p>
                 </div>
               </div>
               <div className={styles.menuRight}>
@@ -298,7 +306,7 @@ export function AccountPage() {
             <Link to="/notifications" className={styles.menuLink}>
               <div className={styles.menuLeft}>
                 <span className={styles.menuIcon} aria-hidden="true">
-                  🔔
+                  <AccountIcon name="alerts" />
                 </span>
                 <div className={styles.menuText}>
                   <p className={styles.menuTitle}>Notifications & Alerts</p>
@@ -336,17 +344,17 @@ export function AccountPage() {
       </section>
 
       <section className={styles.menuSection} aria-label="Account details">
-        <h2 className={styles.menuSectionHeader}>Account Settings</h2>
+        <h2 className={styles.menuSectionHeader}>Account & help</h2>
         <ul className={styles.menuList}>
           <li className={styles.menuItem}>
             <Link to="/checkout" className={styles.menuLink}>
               <div className={styles.menuLeft}>
                 <span className={styles.menuIcon} aria-hidden="true">
-                  📍
+                  <AccountIcon name="location" />
                 </span>
                 <div className={styles.menuText}>
                   <p className={styles.menuTitle}>Delivery Addresses</p>
-                  <p className={styles.menuSubtitle}>Manage delivery addresses across Rwanda</p>
+                  <p className={styles.menuSubtitle}>Review addresses during checkout</p>
                 </div>
               </div>
               <div className={styles.menuRight}>
@@ -362,7 +370,7 @@ export function AccountPage() {
             <Link to="/contact" className={styles.menuLink}>
               <div className={styles.menuLeft}>
                 <span className={styles.menuIcon} aria-hidden="true">
-                  📞
+                  <AccountIcon name="support" />
                 </span>
                 <div className={styles.menuText}>
                   <p className={styles.menuTitle}>Customer Support</p>
@@ -379,13 +387,14 @@ export function AccountPage() {
         </ul>
       </section>
 
+      </div>
       {/* ── 2-Column Responsive Layout: Recent Orders & Saved Addresses ── */}
       <div className={styles.columns}>
         {/* Recent Orders Panel */}
         <section className={styles.panel} aria-label="Recent purchases">
           <header className={styles.panelHead}>
             <h2>
-              <span aria-hidden="true">📦</span> Recent Orders
+              <span aria-hidden="true"><AccountIcon name="orders" /></span> Recent Orders
             </h2>
             <Link to="/orders">View all ({orderCount}) →</Link>
           </header>
@@ -437,7 +446,7 @@ export function AccountPage() {
         <section className={styles.panel} aria-label="Saved addresses">
           <header className={styles.panelHead}>
             <h2>
-              <span aria-hidden="true">📍</span> Saved Addresses
+              <span aria-hidden="true"><AccountIcon name="location" /></span> Saved Addresses
             </h2>
             <Link to="/checkout">Manage →</Link>
           </header>
@@ -466,7 +475,7 @@ export function AccountPage() {
                   <p className={styles.addressLines}>
                     {[address.landmark, address.district, address.province].filter(Boolean).join(', ')}
                   </p>
-                  <p className={styles.addressPhone}>📞 {address.phone}</p>
+                  <p className={styles.addressPhone}><AccountIcon name="support" /> {address.phone}</p>
                 </li>
               ))}
             </ul>
@@ -475,18 +484,34 @@ export function AccountPage() {
       </div>
 
       {/* ── NeereMarket Escrow Buyer Guarantee Card ── */}
-      <section className={styles.escrowCard} aria-label="NeereMarket buyer protection">
+      <section className={styles.escrowCard} aria-label="Shopping support">
         <div className={styles.escrowIcon} aria-hidden="true">
-          🛡️
+          <AccountIcon name="shield" />
         </div>
         <div className={styles.escrowText}>
-          <h4>NeereMarket Escrow Protection</h4>
+          <h2>Support for your next order</h2>
           <p>
-            Every order is protected by our escrow system. Your payment is held safely and only released
-            to the merchant after you confirm that your parcel arrived in good condition.
+            Need a hand with an order? Visit the <Link to="/help">help center</Link> or review our <Link to="/returns">returns policy</Link> before your next purchase.
           </p>
         </div>
       </section>
     </div>
   );
+}
+
+function AccountIcon({ name }: { name: string }) {
+  const paths: Record<string, string> = {
+    orders: 'M4 5h16v16H4V5ZM8 5V3h8v2M8 10h8M8 14h5',
+    saved: 'M12 21S3 16 3 9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 7-9 12-9 12Z',
+    cart: 'M2 3h3l3 12h11l2-9H6M10 20h.01M18 20h.01',
+    messages: 'M4 4h16v13H9l-5 4V4ZM8 9h8M8 13h5',
+    alerts: 'M6 8a6 6 0 0 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9ZM10 21h4',
+    location: 'M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0ZM15 10a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z',
+    support: 'M4 14v-3a8 8 0 0 1 16 0v3M4 11H2v7h4v-7H4ZM20 11h2v7h-4v-7h2ZM18 18v3h-6',
+    shield: 'm12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3ZM8 12l3 3 5-5',
+    store: 'M3 10h18l-2-6H5l-2 6ZM4 10v10h16V10M9 20v-6h6v6',
+    dashboard: 'M3 3h7v7H3V3ZM14 3h7v7h-7V3ZM3 14h7v7H3v-7ZM14 14h7v7h-7v-7Z',
+    profile: 'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM4 21v-2a8 8 0 0 1 16 0v2',
+  };
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name] || paths.shield} /></svg>;
 }

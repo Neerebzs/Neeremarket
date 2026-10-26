@@ -36,6 +36,19 @@ cd frontend && npm install && npm run dev
 
 Prefer running the **API inside Docker** (it talks to Postgres on the compose network). Redis is published on host port **6380**.
 
+## Authentication settings
+
+Configure authentication in `.env` and restart the backend after changes:
+
+```dotenv
+JWT_ACCESS_TTL=1d
+JWT_REFRESH_TTL=7d
+AUTH_MAX_FAILED_ATTEMPTS=5
+AUTH_LOCKOUT_SECONDS=30
+```
+
+Token lifetimes accept whole days from `1d` to `7d`. The account cooldown accepts `15` or `30` seconds. After five consecutive incorrect passwords, sign-in is blocked until the cooldown ends, and the login page shows a countdown. A successful sign-in resets the failure count. Updated lifetimes apply to newly issued tokens.
+
 ## Production
 
 ```bash

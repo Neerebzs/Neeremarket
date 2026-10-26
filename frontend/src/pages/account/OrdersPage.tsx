@@ -1,15 +1,22 @@
 import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useMe, useOrders } from '@/api/hooks';
-import { Alert, Badge, Button, EmptyState, ProductGridSkeleton } from '@/components/ui';
+import { Alert, Badge, Button, ProductGridSkeleton } from '@/components/ui';
 import { getErrorMessage } from '@/api/client';
 import { loginHref } from '@/utils/auth';
 import { formatRwf } from '@/utils/money';
 import { prettyStatus, statusTone } from '@/utils/status';
 import styles from './OrdersPage.module.css';
 
-type FilterTab = 'ALL' | 'UNPAID' | 'PROCESSING' | 'DELIVERED' | 'CANCELLED';
+type FilterTab = 'ALL' | 'UNPAID' | 'PROCESSING' | 'DELIVERED' | 'CANCELLED' | 'SUPPORT';
+const STATUS_GROUPS: Record<Exclude<FilterTab, 'ALL'>, readonly string[]> = {
+  UNPAID: ['PENDING_PAYMENT', 'UNPAID', 'INITIATED'],
+  PROCESSING: ['PAID', 'CONFIRMED', 'PROCESSING', 'READY', 'READY_FOR_SHIPMENT', 'SHIPPED', 'OUT_FOR_DELIVERY'],
+  DELIVERED: ['DELIVERED', 'COMPLETED'],
+  CANCELLED: ['CANCELLED', 'FAILED', 'REFUNDED', 'RETURNED'],
+  SUPPORT: ['RETURN_REQUESTED', 'REFUND_PENDING', 'DISPUTED'],
+};
 
 function formatOrderDate(isoDate: string) {
   try {
@@ -25,35 +32,16 @@ function formatOrderDate(isoDate: string) {
 
 export function OrdersPage() {
   const { data: user, isLoading: isUserLoading } = useMe();
-  const { data, isLoading, isError, error } = useOrders();
-  const navigate = useNavigate();
+  const { data, isLoading, isError, error, refetch } = useOrders(Boolean(user));
 
   const [activeTab, setActiveTab] = useState<FilterTab>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
   const allItems = useMemo(() => data?.items || [], [data?.items]);
 
-  // Filter Counts for Tabs (unconditional hooks)
   const counts = useMemo(() => {
-    let unpaid = 0;
-    let processing = 0;
-    let delivered = 0;
-    let cancelled = 0;
-
-    for (const order of allItems) {
-      const s = order.status.toUpperCase();
-      if (s === 'PENDING_PAYMENT' || s === 'UNPAID' || s === 'INITIATED') {
-        unpaid += 1;
-      } else if (s === 'PAID' || s === 'PROCESSING' || s === 'SHIPPED' || s === 'READY') {
-        processing += 1;
-      } else if (s === 'DELIVERED' || s === 'COMPLETED') {
-        delivered += 1;
-      } else if (s === 'CANCELLED' || s === 'FAILED' || s === 'REFUNDED') {
-        cancelled += 1;
-      }
-    }
-
-    return { all: allItems.length, unpaid, processing, delivered, cancelled };
+    const count = (group: Exclude<FilterTab, 'ALL'>) => allItems.filter((order) => STATUS_GROUPS[group].includes(order.status.toUpperCase())).length;
+    return { all: allItems.length, unpaid: count('UNPAID'), processing: count('PROCESSING'), delivered: count('DELIVERED'), cancelled: count('CANCELLED'), support: count('SUPPORT') };
   }, [allItems]);
 
   // Filtered Orders List (unconditional hooks)
@@ -61,25 +49,7 @@ export function OrdersPage() {
     return allItems.filter((order) => {
       const s = order.status.toUpperCase();
 
-      // Tab matching
-      if (activeTab === 'UNPAID' && !(s === 'PENDING_PAYMENT' || s === 'UNPAID' || s === 'INITIATED')) {
-        return false;
-      }
-      if (
-        activeTab === 'PROCESSING' &&
-        !(s === 'PAID' || s === 'PROCESSING' || s === 'SHIPPED' || s === 'READY')
-      ) {
-        return false;
-      }
-      if (activeTab === 'DELIVERED' && !(s === 'DELIVERED' || s === 'COMPLETED')) {
-        return false;
-      }
-      if (
-        activeTab === 'CANCELLED' &&
-        !(s === 'CANCELLED' || s === 'FAILED' || s === 'REFUNDED')
-      ) {
-        return false;
-      }
+      if (activeTab !== 'ALL' && !STATUS_GROUPS[activeTab].includes(s)) return false;
 
       // Search Query matching
       if (searchQuery.trim()) {
@@ -98,10 +68,9 @@ export function OrdersPage() {
     });
   }, [allItems, activeTab, searchQuery]);
 
-  const hasToken = Boolean(localStorage.getItem('th_access_token'));
 
   // Loading state while verifying user session or fetching orders on page refresh
-  if (isUserLoading || (hasToken && isLoading)) {
+  if (isUserLoading || (user && isLoading)) {
     return (
       <div className={`container ${styles.page}`}>
         <Helmet>
@@ -118,18 +87,14 @@ export function OrdersPage() {
     );
   }
 
-  // Unauthenticated Guest View
   if (!user) {
-    return (
-      <div className="container" style={{ paddingTop: '2rem' }}>
-        <EmptyState
-          title="Sign in to view your orders"
-          description="Your order history, delivery tracking, and merchant receipts are saved to your account."
-          actionLabel="Log In"
-          onAction={() => navigate(loginHref('/orders'))}
-        />
-      </div>
-    );
+    return <div className={`container ${styles.page}`}>
+      <Helmet><title>My orders | NeereMarket</title></Helmet>
+      <nav className={styles.breadcrumb} aria-label="Breadcrumb"><Link to="/">Home</Link><span aria-hidden="true">/</span><Link to="/account">My account</Link><span aria-hidden="true">/</span><span aria-current="page">Orders</span></nav>
+      <section className={styles.guestCard} aria-labelledby="orders-signin-title"><div className={styles.guestCopy}><span className={styles.guestIcon}><OrderIcon /></span><p className={styles.eyebrow}>EVERY ORDER. ONE PLACE.</p><h1 id="orders-signin-title">From your first find<br /><span>to your front door.</span></h1><p>Sign in to see your purchases, check order updates, and keep in touch with the stores you shop.</p><div className={styles.guestActions}><Link to={loginHref('/orders')} className={styles.shopLink}>Sign in to view orders <span aria-hidden="true">&#8594;</span></Link><Link to="/products" className={styles.secondaryLink}>Keep exploring</Link></div></div><div className={styles.guestImage}><img src="/neeremarket-delivery.png" alt="A customer receiving a parcel from a local courier" width="1448" height="1086" /><div><span>LOCAL STORES. YOUR NEXT DELIVERY.</span><strong>Good things are worth keeping track of.</strong></div></div></section>
+      <div className={styles.guestBenefits}>{[{number:'01',title:'Follow the progress',text:'See payment, preparation, and delivery updates for your orders.'},{number:'02',title:'All your stores together',text:'Review the items and seller packages that make up each purchase.'},{number:'03',title:'Get help when you need it',text:'Open order details to find support for your purchase.'}].map((item) => <article key={item.number}><span>{item.number}</span><h2>{item.title}</h2><p>{item.text}</p></article>)}</div>
+      <aside className={styles.supportCard}><div><h2>A question about an order?</h2><p>Find answers and shopping support in the help center.</p></div><Link to="/help">Get help <span aria-hidden="true">&#8594;</span></Link></aside>
+    </div>;
   }
 
   return (
@@ -138,9 +103,11 @@ export function OrdersPage() {
         <title>{`My Orders (${allItems.length}) | NeereMarket`}</title>
       </Helmet>
 
+      <nav className={styles.breadcrumb} aria-label="Breadcrumb"><Link to="/">Home</Link><span aria-hidden="true">/</span><Link to="/account">My account</Link><span aria-hidden="true">/</span><span aria-current="page">Orders</span></nav>
       {/* Page Header */}
       <header className={styles.header}>
         <div className={styles.titleArea}>
+          <p className={styles.eyebrow}>EVERY PURCHASE, A LITTLE CLOSER</p>
           <div className={styles.titleRow}>
             <h1 className={styles.title}>My Orders</h1>
             {allItems.length > 0 ? (
@@ -150,8 +117,7 @@ export function OrdersPage() {
             ) : null}
           </div>
           <p className={styles.subtitle}>
-            Track delivery, confirm receipts, and manage multi-vendor orders from verified Rwandan
-            merchants.
+            Your purchases, seller packages, and delivery updates, all together.
           </p>
         </div>
 
@@ -197,7 +163,7 @@ export function OrdersPage() {
 
               aria-pressed={activeTab === 'PROCESSING'}
             >
-              <span>In Transit</span>
+              <span>In progress</span>
               {counts.processing > 0 ? (
                 <span className={styles.tabCount}>{counts.processing}</span>
               ) : null}
@@ -223,11 +189,12 @@ export function OrdersPage() {
 
               aria-pressed={activeTab === 'CANCELLED'}
             >
-              <span>Cancelled</span>
+              <span>Closed</span>
               {counts.cancelled > 0 ? (
                 <span className={styles.tabCount}>{counts.cancelled}</span>
               ) : null}
             </button>
+            <button type="button" className={`${styles.tabBtn} ${activeTab === 'SUPPORT' ? styles.tabBtnActive : ''}`} onClick={() => setActiveTab('SUPPORT')} aria-pressed={activeTab === 'SUPPORT'}><span>Returns & support</span>{counts.support > 0 ? <span className={styles.tabCount}>{counts.support}</span> : null}</button>
           </div>
 
           {/* Search Box */}
@@ -271,10 +238,10 @@ export function OrdersPage() {
       ) : null}
 
       {/* Error Alert */}
-      {isError ? <Alert tone="error">{getErrorMessage(error)}</Alert> : null}
+      {isError ? <div className={styles.error}><Alert tone="error">{getErrorMessage(error)}</Alert><Button type="button" variant="secondary" onClick={() => void refetch()}>Retry orders</Button></div> : null}
 
       {/* Global Empty State (No orders ever) */}
-      {!isLoading && allItems.length === 0 ? (
+      {!isLoading && !isError && allItems.length === 0 ? (
         <div className={styles.emptyCard}>
           <div className={styles.emptyIconCircle} aria-hidden="true">
             <svg
@@ -295,8 +262,7 @@ export function OrdersPage() {
           </div>
           <h2 className={styles.emptyTitle}>No orders yet</h2>
           <p className={styles.emptyDesc}>
-            When you complete checkout with Rwandan merchants, your multi-seller orders will appear
-            here with live tracking and escrow payment protection.
+            Your next good find starts in the marketplace. Once you place an order, its details and updates will appear here.
           </p>
           <div className={styles.emptyActions}>
             <Link to="/products" className={styles.shopLink}>
@@ -307,7 +273,7 @@ export function OrdersPage() {
       ) : null}
 
       {/* Tab/Search Filtered Empty State */}
-      {!isLoading && allItems.length > 0 && filteredOrders.length === 0 ? (
+      {!isLoading && !isError && allItems.length > 0 && filteredOrders.length === 0 ? (
         <div className={styles.emptyCard}>
           <h2 className={styles.emptyTitle}>No matching orders found</h2>
           <p className={styles.emptyDesc}>
@@ -330,12 +296,13 @@ export function OrdersPage() {
         </div>
       ) : null}
 
+      {!isError && allItems.length > 0 ? <p className={styles.resultsCount} role="status">{filteredOrders.length} of {allItems.length} orders{searchQuery.trim() ? ` matching “${searchQuery.trim()}”` : ''}</p> : null}
       {/* Orders List */}
       <ul className={styles.ordersList} aria-label="Customer orders list">
         {filteredOrders.map((order) => {
           const sellerOrders = order.sellerOrders || [];
           const isPendingPayment =
-            order.status === 'PENDING_PAYMENT' || order.status === 'UNPAID';
+            STATUS_GROUPS.UNPAID.includes(order.status.toUpperCase());
           const address = (order as unknown as { address?: { fullName?: string; district?: string; province?: string } }).address;
 
           return (
@@ -351,7 +318,7 @@ export function OrdersPage() {
                     #{order.orderNumber}
                   </Link>
                   <span className={styles.orderDate}>
-                    <span aria-hidden="true">📅</span> Placed {formatOrderDate(order.createdAt)}
+                    <span aria-hidden="true"></span> Placed {formatOrderDate(order.createdAt)}
                   </span>
                 </div>
 
@@ -373,7 +340,7 @@ export function OrdersPage() {
                       <div key={pkg.id || pkg.sellerOrderNumber || idx} className={styles.packageCard}>
                         <div className={styles.packageHead}>
                           <div className={styles.packageSeller}>
-                            <span aria-hidden="true">🏬</span>
+                            <span aria-hidden="true"></span>
                             <span>{pkg.sellerName}</span>
                           </div>
                           {pkg.status ? (
@@ -414,14 +381,14 @@ export function OrdersPage() {
                   </div>
                 ) : (
                   <p style={{ margin: 0, color: 'var(--color-ink-muted)', fontSize: '0.8rem' }}>
-                    Order placed with Rwandan verified merchants.
+                    Open order details to review the items in this purchase.
                   </p>
                 )}
 
                 {/* Address Peek if present */}
                 {address && (address.district || address.province) ? (
                   <div className={styles.addressPeek}>
-                    <span aria-hidden="true">📍</span>
+                    <span aria-hidden="true"></span>
                     <span className={styles.addressPeekText}>
                       Ship to {[address.fullName, address.district, address.province].filter(Boolean).join(', ')}
                     </span>
@@ -446,18 +413,18 @@ export function OrdersPage() {
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
                     <path d="m9 12 2 2 4-4" />
                   </svg>
-                  <span>Protected by NeereMarket Escrow</span>
+                  <span>Order details & purchase support</span>
                 </div>
 
                 <div className={styles.footerActions}>
                   {isPendingPayment ? (
                     <Link to={`/orders/${order.id}`} className={styles.payNowBtn}>
-                      Pay with MoMo →
+                      Review payment →
                     </Link>
                   ) : null}
 
                   <Link to={`/orders/${order.id}`} className={styles.detailsBtn}>
-                    <span>View Order & Tracking</span>
+                    <span>View order details</span>
                     <span aria-hidden="true">→</span>
                   </Link>
 
@@ -476,4 +443,8 @@ export function OrdersPage() {
       </ul>
     </div>
   );
+}
+
+function OrderIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5ZM3 8v10l9 5 9-5V8M12 13v10" /></svg>;
 }

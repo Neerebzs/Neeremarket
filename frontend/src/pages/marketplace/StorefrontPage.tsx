@@ -6,6 +6,7 @@ import { useProducts, useStore } from '@/api/hooks';
 import { Alert, Badge, Button, EmptyState, Input, ProductGridSkeleton, Rating } from '@/components/ui';
 import { ProductGrid } from '@/components/product';
 import gridStyles from '@/components/product/ProductGrid.module.css';
+import { handleImageError } from '@/utils/images';
 import { getErrorMessage } from '@/api/client';
 import browseStyles from './CategoryPage.module.css';
 import styles from './StorefrontPage.module.css';
@@ -38,6 +39,7 @@ export function StorefrontPage() {
     stock: true,
   });
 
+  const query = searchParams.get('q') || '';
   const sort = searchParams.get('sort') || 'popular';
   const category = searchParams.get('category') || '';
   const minPrice = searchParams.get('minPrice') || '';
@@ -56,13 +58,14 @@ export function StorefrontPage() {
       limit: 24,
       seller: slug,
       sort,
+      ...(query ? { q: query } : {}),
       ...(category ? { category } : {}),
       ...(minPrice ? { minPrice: Number(minPrice) } : {}),
       ...(maxPrice ? { maxPrice: Number(maxPrice) } : {}),
       ...(condition ? { condition } : {}),
       ...(inStock ? { inStock: 'true' as const } : {}),
     }),
-    [page, slug, sort, category, minPrice, maxPrice, condition, inStock],
+    [page, slug, sort, query, category, minPrice, maxPrice, condition, inStock],
   );
 
   const { data, isLoading, isError, error, isFetching } = useProducts(productParams);
@@ -111,56 +114,36 @@ export function StorefrontPage() {
     .join(' · ');
 
   return (
-    <div>
+    <div className={`container ${styles.storefront}`}>
+      <nav className={styles.breadcrumb} aria-label="Breadcrumb"><Link to="/">Home</Link><span aria-hidden="true">/</span><Link to="/stores">Stores</Link><span aria-hidden="true">/</span><span aria-current="page">{title}</span></nav>
       {store ? (
-        <section
-          className={styles.cover}
-          aria-label="Store cover"
-          style={
-            store.seller.coverUrl
-              ? {
-                  backgroundImage: `linear-gradient(120deg, rgba(26, 35, 50, 0.9), rgba(232, 93, 4, 0.5)), url('${store.seller.coverUrl}')`,
-                }
-              : undefined
-          }
-        >
-          <div className={`container ${styles.coverInner}`}>
-            <div className={styles.identity}>
-              <h1>{store.name}</h1>
-              <div className={styles.meta}>
-                {store.seller.verificationStatus === 'VERIFIED' ? (
-                  <Badge>Verified seller</Badge>
-                ) : (
-                  <Badge tone="muted">Unverified</Badge>
-                )}
-                <Rating value={store.seller.ratingAvg || 0} count={store.seller.ratingCount} />
-              </div>
-              {location ? <p>{location}</p> : null}
-            </div>
+        <section className={styles.storeHero} aria-labelledby="store-title">
+          <div className={styles.cover}>
+            {store.seller.coverUrl ? <img src={store.seller.coverUrl} alt="" onError={handleImageError} /> : <div className={styles.coverFallback}><span>{store.name}</span></div>}
+            <span className={styles.coverLabel}>LOCAL STORES. GREAT DISCOVERIES.</span>
           </div>
+          <div className={styles.storeProfile}>
+            <div className={styles.storeLogo}>{store.seller.logoUrl ? <img src={store.seller.logoUrl} alt="" onError={handleImageError} /> : <span>{store.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join('')}</span>}</div>
+            <div className={styles.identity}>
+              <div className={styles.titleRow}><h1 id="store-title">{store.name}</h1>{store.seller.verificationStatus === 'VERIFIED' ? <Badge tone="success">Verified seller</Badge> : <Badge tone="muted">Unverified seller</Badge>}</div>
+              <p className={styles.location}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>{location || 'Rwanda'}</p>
+              <div className={styles.rating}><Rating value={store.seller.ratingAvg || 0} count={store.seller.ratingCount} /><span>Customer reviews</span></div>
+            </div>
+            <a href="#store-products" className={styles.shopButton}>Explore the store <span aria-hidden="true">&#8595;</span></a>
+          </div>
+          {store.seller.description || store.description ? <p className={styles.storeDesc}>{store.seller.description || store.description}</p> : null}
+          <nav className={styles.storeNav} aria-label="Store sections"><a href="#store-products" className={styles.storeNavActive}>All products</a><a href="#store-about">About this store</a><Link to="/stores">Discover more stores <span aria-hidden="true">&#8594;</span></Link></nav>
         </section>
       ) : null}
 
-      <div className={`container ${browseStyles.page}`}>
+      <div className={styles.catalogPage}>
         <Helmet>
           <title>{store ? `${store.name} | NeereMarket` : 'Store | NeereMarket'}</title>
         </Helmet>
 
-        <nav className={browseStyles.crumbs} aria-label="Breadcrumb">
-          <Link to="/">Home</Link>
-          <span>/</span>
-          <Link to="/stores">Stores</Link>
-          <span>/</span>
-          <span>{title}</span>
-        </nav>
-
-        {store?.seller.description ? (
-          <p className={styles.storeDesc}>{store.seller.description}</p>
-        ) : null}
-
         {storeError ? <Alert tone="error">{getErrorMessage(storeErr)}</Alert> : null}
 
-        <div className={browseStyles.layout}>
+        <div className={`${browseStyles.layout} ${styles.catalogLayout}`} id="store-products">
           {filtersOpen ? (
             <button
               type="button"
@@ -171,21 +154,22 @@ export function StorefrontPage() {
           ) : null}
           <aside
             ref={filterRef}
+            id="store-filters"
             tabIndex={-1}
-            className={`${browseStyles.filters} ${filtersOpen ? browseStyles.filtersOpen : ''}`}
+            className={`${browseStyles.filters} ${styles.filterPanel} ${filtersOpen ? browseStyles.filtersOpen : ''}`}
             aria-label="Product filters"
             aria-modal={modalFilters || undefined}
             role={modalFilters ? 'dialog' : undefined}
           >
             <div className={browseStyles.filterHead}>
-              <h2>Filter</h2>
-              <div className={browseStyles.filterHeadActions}>
+              <h2>Refine your finds</h2>
+              <div className={styles.filterHeadActions}>
                 <button type="button" className={browseStyles.clearBtn} onClick={clearFilters}>
                   Clear
                 </button>
                 <button
                   type="button"
-                  className={browseStyles.filterClose}
+                  className={styles.filterClose}
                   aria-label="Close filters"
                   onClick={() => setFiltersOpen(false)}
                 >
@@ -274,9 +258,9 @@ export function StorefrontPage() {
                 <span>{openSections.price ? '−' : '+'}</span>
               </button>
               {openSections.price ? (
-                <form className={browseStyles.priceForm} onSubmit={onPriceSubmit}>
-                  <Input name="minPrice" label="Min" defaultValue={minPrice} inputMode="numeric" />
-                  <Input name="maxPrice" label="Max" defaultValue={maxPrice} inputMode="numeric" />
+                <form key={`${minPrice}-${maxPrice}`} className={browseStyles.priceForm} onSubmit={onPriceSubmit}>
+                  <Input name="minPrice" type="number" min="0" label="Min" defaultValue={minPrice} inputMode="numeric" />
+                  <Input name="maxPrice" type="number" min="0" label="Max" defaultValue={maxPrice} inputMode="numeric" />
                   <Button type="submit" size="sm" variant="secondary">
                     Apply
                   </Button>
@@ -337,7 +321,7 @@ export function StorefrontPage() {
             </section>
             </div>
 
-            <div className={browseStyles.filterSheetFooter}>
+            <div className={styles.filterSheetFooter}>
               <Button type="button" onClick={() => setFiltersOpen(false)}>
                 Show {total} result{total === 1 ? '' : 's'}
               </Button>
@@ -345,9 +329,9 @@ export function StorefrontPage() {
           </aside>
 
           <div className={browseStyles.main}>
-            <div className={browseStyles.toolbar}>
+            <div className={styles.toolbar}>
               <div>
-                <h2 className={styles.productsTitle}>Products</h2>
+                <p className={styles.eyebrow}>THE STORE COLLECTION</p><h2 className={styles.productsTitle}>Find your next favorite</h2>
                 <p className={browseStyles.meta}>
                   {isLoading || storeLoading
                     ? 'Loading products…'
@@ -355,20 +339,22 @@ export function StorefrontPage() {
                   {isFetching && !isLoading ? ' · Updating…' : ''}
                 </p>
               </div>
-              <div className={browseStyles.toolbarActions}>
+              <div className={styles.toolbarActions}>
                 <button
                   type="button"
-                  className={`${browseStyles.filterTrigger} ${
-                    activeFilterCount ? browseStyles.filterTriggerActive : ''
+                  className={`${styles.filterTrigger} ${
+                    activeFilterCount ? styles.filterTriggerActive : ''
                   }`}
+                  aria-controls="store-filters"
+                  aria-expanded={filtersOpen}
                   onClick={() => setFiltersOpen(true)}
                 >
                   Filter
                   {activeFilterCount ? (
-                    <span className={browseStyles.filterCount}>{activeFilterCount}</span>
+                    <span className={styles.filterCount}>{activeFilterCount}</span>
                   ) : null}
                 </button>
-                <label className={browseStyles.sort}>
+                <label className={styles.sort}>
                   <span>Sort by</span>
                   <select value={sort} onChange={(e) => setParam('sort', e.target.value)}>
                     {SORT_OPTIONS.map((opt) => (
@@ -381,18 +367,23 @@ export function StorefrontPage() {
               </div>
             </div>
 
+            <form className={styles.storeSearch} onSubmit={(event) => { event.preventDefault(); const form = event.currentTarget; setParam('q', (form.elements.namedItem('storeSearch') as HTMLInputElement).value.trim()); }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="m15 15 6 6"/></svg>
+              <input key={query} name="storeSearch" defaultValue={query} placeholder={`Search ${title}`} aria-label="Search this store" type="search" />
+              <button type="submit">Search</button>
+            </form>
+            {activeFilterCount || query ? <div className={styles.activeFilters}><span>{query ? `Results for “${query}”` : `${activeFilterCount} active filter${activeFilterCount === 1 ? '' : 's'}`}</span><button type="button" onClick={clearFilters}>Reset view &#215;</button></div> : null}
             {isError ? <Alert tone="error">{getErrorMessage(error)}</Alert> : null}
             {isLoading || storeLoading ? <ProductGridSkeleton /> : null}
-            {!isLoading && !storeLoading && data?.items.length === 0 ? (
-              <EmptyState
-                title="No products in this store"
-                description="Try clearing filters or check back later."
-                actionLabel="Clear filters"
-                onAction={clearFilters}
-              />
+            {!isLoading && !storeLoading && !isError && !storeError && data?.items.length === 0 ? (
+              <div className={styles.emptyCard}><span className={styles.emptyIcon} aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="m12 3 9 5-9 5-9-5 9-5ZM3 8v10l9 5 9-5V8M12 13v10"/></svg></span><EmptyState
+                title={activeFilterCount || query ? 'No finds for this search' : 'New finds are on their way'}
+                description={activeFilterCount || query ? 'Try a different search or clear your filters to see more from this store.' : 'This store has no products available right now. Explore other local stores while you wait.'}
+                {...(activeFilterCount || query ? { actionLabel: 'Clear search & filters', onAction: clearFilters } : {})}
+              />{!activeFilterCount && !query ? <Link to="/stores" className={styles.emptyLink}>Explore other stores <span aria-hidden="true">&#8594;</span></Link> : null}</div>
             ) : null}
             {data?.items.length ? (
-              <ProductGrid products={data.items} className={gridStyles.dense} />
+              <ProductGrid products={data.items} className={`${gridStyles.dense} ${styles.productGrid}`} />
             ) : null}
 
             {totalPages > 1 ? (
@@ -423,6 +414,7 @@ export function StorefrontPage() {
           </div>
         </div>
       </div>
+      {store ? <section id="store-about" className={styles.aboutCard} aria-labelledby="about-title"><div><p className={styles.eyebrow}>GET TO KNOW THE STORE</p><h2 id="about-title">About {store.name}</h2><p>{store.seller.description || store.description || 'Discover products from this local seller on NeereMarket.'}</p></div><dl><div><dt>Based in</dt><dd>{location || 'Rwanda'}</dd></div><div><dt>Seller status</dt><dd>{store.seller.verificationStatus === 'VERIFIED' ? 'Verified business' : 'Not verified'}</dd></div></dl></section> : null}
     </div>
   );
 }

@@ -32,7 +32,7 @@ export function CategoryPage() {
   const navigate = useNavigate();
   const toast = useToast();
 
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
 
   // Filter States
   const sort = searchParams.get('sort') || 'popular';
@@ -135,7 +135,8 @@ export function CategoryPage() {
     setSearchParams(next, { replace: true });
   }
 
-  const title = category?.name || 'Category';
+  const title = category?.name || (slug === 'fashion-womens-wear' ? "Women's wear" : 'Category');
+  const isFashion = slug.startsWith('fashion');
   const total = data?.pagination.total ?? 0;
   const totalPages = data?.pagination.totalPages ?? 1;
 
@@ -211,6 +212,20 @@ export function CategoryPage() {
         <span>/</span>
         <span>{title}</span>
       </nav>
+
+      <section className={styles.categoryHero} aria-labelledby="category-title">
+        <div className={styles.heroCopy}>
+          <span className={styles.heroEyebrow}>{isFashion ? 'THE STYLE EDIT' : 'DISCOVER YOUR NEXT FIND'}</span>
+          <h1 id="category-title">{isFashion ? <>Everyday style.<br /><em>Entirely you.</em></> : title}</h1>
+          <p>{isFashion ? 'Make room for your next favourite. Explore women’s wear, fresh looks, and wardrobe staples from sellers across Rwanda.' : `Explore ${title.toLowerCase()} and find something you love from sellers across Rwanda.`}</p>
+          <div className={styles.heroActions}><a href="#category-products" className={styles.heroPrimary}>Explore {title.toLowerCase()} <span aria-hidden="true">↗</span></a><Link to="/stores">Meet the stores <span aria-hidden="true">→</span></Link></div>
+          <div className={styles.heroNotes}><span>Local stores, more choice</span><span>Pay with Mobile Money</span></div>
+        </div>
+        <div className={styles.heroVisual}>
+          <img src={isFashion ? '/neeremarket-auth-boutique.png' : category?.imageUrl || FALLBACK_CATEGORY_VISUAL.image} alt={isFashion ? 'A boutique filled with clothing and accessories' : title} onError={handleImageError} />
+          <div className={styles.heroImageNote}><span>{isFashion ? 'A little wardrobe inspiration' : 'Find your favourites'}</span><strong>{isFashion ? 'Your next look starts here.' : 'Good finds. Close to home.'}</strong></div>
+        </div>
+      </section>
 
       <nav className={styles.topTabBar} aria-label="Browse marketplace"><span className={styles.topTabActive}>Products</span><Link to="/stores" className={styles.topTab}>Discover stores</Link></nav>
 
@@ -317,12 +332,12 @@ export function CategoryPage() {
         <div className={styles.main}>
           {/* Query Title & View Switcher */}
           <div className={styles.resultsHeader}>
-            <h1 className={styles.resultsQueryTitle}>
+            <h2 id="category-products" className={styles.resultsQueryTitle}>
               {title}
               <span className={styles.resultsCount}>
                 {isLoading ? 'Searching products…' : `${total.toLocaleString()} results`}
               </span>
-            </h1>
+            </h2>
 
             <div className={styles.headerRightActions}>
               <select className={styles.sortSelect} aria-label="Sort products" value={sort} onChange={event => setParam('sort', event.target.value)}><option value="popular">Popular</option><option value="newest">Newest</option><option value="price_asc">Price: low to high</option><option value="price_desc">Price: high to low</option><option value="best_rated">Highest rated</option></select>
@@ -395,7 +410,7 @@ export function CategoryPage() {
             >
               All {title}
             </Link>
-            {filterCategories.map((cat) => (
+            {filterCategories.filter(cat => cat.slug !== slug).map((cat) => (
               <Link
                 key={cat.id}
                 to={`/categories/${cat.slug}`}
@@ -406,6 +421,12 @@ export function CategoryPage() {
             ))}
           </div>
 
+          {activeFilterCount > 0 ? <div className={styles.activeFilters} aria-label="Active filters">
+            {minPrice || maxPrice ? <button type="button" onClick={() => { const next = new URLSearchParams(searchParams); next.delete('minPrice'); next.delete('maxPrice'); next.delete('page'); setSearchParams(next, { replace: true }); }}>Price: {minPrice || '0'} – {maxPrice || 'Any'} RWF <span aria-hidden="true">×</span></button> : null}
+            {condition ? <button type="button" onClick={() => setParam('condition', null)}>{CONDITIONS.find(item => item.value === condition)?.label} <span aria-hidden="true">×</span></button> : null}
+            {inStock ? <button type="button" onClick={() => setParam('inStock', null)}>In stock <span aria-hidden="true">×</span></button> : null}
+            <button type="button" onClick={clearFilters}>Clear all</button>
+          </div> : null}
           {categoryError ? <Alert tone="error">{getErrorMessage(categoryErr)}</Alert> : null}
           {isError ? <Alert tone="error">{getErrorMessage(error)}</Alert> : null}
           {isLoading || categoryLoading ? <ProductGridSkeleton count={4} /> : null}
@@ -463,47 +484,13 @@ export function CategoryPage() {
 
                         </div>
 
-                        <p className={styles.moqText}>1 Piece (MOQ) · Direct Kigali Supply</p>
-
-                        {/* 2-Column Specifications Grid */}
-                        <div className={styles.specsGrid}>
-                          <div className={styles.specItem}>
-                            <span className={styles.specLabel}>Category:</span>
-                            <span className={styles.specVal}>{product.category.name}</span>
-                          </div>
-                          <div className={styles.specItem}>
-                            <span className={styles.specLabel}>Usage:</span>
-                            <span className={styles.specVal}>Commercial & Personal</span>
-                          </div>
-                          <div className={styles.specItem}>
-                            <span className={styles.specLabel}>Location:</span>
-                            <span className={styles.specVal}>{product.store.seller.district || 'Kigali, Rwanda'}</span>
-                          </div>
-                          <div className={styles.specItem}>
-                            <span className={styles.specLabel}>Feature:</span>
-                            <span className={styles.specVal}>See delivery options at checkout</span>
-                          </div>
-                          <div className={styles.specItem}>
-                            <span className={styles.specLabel}>Payment:</span>
-                            <span className={styles.specVal}>MTN MoMo & Airtel</span>
-                          </div>
-                          <div className={styles.specItem}>
-                            <span className={styles.specLabel}>Dispatch:</span>
-                            <span className={styles.specVal}>Same Day Kigali Dispatch</span>
-                          </div>
-                        </div>
+                        <p className={styles.moqText}>{product.category.name} · {product.store.seller.district || 'Rwanda'}</p>
 
                         {/* Store Row */}
                         <div className={styles.sellerRow}>
                           <Link to={`/stores/${product.store.slug}`} className={styles.sellerLink}>
                             {product.store.name} ›
                           </Link>
-                          <span className={styles.auditedSellerBadge}>
-                            <span>A</span>udited
-                          </span>
-                          <span className={styles.ratingStars} aria-label="Rating 5 stars">
-                            ★★★★★
-                          </span>
                         </div>
 
                         {/* Bottom Actions Row */}

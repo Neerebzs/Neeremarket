@@ -26,7 +26,8 @@ api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config;
-    if (error.response?.status === 401 && !original._retry) {
+    const authEndpoint = /^\/auth\/(login|register|google|refresh)(?:[/?]|$)/.test(original?.url || '');
+    if (error.response?.status === 401 && original && !original._retry && !authEndpoint) {
       original._retry = true;
       const refresh = localStorage.getItem('th_refresh_token');
       if (refresh) {
@@ -81,4 +82,13 @@ export function getErrorMessage(err: unknown, fallback = 'Something went wrong')
     return data?.error?.message || err.message || fallback;
   }
   return fallback;
+}
+
+export function getAuthRetrySeconds(err: unknown): number {
+  if (!axios.isAxiosError(err)) return 0;
+  const body = err.response?.data as ApiErrorBody | undefined;
+  if (body?.error?.code !== 'ACCOUNT_LOCKED' && err.response?.status !== 429) return 0;
+  const details = body?.error?.details as { retryAfterSeconds?: number } | undefined;
+  const seconds = Number(details?.retryAfterSeconds ?? err.response?.headers?.['retry-after']);
+  return Number.isFinite(seconds) && seconds > 0 ? Math.ceil(seconds) : 30;
 }

@@ -171,7 +171,7 @@ export function useStore(slug: string) {
     queryFn: async () => {
       const { data } = await api.get<
         ApiSuccess<{
-          store: import('@/components/product/SellerCard').StoreListItem & {
+          store: Omit<import('@/components/product/SellerCard').StoreListItem, 'products'> & {
             products: ProductListItem[];
             categories?: Array<{
               id: string;

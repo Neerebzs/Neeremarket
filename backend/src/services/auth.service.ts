@@ -8,6 +8,7 @@ import type { AuthUser } from '../shared/middleware';
 import type { LoginInput, RegisterInput, GoogleAuthInput } from '../validators/auth.validator';
 import { uniqueSlug } from '../shared/serialize';
 import { writeAuditLog } from './audit.service';
+import { accountLockedError, recordPasswordAttempt } from './login-security';
 
 type TokenPayload = { sub: string; type: 'access' | 'refresh' };
 type RequestMeta = { ip?: string; userAgent?: string };
@@ -238,49 +239,29 @@ export async function loginUser(input: LoginInput, meta?: RequestMeta) {
   });
 
   if (!user) throw Errors.unauthorized('Invalid credentials');
-  if (user.lockedUntil && user.lockedUntil > new Date()) throw Errors.locked();
+  if (user.lockedUntil && user.lockedUntil > new Date()) throw accountLockedError(user.lockedUntil);
 
   const valid = await verifyPassword(user.passwordHash, input.password);
 
-  await prisma.loginHistory.create({
-    data: {
-      userId: user.id,
-      success: valid,
-      ip: meta?.ip,
-      userAgent: meta?.userAgent,
-    },
-  });
+  const attempt = await recordPasswordAttempt(user.id, valid, {
+    maxFailedAttempts: env.AUTH_MAX_FAILED_ATTEMPTS,
+    lockoutSeconds: env.AUTH_LOCKOUT_SECONDS,
+  }, meta);
 
   if (!valid) {
-    const failed = user.failedLoginCount + 1;
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        failedLoginCount: failed,
-        lockedUntil: failed >= 5 ? new Date(Date.now() + 15 * 60 * 1000) : null,
-      },
-    });
-
-    if (failed >= 5) {
+    if (attempt.lockedUntil) {
       await writeAuditLog({
         actorId: user.id,
         action: 'user.locked',
         entityType: 'User',
         entityId: user.id,
         ip: meta?.ip,
-        reason: `Account locked for 15m after ${failed} consecutive failed logins`,
+        reason: `Account locked for ${env.AUTH_LOCKOUT_SECONDS}s after ${attempt.failedLoginCount} consecutive failed logins`,
       });
+      throw accountLockedError(attempt.lockedUntil);
     }
-
     throw Errors.unauthorized('Invalid credentials');
   }
-
-  if (user.status !== 'ACTIVE') throw Errors.forbidden('Account is not active');
-
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { failedLoginCount: 0, lockedUntil: null },
-  });
 
   await writeAuditLog({
     actorId: user.id,
@@ -308,7 +289,7 @@ export async function loginWithGoogle(input: GoogleAuthInput, meta?: RequestMeta
     }));
 
   if (user) {
-    if (user.lockedUntil && user.lockedUntil > new Date()) throw Errors.locked();
+    if (user.lockedUntil && user.lockedUntil > new Date()) throw accountLockedError(user.lockedUntil);
     if (user.status !== 'ACTIVE') throw Errors.forbidden('Account is not active');
 
     user = await prisma.user.update({

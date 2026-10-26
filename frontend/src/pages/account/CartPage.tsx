@@ -13,7 +13,7 @@ import { Alert, Button, ProductGridSkeleton, useToast } from '@/components/ui';
 import { CartLineItem, ProductCard } from '@/components/product';
 import type { CartLine } from '@/components/product/CartLineItem';
 import { getErrorMessage } from '@/api/client';
-import { loginHref } from '@/utils/auth';
+import { ShoppingJourney, ShoppingState } from '@/components/product/ShoppingJourney';
 import { formatRwf } from '@/utils/money';
 import styles from './CartPage.module.css';
 
@@ -67,100 +67,14 @@ export function CartPage() {
         <Helmet>
           <title>Shopping Cart | NeereMarket</title>
         </Helmet>
-        <div className={styles.stepsBar} aria-label="Checkout Progress">
-          <div className={`${styles.step} ${styles.stepActive}`}>
-            <span className={styles.stepNum}>1</span>
-            <span className={styles.stepLabel}>Shopping Cart</span>
-          </div>
-          <div className={styles.stepLine} />
-          <div className={styles.step}>
-            <span className={styles.stepNum}>2</span>
-            <span className={styles.stepLabel}>Shipping & Address</span>
-          </div>
-          <div className={styles.stepLine} />
-          <div className={styles.step}>
-            <span className={styles.stepNum}>3</span>
-            <span className={styles.stepLabel}>Payment & Confirm</span>
-          </div>
-        </div>
+        <ShoppingJourney step="cart" />
         <ProductGridSkeleton count={2} />
       </div>
     );
   }
 
   // Unauthenticated Guest View (only when auth query has completed and user is null)
-  if (!user) {
-    return (
-      <div className={`container ${styles.page}`}>
-        <Helmet>
-          <title>Shopping Cart | NeereMarket</title>
-        </Helmet>
-
-        {/* 3-Step Checkout Bar */}
-        <div className={styles.stepsBar} aria-label="Checkout Progress">
-          <div className={`${styles.step} ${styles.stepActive}`}>
-            <span className={styles.stepNum}>1</span>
-            <span className={styles.stepLabel}>Shopping Cart</span>
-          </div>
-          <div className={styles.stepLine} />
-          <div className={styles.step}>
-            <span className={styles.stepNum}>2</span>
-            <span className={styles.stepLabel}>Shipping & Address</span>
-          </div>
-          <div className={styles.stepLine} />
-          <div className={styles.step}>
-            <span className={styles.stepNum}>3</span>
-            <span className={styles.stepLabel}>Payment & Confirm</span>
-          </div>
-        </div>
-
-        <div className={styles.guestCard}>
-          <div className={styles.emptyIconCircle}>
-            <svg
-              width="36"
-              height="36"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-          </div>
-          <h1 className={styles.emptyTitle}>Sign in to view your cart</h1>
-          <p className={styles.emptyDesc}>
-            Your multi-vendor shopping cart is saved to your account and synchronizes across all
-            your devices.
-          </p>
-          <ul className={styles.guestBenefits}>
-            <li>
-              <span className={styles.checkIcon}>✓</span> Synchronize cart across phone, tablet, and
-              laptop
-            </li>
-            <li>
-              <span className={styles.checkIcon}>✓</span> Fast checkout with saved addresses across
-              Rwanda
-            </li>
-            <li>
-              <span className={styles.checkIcon}>✓</span> Direct messaging and escrow buyer
-              protection
-            </li>
-          </ul>
-          <div className={styles.emptyActions}>
-            <Button size="md" onClick={() => navigate(loginHref('/cart'))}>
-              Sign in to continue
-            </Button>
-            <Link to="/products" className={styles.secondaryWishlistBtn}>
-              Browse products as guest
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (!user) return <ShoppingState mode="cart-signin" />;
 
   return (
     <div className={`container ${styles.page}`}>
@@ -169,27 +83,12 @@ export function CartPage() {
       </Helmet>
 
       {/* 3-Step Checkout Bar */}
-      <div className={styles.stepsBar} aria-label="Checkout Progress">
-        <div className={`${styles.step} ${styles.stepActive}`}>
-          <span className={styles.stepNum}>1</span>
-          <span className={styles.stepLabel}>Shopping Cart</span>
-        </div>
-        <div className={styles.stepLine} />
-        <div className={styles.step}>
-          <span className={styles.stepNum}>2</span>
-          <span className={styles.stepLabel}>Shipping & Address</span>
-        </div>
-        <div className={styles.stepLine} />
-        <div className={styles.step}>
-          <span className={styles.stepNum}>3</span>
-          <span className={styles.stepLabel}>Payment & Confirm</span>
-        </div>
-      </div>
+      <ShoppingJourney step="cart" />
 
       {/* Page Header */}
       <div className={styles.pageHeader}>
         <div className={styles.headerLeft}>
-          <h1 className={styles.headerTitle}>Shopping Cart</h1>
+          <h1 className={styles.headerTitle}>Your shopping cart.</h1>
           {cart && cart.itemCount > 0 ? (
             <span className={styles.itemCountBadge}>
               {cart.itemCount} {cart.itemCount === 1 ? 'item' : 'items'}
@@ -247,7 +146,7 @@ export function CartPage() {
               <line x1="12" y1="8" x2="12" y2="12" />
               <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
-            <span>One or more items in your cart are currently out of stock.</span>
+            <span>Some quantities exceed available stock. Update those items before checkout.</span>
           </div>
           <button
             type="button"

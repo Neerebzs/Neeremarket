@@ -26,6 +26,16 @@ import styles from './ProductDetailPage.module.css';
 export function ProductDetailPage() {
   const { slug = '' } = useParams();
   const toast = useToast();
+  const pageRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const header = document.querySelector('header');
+    if (!header) return;
+    const syncHeader = () => pageRef.current?.style.setProperty('--product-header-offset', `${header.getBoundingClientRect().height}px`);
+    syncHeader();
+    const observer = new ResizeObserver(syncHeader);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
   const { data: product, isLoading, isError, error } = useProduct(slug);
   const { data: user } = useMe();
   const { data: reviews } = useProductReviews(product?.id);
@@ -64,10 +74,12 @@ export function ProductDetailPage() {
   const [errMsg, setErrMsg] = useState<string | null>(null);
   const [rating, setRating] = useState(5);
   const [reviewBody, setReviewBody] = useState('');
+  const [detailTab, setDetailTab] = useState<'details' | 'specs' | 'reviews' | 'comments'>('details');
   const [sellerMsg, setSellerMsg] = useState('');
   const [mobileTab, setMobileTab] = useState<'overview' | 'details' | 'reviews' | 'recommended'>('overview');
-  const [attrsExpanded, setAttrsExpanded] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
+
+  useEffect(() => { setDetailTab('details'); }, [slug]);
 
   useEffect(() => {
     setActiveImage(0);
@@ -198,7 +210,6 @@ export function ProductDetailPage() {
     return rows;
   }, [product]);
 
-  const visibleAttrs = attrsExpanded ? attrRows : attrRows.slice(0, 5);
 
   function initials(name: string) {
     return name
@@ -316,6 +327,7 @@ export function ProductDetailPage() {
   }
 
   function goMobileTab(tab: 'overview' | 'details' | 'reviews' | 'recommended') {
+    if (tab === 'details' || tab === 'reviews') setDetailTab(tab);
     setMobileTab(tab);
     const id =
       tab === 'overview'
@@ -348,7 +360,7 @@ export function ProductDetailPage() {
   }
 
   return (
-    <div className={`container ${styles.page}`}>
+    <div ref={pageRef} className={`container ${styles.page}`}>
       <Helmet>
         <title>{product ? `${product.name} | NeereMarket` : 'Product | NeereMarket'}</title>
       </Helmet>
@@ -360,6 +372,19 @@ export function ProductDetailPage() {
 
       {product ? (
         <>
+              <nav className={styles.crumb} aria-label="Breadcrumb">
+                <Link to="/products">Products</Link>
+                {product.category.parent ? (
+                  <>
+                    <span>/</span>
+                    <Link to={`/categories/${product.category.parent.slug}`}>
+                      {product.category.parent.name}
+                    </Link>
+                  </>
+                ) : null}
+                <span>/</span>
+                <Link to={`/categories/${product.category.slug}`}>{product.category.name}</Link>
+              </nav>
           <div className={styles.mobileTabs} role="group" aria-label="Product sections">
             <button
               type="button"
@@ -507,6 +532,7 @@ export function ProductDetailPage() {
                           setPreviewOpen(true);
                         }}
                         aria-label={`View photo ${index + 1}`}
+                        aria-pressed={index === activeImage}
                       >
                         <img onError={handleImageError} src={image.url} alt="" loading="lazy" decoding="async" />
                       </button>
@@ -515,6 +541,326 @@ export function ProductDetailPage() {
                 ) : null}
               </div>
 
+
+            </div>
+
+            <div className={styles.info}>
+              <div className={styles.storeHeaderChip}>
+                <Link to={`/stores/${product.store.slug}`} className={styles.storeHeaderLink}>
+                  <span className={styles.storeHeaderIcon} aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M3 10h18l-2-6H5l-2 6ZM4 10v10h16V10M9 20v-6h6v6"/></svg></span>
+                  <span className={styles.storeHeaderName}>{product.store.name}</span>
+                </Link>
+                {product.store.seller.verificationStatus === 'VERIFIED' ? (
+                  <span className={styles.verifiedChip}>✓ Verified</span>
+                ) : null}
+                <span className={styles.storeLocationChip}>
+                  📍 {[product.store.seller.district, product.store.seller.province].filter(Boolean).join(', ') || 'Rwanda'}
+                </span>
+              </div>
+
+
+
+              <p className={styles.productEyebrow}>A FIND FROM YOUR LOCAL MARKETPLACE</p>
+              <h1 className={styles.title}>{product.name}</h1>
+              {product.shortDescription ? <p className={styles.productIntro}>{product.shortDescription}</p> : null}
+
+              <div className={styles.metaRow}>
+                {selected?.sku || product.slug ? (
+                  <p className={styles.sku}>
+                    SKU: <span>{selected?.sku || product.slug}</span>
+                  </p>
+                ) : null}
+                <a href="#pd-reviews" className={styles.reviewsLink} onClick={() => setDetailTab('reviews')}>
+                  <span aria-hidden="true" className={styles.reviewsStarsGold}>
+                    {starsRow(averageRating)}
+                  </span>
+                  <span>
+                    {averageRating > 0 ? averageRating.toFixed(1) : 'Not rated'} ({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})
+                  </span>
+                </a>
+              </div>
+
+              <div className={styles.priceRow}>
+                <div className={styles.priceBlock}>
+                  <PriceDisplay
+                    price={product.price}
+                    discountPrice={selected?.price || product.discountPrice}
+                    size="lg"
+                  />
+                </div>
+                {savingsAmount > 0 ? (
+                  <span className={styles.savingsTag}>
+                    Save {formatRwf(savingsAmount)}
+                  </span>
+                ) : null}
+              </div>
+
+              <div className={styles.stockStatus}>
+                {isOutOfStock ? (
+                  <span className={styles.stockBadgeOut}>
+                    <span className={styles.stockDotOut} aria-hidden="true" />
+                    Out of Stock
+                  </span>
+                ) : isLowStock ? (
+                  <span className={styles.stockBadgeLow}>
+                    <span className={styles.stockDotLow} aria-hidden="true" />
+                    Only {availableStock} left in stock - order soon
+                  </span>
+                ) : (
+                  <span className={styles.stockBadgeIn}>
+                    <span className={styles.stockDotIn} aria-hidden="true" />
+                    In Stock ({availableStock} available)
+                  </span>
+                )}
+                <span className={styles.deliveryPromise}>Delivery options available at checkout</span>
+              </div>
+
+              <Link to={`/categories/${product.category.slug}`} className={styles.promoBanner}>
+                <span className={styles.promoBadge}>Category</span>
+                <span className={styles.promoText}>
+                  Explore more in {product.category.parent ? `${product.category.parent.name} / ` : ''}
+                  {product.category.name}
+                </span>
+                <span className={styles.promoArrow} aria-hidden="true">
+                  ›
+                </span>
+              </Link>
+
+              <div className={styles.optionsBlock}>
+                <VariantSelector
+                  variants={product.variants}
+                  selectedId={variantId}
+                  onSelect={setVariantId}
+                />
+              </div>
+
+              <div className={styles.qtyRow}>
+                <span className={styles.qtyLabel}>Quantity:</span>
+                {!isOutOfStock ? (
+                  <QuantitySelector value={qty} max={Math.max(1, maxQty)} onChange={setQty} />
+                ) : null}
+                <span className={styles.qtyStockHint}>
+                  {!isOutOfStock
+                    ? `${availableStock} units available`
+                    : 'Option currently unavailable'}
+                </span>
+              </div>
+
+              <div className={styles.actions}>
+                <Button
+                  type="button"
+                  variant="primary"
+                  className={styles.addToCart}
+                  disabled={isOutOfStock || addToCart.isPending}
+                  onClick={() => void handleAdd()}
+                >
+                  <svg viewBox="0 0 24 24" className={styles.btnCartIcon} aria-hidden="true">
+                    <path
+                      d="M6 6h15l-1.5 9h-12L4.5 3H2"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <circle cx="9" cy="20" r="1.2" fill="currentColor" />
+                    <circle cx="18" cy="20" r="1.2" fill="currentColor" />
+                  </svg>
+                  {addToCart.isPending ? 'Adding to cart…' : 'Add to Cart'}
+                </Button>
+
+                <button
+                  type="button"
+                  className={styles.buyNowBtn}
+                  disabled={isOutOfStock || addToCart.isPending}
+                  onClick={() => void handleBuyNow()}
+                >
+                  Buy Now
+                </button>
+
+                <button
+                  type="button"
+                  className={`${styles.wishlistBtn} ${isWishlisted ? styles.wishlistBtnActive : ''}`}
+                  onClick={() => void handleWishlistToggle()}
+                  aria-label={isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
+                  title={isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M12 20s-7-4.35-7-9.2A4.2 4.2 0 0 1 12 7.1a4.2 4.2 0 0 1 7 3.7C19 15.65 12 20 12 20z"
+                      fill={isWishlisted ? 'currentColor' : 'none'}
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              {/* NeereMarket Assurance Guarantee Strip */}
+
+
+
+            </div>
+          </div>
+
+          <section className={styles.productTabs} aria-label="Product information">
+            <div className={styles.detailTabBar} role="tablist" aria-label="Product information tabs" onKeyDown={event => {
+              const keys = ['details', 'specs', 'reviews', 'comments'] as const;
+              const index = keys.indexOf(detailTab);
+              const next = event.key === 'ArrowRight' ? (index + 1) % 4 : event.key === 'ArrowLeft' ? (index + 3) % 4 : event.key === 'Home' ? 0 : event.key === 'End' ? 3 : -1;
+              if (next < 0) return;
+              event.preventDefault(); setDetailTab(keys[next]); document.getElementById(`product-tab-${keys[next]}`)?.focus();
+            }}>
+              {([{ key: 'details', label: 'Details' }, { key: 'specs', label: 'Specifications' }, { key: 'reviews', label: `Reviews (${reviewCount})` }, { key: 'comments', label: 'Comments & Q&A' }] as const).map(tab => <button type="button" key={tab.key} id={`product-tab-${tab.key}`} role="tab" aria-selected={detailTab === tab.key} aria-controls={`product-panel-${tab.key}`} tabIndex={detailTab === tab.key ? 0 : -1} onClick={() => setDetailTab(tab.key)} className={detailTab === tab.key ? styles.detailTabSelected : styles.detailTab}>{tab.label}</button>)}
+            </div>
+            <div id="product-panel-details" role="tabpanel" aria-labelledby="product-tab-details" hidden={detailTab !== 'details'} tabIndex={0}>
+              <div className={styles.detailPanel} id="pd-details">
+                <h2>Product Details</h2>
+                {product.shortDescription ? (
+                  <p className={styles.shortDesc}>{product.shortDescription}</p>
+                ) : null}
+                <div
+                  className={`${styles.longDesc} ${
+                    descExpanded ? styles.longDescExpanded : styles.longDescCollapsed
+                  }`}
+                >
+                  {product.description || 'No detailed description provided.'}
+                </div>
+                {product.description && product.description.length > 180 ? (
+                  <button
+                    type="button"
+                    className={styles.toggleDescBtn}
+                    onClick={() => setDescExpanded((v) => !v)}
+                  >
+                    {descExpanded ? 'Show less' : 'Read full description'}
+                    <span aria-hidden="true">{descExpanded ? ' ˄' : ' ˅'}</span>
+                  </button>
+                ) : null}
+
+              </div>
+
+              <div className={styles.detailsSupportGrid}>
+              <div className={styles.trustStrip} aria-label="Payment, delivery, and returns">
+                <div className={styles.trustItem}>
+                  <span className={styles.trustIcon} aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                      <path
+                        d="M12 2l7 3v6c0 5.25-3.5 10-7 11-3.5-1-7-5.75-7-11V5l7-3z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M9 11.5l2 2 4-4"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                  <div>
+                    <strong>Mobile Money checkout</strong>
+                    <p>Pay with MTN MoMo or Airtel Money.</p>
+                  </div>
+                </div>
+
+                <div className={styles.trustItem}>
+                  <span className={styles.trustIcon} aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                      <path
+                        d="M1 3h14v13H1zM15 8h4l3 3v5h-7V8z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinejoin="round"
+                      />
+                      <circle cx="5.5" cy="18.5" r="2" fill="none" stroke="currentColor" strokeWidth="1.8" />
+                      <circle cx="18.5" cy="18.5" r="2" fill="none" stroke="currentColor" strokeWidth="1.8" />
+                    </svg>
+                  </span>
+                  <div>
+                    <strong>Delivery & pickup</strong>
+                    <p>Choose an available option and review costs at checkout.</p>
+                  </div>
+                </div>
+
+                <div className={styles.trustItem}>
+                  <span className={styles.trustIcon} aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                      <path
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                  <div>
+                    <strong>Return support</strong>
+                    <p><Link to="/returns">Review the return policy before ordering.</Link></p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Merchant Showcase Card */}
+              <div className={styles.sellerCard}>
+                <div className={styles.sellerCardTop}>
+                  <div className={styles.sellerAvatar} aria-hidden="true">
+                    <span>{initials(product.store.name)}</span>
+                  </div>
+                  <div className={styles.sellerMeta}>
+                    <div className={styles.sellerNameRow}>
+                      <Link to={`/stores/${product.store.slug}`} className={styles.sellerName}>
+                        {product.store.name}
+                      </Link>
+                      {product.store.seller.verificationStatus === 'VERIFIED' ? (
+<span className={styles.verifiedTag}>✓ Verified seller</span>
+                      ) : null}
+                    </div>
+                    <p className={styles.sellerLocation}>
+                      📍 {[product.store.seller.district, product.store.seller.province]
+                        .filter(Boolean)
+                        .join(', ') || 'Rwanda'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className={styles.sellerActions}>
+                  <Link to={`/stores/${product.store.slug}`} className={styles.sellerVisitBtn}>
+                    Visit Store
+                  </Link>
+                  <button
+                    type="button"
+                    className={styles.sellerChatBtn}
+                    onClick={() => void handleChatNow()}
+                    disabled={sendMessage.isPending}
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v8A2.5 2.5 0 0 1 17.5 17H9l-4 3v-3.2A2.5 2.5 0 0 1 4 14.5v-8z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.7"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    Message Seller
+                  </button>
+                </div>
+              </div>
+              </div>
+            </div>
+            <div id="product-panel-specs" role="tabpanel" aria-labelledby="product-tab-specs" hidden={detailTab !== 'specs'} tabIndex={0} className={styles.specificationsTab}>
+              <h2>Product specifications</h2>
+              {attrRows.length ? <table className={styles.specificationTable}><caption>Specifications for {product.name}</caption><tbody>{attrRows.map(row => <tr key={`${row.name}-${row.value}`}><th scope="row">{row.name}</th><td>{row.value}</td></tr>)}</tbody></table> : <p>The seller has not added specifications for this product yet.</p>}
+            </div>
+            <div id="product-panel-reviews" role="tabpanel" aria-labelledby="product-tab-reviews" hidden={detailTab !== 'reviews'} tabIndex={0}>
               <section className={styles.reviewsPanel} id="pd-reviews" aria-labelledby="reviews-heading">
                 <div className={styles.reviewsHead}>
                   <div>
@@ -532,10 +878,10 @@ export function ProductDetailPage() {
 
                 <div className={styles.reviewsSummary}>
                   <div className={styles.scoreBlock}>
-                    <p className={styles.scoreValue}>{averageRating > 0 ? averageRating.toFixed(1) : '5.0'}</p>
+                    <p className={styles.scoreValue}>{averageRating > 0 ? averageRating.toFixed(1) : 'Not rated'}</p>
                     <div>
                       <p className={styles.scoreStars} aria-hidden="true">
-                        {starsRow(averageRating || 5)}
+                        {starsRow(averageRating)}
                       </p>
                       <p className={styles.scoreMeta}>
                         Based on {reviewCount} review{reviewCount === 1 ? '' : 's'}
@@ -547,9 +893,7 @@ export function ProductDetailPage() {
                       const count = ratingBreakdown[star as 1 | 2 | 3 | 4 | 5];
                       const pct = reviewItems.length
                         ? Math.round((count / reviewItems.length) * 100)
-                        : star === 5
-                          ? 100
-                          : 0;
+                        : 0;
                       return (
                         <li key={star}>
                           <span className={styles.breakdownStar}>{star}★</span>
@@ -646,345 +990,10 @@ export function ProductDetailPage() {
                 </form>
               </section>
             </div>
-
-            <div className={styles.info}>
-              <div className={styles.storeHeaderChip}>
-                <Link to={`/stores/${product.store.slug}`} className={styles.storeHeaderLink}>
-                  <span className={styles.storeHeaderIcon} aria-hidden="true">🏬</span>
-                  <span className={styles.storeHeaderName}>{product.store.name}</span>
-                </Link>
-                {product.store.seller.verificationStatus === 'VERIFIED' ? (
-                  <span className={styles.verifiedChip}>✓ Verified</span>
-                ) : null}
-                <span className={styles.storeLocationChip}>
-                  📍 {[product.store.seller.district, product.store.seller.province].filter(Boolean).join(', ') || 'Rwanda'}
-                </span>
-              </div>
-
-              <p className={styles.crumb}>
-                <Link to="/products">Products</Link>
-                {product.category.parent ? (
-                  <>
-                    <span>/</span>
-                    <Link to={`/categories/${product.category.parent.slug}`}>
-                      {product.category.parent.name}
-                    </Link>
-                  </>
-                ) : null}
-                <span>/</span>
-                <Link to={`/categories/${product.category.slug}`}>{product.category.name}</Link>
-              </p>
-
-              <h1 className={styles.title}>{product.name}</h1>
-
-              <div className={styles.metaRow}>
-                {selected?.sku || product.slug ? (
-                  <p className={styles.sku}>
-                    SKU: <span>{selected?.sku || product.slug}</span>
-                  </p>
-                ) : null}
-                <a href="#pd-reviews" className={styles.reviewsLink}>
-                  <span aria-hidden="true" className={styles.reviewsStarsGold}>
-                    {starsRow(averageRating || 5)}
-                  </span>
-                  <span>
-                    {averageRating > 0 ? averageRating.toFixed(1) : '5.0'} ({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})
-                  </span>
-                </a>
-                <span className={styles.hotTag}>⚡ In High Demand</span>
-              </div>
-
-              <div className={styles.priceRow}>
-                <div className={styles.priceBlock}>
-                  <PriceDisplay
-                    price={product.price}
-                    discountPrice={selected?.price || product.discountPrice}
-                    size="lg"
-                  />
-                </div>
-                {savingsAmount > 0 ? (
-                  <span className={styles.savingsTag}>
-                    Save {formatRwf(savingsAmount)}
-                  </span>
-                ) : null}
-              </div>
-
-              <div className={styles.stockStatus}>
-                {isOutOfStock ? (
-                  <span className={styles.stockBadgeOut}>
-                    <span className={styles.stockDotOut} aria-hidden="true" />
-                    Out of Stock
-                  </span>
-                ) : isLowStock ? (
-                  <span className={styles.stockBadgeLow}>
-                    <span className={styles.stockDotLow} aria-hidden="true" />
-                    Only {availableStock} left in stock - order soon
-                  </span>
-                ) : (
-                  <span className={styles.stockBadgeIn}>
-                    <span className={styles.stockDotIn} aria-hidden="true" />
-                    In Stock ({availableStock} available)
-                  </span>
-                )}
-                <span className={styles.deliveryPromise}>• Dispatches within 24h across Rwanda</span>
-              </div>
-
-              <Link to={`/categories/${product.category.slug}`} className={styles.promoBanner}>
-                <span className={styles.promoBadge}>Category</span>
-                <span className={styles.promoText}>
-                  Explore more in {product.category.parent ? `${product.category.parent.name} / ` : ''}
-                  {product.category.name}
-                </span>
-                <span className={styles.promoArrow} aria-hidden="true">
-                  ›
-                </span>
-              </Link>
-
-              <div className={styles.optionsBlock}>
-                <VariantSelector
-                  variants={product.variants}
-                  selectedId={variantId}
-                  onSelect={setVariantId}
-                />
-              </div>
-
-              <div className={styles.qtyRow}>
-                <span className={styles.qtyLabel}>Quantity:</span>
-                {!isOutOfStock ? (
-                  <QuantitySelector value={qty} max={Math.max(1, maxQty)} onChange={setQty} />
-                ) : null}
-                <span className={styles.qtyStockHint}>
-                  {!isOutOfStock
-                    ? `${availableStock} units available`
-                    : 'Option currently unavailable'}
-                </span>
-              </div>
-
-              <div className={styles.actions}>
-                <Button
-                  type="button"
-                  variant="primary"
-                  className={styles.addToCart}
-                  disabled={isOutOfStock || addToCart.isPending}
-                  onClick={() => void handleAdd()}
-                >
-                  <svg viewBox="0 0 24 24" className={styles.btnCartIcon} aria-hidden="true">
-                    <path
-                      d="M6 6h15l-1.5 9h-12L4.5 3H2"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <circle cx="9" cy="20" r="1.2" fill="currentColor" />
-                    <circle cx="18" cy="20" r="1.2" fill="currentColor" />
-                  </svg>
-                  {addToCart.isPending ? 'Adding to cart…' : 'Add to Cart'}
-                </Button>
-
-                <button
-                  type="button"
-                  className={styles.buyNowBtn}
-                  disabled={isOutOfStock || addToCart.isPending}
-                  onClick={() => void handleBuyNow()}
-                >
-                  Buy Now
-                </button>
-
-                <button
-                  type="button"
-                  className={`${styles.wishlistBtn} ${isWishlisted ? styles.wishlistBtnActive : ''}`}
-                  onClick={() => void handleWishlistToggle()}
-                  aria-label={isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
-                  title={isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path
-                      d="M12 20s-7-4.35-7-9.2A4.2 4.2 0 0 1 12 7.1a4.2 4.2 0 0 1 7 3.7C19 15.65 12 20 12 20z"
-                      fill={isWishlisted ? 'currentColor' : 'none'}
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
-              </div>
-
-              {/* NeereMarket Assurance Guarantee Strip */}
-              <div className={styles.trustStrip} aria-label="Buyer protection guarantees">
-                <div className={styles.trustItem}>
-                  <span className={styles.trustIcon} aria-hidden="true">
-                    <svg viewBox="0 0 24 24">
-                      <path
-                        d="M12 2l7 3v6c0 5.25-3.5 10-7 11-3.5-1-7-5.75-7-11V5l7-3z"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M9 11.5l2 2 4-4"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </span>
-                  <div>
-                    <strong>NeereMarket Escrow</strong>
-                    <p>Funds released only after you confirm delivery</p>
-                  </div>
-                </div>
-
-                <div className={styles.trustItem}>
-                  <span className={styles.trustIcon} aria-hidden="true">
-                    <svg viewBox="0 0 24 24">
-                      <path
-                        d="M1 3h14v13H1zM15 8h4l3 3v5h-7V8z"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinejoin="round"
-                      />
-                      <circle cx="5.5" cy="18.5" r="2" fill="none" stroke="currentColor" strokeWidth="1.8" />
-                      <circle cx="18.5" cy="18.5" r="2" fill="none" stroke="currentColor" strokeWidth="1.8" />
-                    </svg>
-                  </span>
-                  <div>
-                    <strong>Delivery & pickup</strong>
-                    <p>Choose an available option and review costs at checkout.</p>
-                  </div>
-                </div>
-
-                <div className={styles.trustItem}>
-                  <span className={styles.trustIcon} aria-hidden="true">
-                    <svg viewBox="0 0 24 24">
-                      <path
-                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </span>
-                  <div>
-                    <strong>Return support</strong>
-                    <p><Link to="/returns">Review the return policy before ordering.</Link></p>
-                  </div>
-                </div>
-              </div>
-
-              {attrRows.length ? (
-                <section className={styles.attrPanel} aria-labelledby="attrs-heading">
-                  <h2 id="attrs-heading">Key Specifications</h2>
-                  <dl className={styles.attrList}>
-                    {visibleAttrs.map((row) => (
-                      <div key={`${row.name}-${row.value}`}>
-                        <dt>{row.name}</dt>
-                        <dd>{row.value}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                  {attrRows.length > 5 ? (
-                    <button
-                      type="button"
-                      className={styles.viewMoreAttrs}
-                      onClick={() => setAttrsExpanded((v) => !v)}
-                    >
-                      {attrsExpanded ? 'Show fewer specifications' : `View all ${attrRows.length} specifications`}
-                      <span aria-hidden="true">{attrsExpanded ? ' ˄' : ' ˅'}</span>
-                    </button>
-                  ) : null}
-                </section>
-              ) : null}
-
-              <div className={styles.detailPanel} id="pd-details">
-                <h2>Product Details</h2>
-                {product.shortDescription ? (
-                  <p className={styles.shortDesc}>{product.shortDescription}</p>
-                ) : null}
-                <div
-                  className={`${styles.longDesc} ${
-                    descExpanded ? styles.longDescExpanded : styles.longDescCollapsed
-                  }`}
-                >
-                  {product.description || 'No detailed description provided.'}
-                </div>
-                {product.description && product.description.length > 180 ? (
-                  <button
-                    type="button"
-                    className={styles.toggleDescBtn}
-                    onClick={() => setDescExpanded((v) => !v)}
-                  >
-                    {descExpanded ? 'Show less' : 'Read full description'}
-                    <span aria-hidden="true">{descExpanded ? ' ˄' : ' ˅'}</span>
-                  </button>
-                ) : null}
-
-                {attrRows.length ? (
-                  <dl className={`${styles.specs} ${styles.desktopSpecsOnly}`}>
-                    {attrRows.map((row) => (
-                      <div key={`desk-${row.name}-${row.value}`}>
-                        <dt>{row.name}</dt>
-                        <dd>{row.value}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                ) : null}
-              </div>
-
-              {/* Merchant Showcase Card */}
-              <div className={styles.sellerCard}>
-                <div className={styles.sellerCardTop}>
-                  <div className={styles.sellerAvatar} aria-hidden="true">
-                    <span>{initials(product.store.name)}</span>
-                  </div>
-                  <div className={styles.sellerMeta}>
-                    <div className={styles.sellerNameRow}>
-                      <Link to={`/stores/${product.store.slug}`} className={styles.sellerName}>
-                        {product.store.name}
-                      </Link>
-                      {product.store.seller.verificationStatus === 'VERIFIED' ? (
-<span className={styles.verifiedTag}>✓ Verified seller</span>
-                      ) : null}
-                    </div>
-                    <p className={styles.sellerLocation}>
-                      📍 {[product.store.seller.district, product.store.seller.province]
-                        .filter(Boolean)
-                        .join(', ') || 'Rwanda'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className={styles.sellerActions}>
-                  <Link to={`/stores/${product.store.slug}`} className={styles.sellerVisitBtn}>
-                    Visit Store
-                  </Link>
-                  <button
-                    type="button"
-                    className={styles.sellerChatBtn}
-                    onClick={() => void handleChatNow()}
-                    disabled={sendMessage.isPending}
-                  >
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path
-                        d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v8A2.5 2.5 0 0 1 17.5 17H9l-4 3v-3.2A2.5 2.5 0 0 1 4 14.5v-8z"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.7"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    Message Seller
-                  </button>
-                </div>
-              </div>
-
+            <div id="product-panel-comments" role="tabpanel" aria-labelledby="product-tab-comments" hidden={detailTab !== 'comments'} tabIndex={0} className={styles.commentsTab}>
+              <div><h2>Comments & questions</h2><p>Read customer comments or ask the seller about this product.</p></div>
+              {reviewItems.filter(review => review.body?.trim()).length ? <ul className={styles.commentList}>{reviewItems.filter(review => review.body?.trim()).map(review => <li key={review.id}><strong>{review.customer.fullName}</strong><time dateTime={review.createdAt}>{new Date(review.createdAt).toLocaleDateString()}</time><p>{review.body}</p></li>)}</ul> : <p className={styles.noComments}>No customer comments yet. Share your experience in the Reviews tab.</p>}
+              <p className={styles.privateMessageNote}>Questions are sent privately to the seller through your messages.</p>
               <form className={styles.contactBox} onSubmit={handleContact}>
                 <h3>Ask Seller a Question</h3>
                 <label className={styles.composerField}>
@@ -1002,7 +1011,7 @@ export function ProductDetailPage() {
                 </Button>
               </form>
             </div>
-          </div>
+          </section>
 
           <section
             className={styles.alsoViewed}

@@ -1,8 +1,8 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useLogin, useGoogleAuth } from '@/api/hooks';
-import { getErrorMessage } from '@/api/client';
+import { getAuthRetrySeconds, getErrorMessage } from '@/api/client';
 import { Alert } from '@/components/ui';
 import { GoogleSignIn } from '@/components/auth/GoogleSignIn';
 import { APP_NAME } from '@/config/brand';
@@ -26,10 +26,35 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lock, setLock] = useState<{ account: string; until: number } | null>(null);
+  const [now, setNow] = useState(Date.now);
+  const lockedSeconds = lock && lock.account === account.trim().toLowerCase()
+    ? Math.max(0, Math.ceil((lock.until - now) / 1000)) : 0;
   const busy = login.isPending || googleAuth.isPending;
+  useEffect(() => {
+    if (!lock) return;
+    const tick = () => {
+      const current = Date.now();
+      setNow(current);
+      if (current >= lock.until) setLock(null);
+    };
+    tick();
+    const timer = window.setInterval(tick, 250);
+    return () => window.clearInterval(timer);
+  }, [lock]);
+
+  function handleAuthError(err: unknown, fallback: string) {
+    const seconds = getAuthRetrySeconds(err);
+    if (seconds) {
+      setNow(Date.now());
+      setLock({ account: account.trim().toLowerCase(), until: Date.now() + seconds * 1000 });
+      setError(null);
+    } else setError(getErrorMessage(err, fallback));
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (busy || lockedSeconds > 0) return;
     setError(null);
     const trimmed = account.trim();
     try {
@@ -38,7 +63,7 @@ export function LoginPage() {
       );
       navigate(postLoginPath(data.user.roles, nextParam), { replace: true });
     } catch (err) {
-      setError(getErrorMessage(err, 'Sign in failed'));
+      handleAuthError(err, 'Sign in failed');
     }
   }
 
@@ -48,7 +73,7 @@ export function LoginPage() {
       const data = await googleAuth.mutateAsync({ idToken });
       navigate(postLoginPath(data.user.roles, nextParam), { replace: true });
     } catch (err) {
-      setError(getErrorMessage(err, 'Google sign-in failed'));
+      handleAuthError(err, 'Google sign-in failed');
     }
   }
 
@@ -68,6 +93,7 @@ export function LoginPage() {
         </div>
       ) : null}
 
+      {lockedSeconds > 0 ? <div className={styles.lockNotice} role="status"><strong>Sign-in temporarily paused</strong><p>Too many failed attempts. You can try again shortly.</p><span>Try again in {lockedSeconds} seconds</span></div> : null}
       <label className={styles.field}>
         <span className={styles.label}>Email or phone number</span>
         <input
@@ -105,12 +131,12 @@ export function LoginPage() {
       </label>
 
       <div className={styles.actions}>
-        <button type="submit" className={styles.signIn} disabled={busy}>
-          {login.isPending ? 'Signing in…' : 'Sign in'}
+        <button type="submit" className={styles.signIn} disabled={busy || lockedSeconds > 0}>
+          {lockedSeconds > 0 ? `Try again in ${lockedSeconds}s` : login.isPending ? 'Signing in…' : 'Sign in'}
         </button>
       </div>
 
-      <GoogleSignIn onCredential={onGoogle} onError={setError} disabled={busy} />
+      <GoogleSignIn onCredential={onGoogle} onError={setError} disabled={busy || lockedSeconds > 0} />
 
       <p className={styles.footHelp}>
         <span>

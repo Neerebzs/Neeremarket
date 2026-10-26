@@ -25,6 +25,10 @@ export function notFoundHandler(_req: Request, res: Response) {
 
 export function errorHandler(err: unknown, _req: Request, res: Response, _next: NextFunction) {
   if (err instanceof AppError) {
+    if (err.code === 'ACCOUNT_LOCKED') {
+      const seconds = (err.details as { retryAfterSeconds?: number } | undefined)?.retryAfterSeconds;
+      if (seconds) res.setHeader('Retry-After', String(seconds));
+    }
     return res.status(err.statusCode).json({
       success: false,
       error: {

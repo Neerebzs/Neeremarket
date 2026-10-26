@@ -2,7 +2,7 @@ import { handleImageError } from '@/utils/images';
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { useCategories, useProducts, useStores, type ProductListItem } from '@/api/hooks';
+import { useCategories, useProducts, useStores, useStore, type ProductListItem } from '@/api/hooks';
 import { Alert } from '@/components/ui';
 import { PriceDisplay } from '@/components/product';
 import {
@@ -104,15 +104,12 @@ export function HomePage() {
 
   const currentStore = showcaseStores[showcaseStoreIdx] || showcaseStores[0];
 
-  const showcaseProducts = useMemo(() => {
-    if (!currentStore) return [];
-    const list = [...(currentStore.products || [])];
-    return list.slice(0, 8);
-  }, [currentStore, items]);
+  const { data: showcaseStore, isLoading: showcaseLoading } = useStore(currentStore?.slug || '');
+  const showcaseProducts = (showcaseStore?.products || []).slice(0, 4);
 
   const showcaseBannerImg =
     currentStore?.seller.coverUrl ||
-    showcaseProducts[0]?.imageUrl ||
+    showcaseProducts[0]?.images?.[0]?.url ||
     currentStore?.seller.logoUrl ||
     FALLBACK_CATEGORY_VISUAL.image;
 
@@ -436,6 +433,7 @@ export function HomePage() {
           onMouseLeave={() => setShowcasePaused(false)}
         >
           <div className={styles.sectionHead}>
+            <div className={styles.spotlightHeading}><span>LOCAL FINDS, REAL CONNECTIONS</span><h2>Meet your next favourite store</h2><p>Discover the people and places behind the products.</p></div>
             <div className={styles.showcaseNavGroup}>
               <Link to="/stores" className={styles.sectionLink}>
                 All stores
@@ -473,20 +471,21 @@ export function HomePage() {
           </div>
 
           <div className={styles.storeShowcaseCard}>
-            {/* Left Column: Featured Banner matching the design */}
+            {/* Featured store */}
             <div className={styles.showcaseBanner}>
               <div className={styles.showcaseBannerTop}>
+                <span className={styles.showcaseBadge}>STORE SPOTLIGHT</span>
                 <h3 className={styles.showcaseTitle}>{currentStore.name}</h3>
                 <p className={styles.showcaseLocation}>
                   {[currentStore.seller.marketLocation, currentStore.seller.district]
                     .filter(Boolean)
-                    .join(' Â· ') || 'Kigali, Rwanda'}
+                    .join(' · ') || 'Rwanda'}
                 </p>
                 <Link
                   to={`/stores/${currentStore.slug}`}
                   className={styles.showcasePillBtn}
                 >
-                  Visit store
+                  Explore store <span aria-hidden="true">↗</span>
                 </Link>
               </div>
               <div className={styles.showcaseBannerImage}>
@@ -494,8 +493,10 @@ export function HomePage() {
               </div>
             </div>
 
-            {/* Right Column: 4x2 Grid of 8 items */}
-            <div className={styles.showcaseGrid}>
+            {/* Store collection */}
+            <div className={styles.spotlightCollection} aria-live="polite">
+              <div className={styles.collectionHeading}><div><span>FROM {currentStore.name}</span><h3>A closer look inside</h3></div>{currentStore.seller.verificationStatus === 'VERIFIED' ? <span className={styles.verifiedStore}>✓ Verified seller</span> : null}</div>
+              <div className={styles.showcaseGrid}>
               {showcaseProducts.map((p) => (
                 <Link
                   key={p.id}
@@ -506,13 +507,21 @@ export function HomePage() {
                   <span className={styles.showcaseItemTitle}>{p.name}</span>
                   <div className={styles.showcaseItemImgWrap}>
                     <img
-                      src={p.imageUrl || FALLBACK_CATEGORY_VISUAL.image}
+                      onError={handleImageError} src={p.images?.[0]?.url || '/product-placeholder.svg'}
                       alt={p.name}
                       loading="lazy"
                     />
                   </div>
                 </Link>
               ))}
+              </div>
+              {!showcaseProducts.length ? <div className={styles.storeInvitation}>
+                <span className={styles.invitationIcon} aria-hidden="true">↗</span>
+                <h4>{showcaseLoading ? 'Opening the collection…' : 'Get to know the store'}</h4>
+                <p>{currentStore.description || 'Explore the store profile, learn about the seller, and discover what they have to offer.'}</p>
+                <Link to={`/stores/${currentStore.slug}`}>Discover {currentStore.name} <span aria-hidden="true">→</span></Link>
+              </div> : <Link className={styles.collectionLink} to={`/stores/${currentStore.slug}`}>View the full collection <span aria-hidden="true">→</span></Link>}
+              <div className={styles.spotlightFooter}><span>Shop local. Find something different.</span><Link to="/stores">Explore more stores →</Link></div>
             </div>
           </div>
 
