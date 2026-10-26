@@ -95,7 +95,7 @@ export function SellerOrdersPage() {
       <header className={styles.pageHead}>
         <div className={styles.pageHeadCopy}>
           <p className={styles.kicker}>Order Fulfillment</p>
-          <h1>Customer Orders & Shipments</h1>
+          <h1>Orders & shipments</h1>
           <p className={styles.muted}>
             Track incoming purchases, update packaging and dispatch status, and manage customer deliveries across Rwanda.
           </p>

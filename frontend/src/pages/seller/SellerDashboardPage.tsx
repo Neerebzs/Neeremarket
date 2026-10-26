@@ -9,12 +9,8 @@ import {
   useSellerInventory,
 } from '@/api/hooks';
 import { Alert, Badge, EmptyState, TableSkeleton } from '@/components/ui';
-import {
-  TailMetricCard,
-  TargetGaugeCard,
-  MonthlySalesBarChart,
-  StatisticsAreaChart,
-} from '@/components/dashboard';
+import { TailMetricCard } from '@/components/dashboard';
+import { ICONS, MetricIcon } from '@/components/dashboard/metrics';
 import { getErrorMessage } from '@/api/client';
 import { isSellerRole } from '@/utils/auth';
 import { formatRwf } from '@/utils/money';
@@ -79,13 +75,6 @@ function SellerDashboardView() {
     return orders;
   }, [orders, orderFilter]);
 
-  const customerCount = useMemo(() => {
-    const unique = new Set(
-      orders.map((o) => o.customer?.fullName || o.address?.fullName || o.id).filter(Boolean),
-    );
-    return unique.size > 0 ? unique.size : 3782;
-  }, [orders]);
-
   if (isLoading || ordersQuery.isLoading) return <TableSkeleton rows={4} />;
   if (isError) return <Alert tone="error">{getErrorMessage(error)}</Alert>;
 
@@ -113,6 +102,21 @@ function SellerDashboardView() {
       <Helmet>
         <title>{`${storeDisplayName} | Seller Overview | NeereMarket`}</title>
       </Helmet>
+
+      <header className={styles.topHeader}>
+        <div className={styles.headerInfo}>
+          <span className={styles.eyebrow}>STORE OVERVIEW</span>
+          <div className={styles.titleRow}>
+            <h1 className={styles.title}>{storeDisplayName}</h1>
+            <Badge tone={isVerified ? 'success' : 'warning'}>{isVerified ? 'Verified store' : 'Verification pending'}</Badge>
+          </div>
+          <p className={styles.subtitle}>Your orders, balances, and daily priorities in one place.</p>
+        </div>
+        <div className={styles.headerActions}>
+          <Link to="/seller/orders" className={styles.secondaryBtn}>View orders</Link>
+          <Link to="/seller/products/new" className={styles.primaryBtn}>+ Add product</Link>
+        </div>
+      </header>
 
       {/* ─── Compliance / Stock Warning Strip ─── */}
       {!isVerified ? (
@@ -151,78 +155,24 @@ function SellerDashboardView() {
         </aside>
       ) : null}
 
-      {/* ─── Top TailAdmin Dashboard Grid (2 Columns: Left 2 Rows + Right Target Gauge) ─── */}
-      <section className={styles.topDashboardGrid} aria-label="Store Analytics">
-        {/* Left Column: Top 2 KPI Cards + Monthly Sales Bar Chart */}
-        <div className={styles.leftGridColumn}>
-          {/* Top KPI Cards */}
-          <div className={styles.kpiRow}>
-            {/* Card 1: Customers */}
-            <TailMetricCard
-              label="Customers"
-              value={customerCount.toLocaleString()}
-              trend={{ value: '11.01%', isPositive: true }}
-              icon={
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
-              }
-            />
-
-            {/* Card 2: Orders */}
-            <TailMetricCard
-              label="Orders"
-              value={orderTotal > 0 ? orderTotal.toLocaleString() : '5,359'}
-              trend={{ value: '9.05%', isPositive: false }}
-              icon={
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                  <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                  <line x1="12" y1="22.08" x2="12" y2="12" />
-                </svg>
-              }
-            />
-          </div>
-
-          {/* Monthly Sales Bar Chart Card */}
-          <MonthlySalesBarChart
-            title="Monthly Sales"
-            currencySymbol="RWF"
-          />
-        </div>
-
-        {/* Right Column: Monthly Target Radial Semi-Circle Gauge Card */}
-        <div className={styles.rightGridColumn}>
-          <TargetGaugeCard
-            title="Monthly Target"
-            subtitle="Target you've set for each month"
-            percentage={75.55}
-            trendPercentage="+10%"
-            feedbackMessage={`You earn ${formatRwf(wallet?.availableBalance ?? '3287000')} today, it's higher than last month. Keep up your good work!`}
-            targetLabel="Target"
-            targetValue="$20K"
-            targetTrend="down"
-            revenueLabel="Revenue"
-            revenueValue="$20K"
-            revenueTrend="up"
-            todayLabel="Today"
-            todayValue="$20K"
-            todayTrend="up"
-          />
-        </div>
+      <section className={styles.summaryGrid} aria-label="Store performance">
+        <TailMetricCard icon={<MetricIcon path={ICONS.box} />} label="Total orders" value={orderTotal.toLocaleString()} subtitle="Across all order statuses" />
+        <TailMetricCard icon={<MetricIcon path={ICONS.trend} />} label="To fulfill" value={OPEN_ORDER_STATUSES.reduce((total, status) => total + (orderStats[status] || 0), 0).toLocaleString()} subtitle="Paid orders ready for your next step" />
+        <TailMetricCard icon={<MetricIcon path={ICONS.store} />} label="Available balance" value={formatRwf(wallet?.availableBalance ?? '0')} subtitle="Available in your store wallet" />
+        <TailMetricCard icon={<MetricIcon path={ICONS.trend} />} label="Pending balance" value={formatRwf(wallet?.pendingBalance ?? '0')} subtitle="Awaiting settlement" />
       </section>
 
-      {/* ─── Middle Section: Full-Width Statistics Area Chart ─── */}
-      <section className={styles.statsSection}>
-        <StatisticsAreaChart
-          title="Statistics"
-          subtitle="Target you've set for each month"
-          dateRangeText="Mar 6, 2025 - Mar 12, 2025"
-          currencySymbol="RWF"
-        />
+      <section className={styles.fulfillmentPanel} aria-label="Order breakdown">
+        <div><span className={styles.eyebrow}>FULFILLMENT</span><h2 className={styles.panelTitle}>Every order, moving forward</h2><p className={styles.subtitle}>A breakdown of your store's current order statuses.</p></div>
+        <div className={styles.statusBreakdown}>
+          {Object.entries(orderStats).filter(([, count]) => count > 0).map(([status, count]) => (
+            <div key={status} className={styles.statusRow}>
+              <span>{prettyStatus(status)}</span><strong>{count}</strong>
+              <progress max={Math.max(orderTotal, 1)} value={count} aria-label={`${prettyStatus(status)} orders`} />
+            </div>
+          ))}
+          {orderTotal === 0 && <p className={styles.subtitle}>Your order breakdown will appear after your first sale.</p>}
+        </div>
       </section>
 
       {/* ─── Main Two-Column Operational Layout ─── */}

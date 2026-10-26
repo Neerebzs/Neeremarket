@@ -165,7 +165,7 @@ export function SellerProductsPage() {
       <header className={styles.pageHead}>
         <div className={styles.pageHeadCopy}>
           <p className={styles.kicker}>Catalog Governance</p>
-          <h1>Products & Listings</h1>
+          <h1>Products</h1>
           <p className={styles.muted}>
             Manage your store's item catalog, pricing in RWF, attributes, inventory stock, and public visibility.
           </p>

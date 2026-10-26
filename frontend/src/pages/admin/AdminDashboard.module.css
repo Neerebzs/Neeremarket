@@ -778,3 +778,18 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+.dashboard { min-height: auto; gap: 1.5rem; }
+.commandHero { background: none; padding: 0 0 .5rem; border: 0; align-items: center; gap: 1.5rem; }
+.kickerText { font-size: .64rem; letter-spacing: .12em; color: #7a8796; }
+.heroTitle { font-family: var(--font-sans); font-size: clamp(1.5rem, 2.5vw, 2rem); font-weight: 700; background: none; -webkit-text-fill-color: #192638; color: #192638; margin-bottom: .5rem; }
+.heroSubtitle { font-size: .85rem; max-width: 36rem; }
+.heroBtn { white-space: nowrap; min-height: 40px; padding: .6rem .9rem; font-size: .78rem; }
+.attentionBanner { background: #fff8ee; border: 1px solid #f1dfc5; border-left: 3px solid #d78a35; box-shadow: none; backdrop-filter: none; padding: 1.1rem 1.3rem; margin: 0; border-radius: 10px; }
+.kpiCard, .panel, .queueCard { border-color: #e5e9ef; border-radius: 12px; box-shadow: none; background: #fff; }
+.kpiCard:hover, .queueCard:hover { transform: none; box-shadow: 0 3px 14px #19263805; border-color: #cdd6e0; }
+.kpiMainNumber { font-family: var(--font-sans); font-size: clamp(1.4rem, 2.2vw, 2rem); letter-spacing: -.04em; color: #192638; overflow-wrap: anywhere; }
+.kpiLabel { font-size: .8rem; }
+.kpiSub, .kpiFootText { font-size: .72rem; }
+.panelTitle { font-family: var(--font-sans); font-size: .95rem; color: #192638; }
+@media (max-width: 768px) { .commandHero { flex-direction: column; align-items: flex-start; } .heroActions { flex-wrap: wrap; gap: .5rem; } .attentionBanner { align-items: flex-start; } }

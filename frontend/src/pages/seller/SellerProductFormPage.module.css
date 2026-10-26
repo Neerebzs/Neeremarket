@@ -543,3 +543,17 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Listing editor follows the workspace page system */
+.hero { padding: 0 0 .5rem; background: transparent; border: 0; border-radius: 0; }
+.hero h1 { font-size: clamp(1.5rem, 2.5vw, 2rem); font-weight: 700; letter-spacing: -.03em; color: #192638; }
+.hero p { font-size: .85rem; line-height: 1.6; }
+.kicker { font-size: .64rem; letter-spacing: .12em; color: #748294; }
+.card, .steps { border-radius: 12px; border-color: #e5e9ef; }
+.steps { top: 100px; }
+.stepBtn { border-radius: 7px; min-height: 48px; font-size: .8rem; }
+.stepBtn:hover, .stepOn { background: #f0f4f8; color: #243c56; }
+.stepOn .stepNum { background: #243c56; }
+.cardHead { background: #fff; border-color: #e5e9ef; }
+@media (max-width: 1100px) { .layout { grid-template-columns: 190px minmax(0, 1fr); } }
+@media (max-width: 860px) { .layout { grid-template-columns: minmax(0, 1fr); } .steps { position: static; } }

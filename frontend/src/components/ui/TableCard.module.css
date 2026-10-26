@@ -500,3 +500,39 @@
 }
 
 .sortButton { display:inline-flex; gap:0.25rem; align-items:center; border:0; background:transparent; color:inherit; font:inherit; text-align:inherit; padding:0.25rem 0; cursor:pointer; min-height:32px; }
+
+/* Consistent data surfaces across dashboard tabs */
+.tableCard { min-width: 0; margin-bottom: 0; border-color: #e5e9ef; border-radius: 12px; }
+.banner { padding: 1.2rem 1.3rem; }
+.bannerTitle { font-size: .95rem; font-weight: 650; color: #243449; }
+.bannerSubtitle { font-size: .75rem; color: #697586; line-height: 1.6; }
+.bannerIcon { background: #f0f4f8; border-color: #e1e7ef; color: #45617e; border-radius: 9px; }
+.toolbar { padding: 1rem 1.3rem; align-items: center; background: #fff; gap: .85rem; }
+.searchWrap { min-width: min(100%, 240px); }
+.searchInput { border-radius: 8px; height: 40px; border-color: #dce3eb; background: #f8fafc; font-size: .8rem; }
+.searchInput:focus { background: #fff; border-color: #a0afc0; box-shadow: 0 0 0 3px #19263808; }
+.toolbarActions { min-width: 0; max-width: 100%; flex-wrap: wrap; }
+.chipGroup { max-width: 100%; border-radius: 8px; background: #f3f6f9; padding: 4px; gap: 3px; flex-wrap: wrap; }
+.chip { min-height: 32px; border-radius: 6px; border: 1px solid transparent; text-transform: none; letter-spacing: 0; font-weight: 550; }
+.chipActive { background: #fff; color: #243c56; border-color: #e0e6ee; box-shadow: 0 1px 3px #19263808; }
+.pillBtn { border-radius: 8px; height: 40px; text-transform: none; letter-spacing: 0; font-weight: 550; }
+.pagination { background: #fcfdfe; padding: 1rem 1.3rem; border-color: #e5e9ef; }
+.pageInfo { font-size: .75rem; color: #697586; }
+.pageBtn { min-width: 34px; height: 34px; border-radius: 7px; }
+.pageBtnActive { background: #243c56; border-color: #243c56; color: #fff; }
+.pageBtnActive:hover:not(:disabled) { background: #142435; border-color: #142435; }
+.sortButton { font: inherit; font-weight: inherit; color: inherit; }
+@media (max-width: 768px) {
+  .banner { padding: 1rem; }
+  .toolbar { padding: .85rem 1rem; align-items: stretch; }
+  .searchWrap { flex-basis: 100%; max-width: none; }
+  .toolbarActions { width: 100%; justify-content: flex-start; }
+  .chipGroup { width: 100%; }
+  .pagination { padding: 1rem; gap: .75rem; }
+  .pageControls { max-width: 100%; flex-wrap: wrap; }
+}
+
+.chip { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; }
+.chipCount { display: inline-grid; place-items: center; min-width: 19px; min-height: 19px; padding-inline: 4px; border-radius: 5px; background: #e6ebf1; color: #526479; font-size: .65rem; font-variant-numeric: tabular-nums; }
+.chipActive .chipCount { background: #eaf0f6; color: #243c56; }
+.chip:focus-visible, .pageBtn:focus-visible, .pillBtn:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }

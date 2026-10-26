@@ -113,7 +113,7 @@ export function TableToolbar({
 
       <div className={styles.toolbarActions}>
         {filterChips && filterChips.length > 0 && onFilterChange ? (
-          <div className={styles.chipGroup}>
+          <div className={styles.chipGroup} role="group" aria-label="Filter records">
             {filterChips.map((chip) => {
               const isActive = activeFilter === chip.id;
               return (
@@ -125,7 +125,7 @@ export function TableToolbar({
                   onClick={() => onFilterChange(chip.id)}
                 >
                   {chip.label}
-                  {chip.count !== undefined ? ` (${chip.count})` : ''}
+                  {chip.count !== undefined ? <span className={styles.chipCount}>{chip.count.toLocaleString()}</span> : null}
                 </button>
               );
             })}
@@ -216,7 +216,7 @@ export function TablePagination({
 
   return (
     <div className={`${styles.pagination} ${className}`.trim()}>
-      <div className={styles.pageInfo}>
+      <div className={styles.pageInfo} aria-live="polite" aria-atomic="true">
         {totalItems !== undefined ? (
           <>
             Showing <strong>{startIdx}</strong> to <strong>{endIdx}</strong> of{' '}

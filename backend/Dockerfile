@@ -9,7 +9,12 @@ RUN echo "https://mirror.aarnet.edu.au/pub/alpine/v3.20/main" > /etc/apk/reposit
     apk add --no-cache openssl libc6-compat
 
 COPY package.json package-lock.json* ./
-RUN npm install
+RUN npm config set registry https://registry.npmmirror.com && \
+    npm config set fetch-retries 5 && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    npm config set maxsockets 5 && \
+    npm install --no-audit --no-fund
 
 COPY prisma ./prisma
 RUN npx prisma generate

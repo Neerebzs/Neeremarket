@@ -1,6 +1,6 @@
 @import './tokens.css';
 
-/* Tailwind CSS */
+/* Tailwind CSS Base Layers */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

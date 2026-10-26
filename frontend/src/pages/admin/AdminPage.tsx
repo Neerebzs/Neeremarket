@@ -1,4 +1,4 @@
-import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { NavLink, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useMe } from '@/api/hooks';
 import { EmptyState } from '@/components/ui';
@@ -40,54 +40,60 @@ function isSection(value: string | undefined): value is Section {
 const SECTION_INFO: Record<Exclude<Section, 'overview'>, { kicker: string; title: string; description: string }> = {
   users: {
     kicker: 'Access & Governance',
-    title: 'User Accounts & Roles',
-    description: 'Manage customer accounts, seller merchant profiles, and operations staff role permissions across NeereMarket.',
+    title: 'Users & roles',
+    description: 'Manage customer accounts and staff access to the marketplace.',
   },
   sellers: {
     kicker: 'Merchant Pipeline',
-    title: 'Seller Verification & KYC Directory',
-    description: 'Review merchant KYC documents, business licenses, physical market locations in Kigali, and store verification status.',
+    title: 'Sellers & verification',
+    description: 'Review business documents, verify sellers, and manage store access.',
   },
   products: {
     kicker: 'Catalog Moderation',
-    title: 'Listing Quality & Catalog Approval',
-    description: 'Inspect newly submitted merchant items, verify image quality and category classification, and moderate public visibility.',
+    title: 'Product moderation',
+    description: 'Review submitted listings and manage what appears in the marketplace.',
   },
   orders: {
     kicker: 'Transaction Monitoring',
-    title: 'Platform Orders & Fulfillment',
-    description: 'Monitor live marketplace orders across physical stores and digital merchants in Kigali, review payment status, and track delivery pipelines.',
+    title: 'Orders & fulfillment',
+    description: 'Track marketplace orders, payments, and delivery progress.',
   },
   payouts: {
     kicker: 'Financial Settlement',
-    title: 'Merchant Payouts & Escrow Releases',
-    description: 'Process seller withdrawal requests via MTN MoMo and Airtel Money, inspect escrow liability, and approve financial settlements.',
+    title: 'Payouts & settlements',
+    description: 'Review withdrawal requests and manage seller settlements.',
   },
   disputes: {
     kicker: 'Trust & Safety',
-    title: 'Dispute Cases & Claims Resolution',
-    description: 'Arbitrate buyer and seller claims, review evidence submissions, and determine escrow release or refund actions.',
+    title: 'Disputes & claims',
+    description: 'Review evidence and help buyers and sellers resolve order issues.',
   },
   cms: {
     kicker: 'Platform Merchandising',
-    title: 'Content & Banner Management',
-    description: 'Control homepage hero banners, promotional carousels, featured commercial centers, and curated store highlights.',
+    title: 'Content management',
+    description: 'Manage homepage banners, featured stores, and marketplace content.',
   },
   settings: {
     kicker: 'Platform Architecture',
-    title: 'System Settings & Operational Rates',
-    description: 'Configure marketplace commission percentages, Kigali delivery fee rules, escrow hold durations, and operational parameters.',
+    title: 'Platform settings',
+    description: 'Manage marketplace rates, delivery rules, and operating preferences.',
   },
   audit: {
     kicker: 'Security & Compliance',
-    title: 'System Audit Trail & Event Logs',
-    description: 'Immutable historical record of staff actions, merchant approvals, permission changes, and security events.',
+    title: 'Audit log',
+    description: 'Review staff actions, approvals, and account security events.',
   },
   profile: {
     kicker: 'Account & Security',
-    title: 'Administrator Profile & Credentials',
-    description: 'Manage your operations staff profile, security settings, notification preferences, and administrative session.',
+    title: 'My profile',
+    description: 'Keep your account details and credentials up to date.',
   },
+};
+
+const SECTION_LABELS: Record<Section, string> = {
+  overview: 'Overview', users: 'Users', sellers: 'Sellers', products: 'Products',
+  orders: 'Orders', payouts: 'Payouts', disputes: 'Disputes', cms: 'Content',
+  settings: 'Settings', audit: 'Audit log', profile: 'My profile',
 };
 
 export function AdminPage() {
@@ -137,6 +143,14 @@ export function AdminPage() {
           </div>
         </header>
       ) : null}
+      <nav className={styles.sectionTabs} aria-label="Administration sections">
+        {SECTIONS.filter((item) => canAccessAdminSection(user, item)).map((item) => (
+          <NavLink key={item} end to={item === 'overview' ? '/admin' : `/admin/${item}`}
+            className={({ isActive }) => `${styles.sectionTab} ${isActive ? styles.sectionTabActive : ''}`}>
+            {SECTION_LABELS[item]}
+          </NavLink>
+        ))}
+      </nav>
       {section === 'overview' ? <OverviewTab /> : null}
       {section === 'users' ? <UsersTab /> : null}
       {section === 'sellers' ? <SellersTab /> : null}

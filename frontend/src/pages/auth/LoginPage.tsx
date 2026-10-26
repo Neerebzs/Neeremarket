@@ -57,7 +57,11 @@ export function LoginPage() {
       <Helmet>
         <title>{`Sign In | ${APP_NAME}`}</title>
       </Helmet>
-      <h1 className="sr-only">Sign In</h1>
+      <div className={styles.intro}>
+        <p className={styles.eyebrow}>YOUR MARKETPLACE, CONNECTED</p>
+        <h1>Welcome back.</h1>
+        <p>Sign in to shop, manage your store, and keep things moving.</p>
+      </div>
       {error ? (
         <div className={styles.alert}>
           <Alert tone="error">{error}</Alert>
@@ -65,7 +69,7 @@ export function LoginPage() {
       ) : null}
 
       <label className={styles.field}>
-        <span className={styles.label}>Account</span>
+        <span className={styles.label}>Email or phone number</span>
         <input
           className={styles.input}
           type="text"
@@ -73,7 +77,9 @@ export function LoginPage() {
           onChange={(e) => setAccount(e.target.value)}
           required
           autoComplete="username"
-          placeholder="Email or phone"
+          placeholder="Enter your email or phone number"
+          autoCapitalize="none"
+          spellCheck={false}
         />
       </label>
 
@@ -92,7 +98,7 @@ export function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
             autoComplete="current-password"
-            placeholder="Password"
+            placeholder="Enter your password"
           />
           <PasswordToggle show={showPassword} onToggle={() => setShowPassword((v) => !v)} />
         </span>
@@ -100,19 +106,15 @@ export function LoginPage() {
 
       <div className={styles.actions}>
         <button type="submit" className={styles.signIn} disabled={busy}>
-          {login.isPending ? 'Signing in…' : 'Sign In'}
+          {login.isPending ? 'Signing in…' : 'Sign in'}
         </button>
-        <Link to={joinTo} className={styles.joinFree}>
-          Join Free
-        </Link>
       </div>
 
       <GoogleSignIn onCredential={onGoogle} onError={setError} disabled={busy} />
 
       <p className={styles.footHelp}>
-        <span className={styles.dot} />
         <span>
-          New to {APP_NAME}? <Link to={joinTo}>Join Free</Link>
+          New to {APP_NAME}? <Link to={joinTo}>Create an account</Link>
         </span>
       </p>
     </form>

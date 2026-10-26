@@ -12,6 +12,7 @@ import { APP_LOGO_SRC, APP_NAME } from '@/config/brand';
 import { isSellerRole, loginHref } from '@/utils/auth';
 import { canAccessAdminSection } from '@/utils/adminAccess';
 import styles from './WorkspaceLayout.module.css';
+import pageStyles from '@/pages/workspace/workspace.module.css';
 
 const COLLAPSE_KEY = 'nm_workspace_sidebar_collapsed';
 
@@ -79,18 +80,18 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
   // Seller Navigation Architecture (TailAdmin Structure)
   const sellerGroups: Array<{ label: string; items: NavItem[] }> = useMemo(() => [
     {
-      label: 'MENU',
+      label: 'Workspace',
       items: [
-        { to: '/seller', label: 'eCommerce', end: true, icon: 'overview' },
+        { to: '/seller', label: 'Overview', end: true, icon: 'overview' },
         { to: '/seller/orders', label: 'Orders', icon: 'orders' },
         { to: '/seller/products', label: 'Products', icon: 'products' },
-        { to: '/seller/inventory', label: 'Inventory', icon: 'inventory', badge: 'NEW', badgeTone: 'brand' },
+        { to: '/seller/inventory', label: 'Inventory', icon: 'inventory' },
         { to: '/seller/reviews', label: 'Reviews', icon: 'reviews' },
-        { to: '/seller/finance', label: 'Finances', icon: 'finance', badge: 'PRO', badgeTone: 'neutral' },
+        { to: '/seller/finance', label: 'Finances', icon: 'finance' },
       ],
     },
     {
-      label: 'SUPPORT',
+      label: 'Management',
       items: [
         {
           to: '/seller/messages',
@@ -116,18 +117,18 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
   // Admin Navigation Architecture (TailAdmin Structure)
   const adminGroups: Array<{ label: string; items: NavItem[] }> = useMemo(() => [
     {
-      label: 'MENU',
+      label: 'Workspace',
       items: [
         { to: '/admin', label: 'Dashboard', end: true, icon: 'overview' },
         { to: '/admin/sellers', label: 'Sellers', icon: 'sellers' },
         { to: '/admin/products', label: 'Products', icon: 'products' },
         { to: '/admin/orders', label: 'Orders', icon: 'orders' },
-        { to: '/admin/payouts', label: 'Payouts', icon: 'payouts', badge: 'PRO', badgeTone: 'neutral' },
+        { to: '/admin/payouts', label: 'Payouts', icon: 'payouts' },
         { to: '/admin/disputes', label: 'Disputes', icon: 'disputes' },
       ],
     },
     {
-      label: 'SUPPORT',
+      label: 'Management',
       items: [
         {
           to: '/admin/messages',
@@ -179,6 +180,16 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
   );
 
   const profileTo = variant === 'seller' ? '/seller/profile' : '/admin/profile';
+  const sellerSectionTabs = variant === 'seller' ? [
+    [{ to: '/seller/products', label: 'Products' }, { to: '/seller/inventory', label: 'Inventory' }, { to: '/seller/reviews', label: 'Reviews' }],
+    [{ to: '/seller/profile', label: 'Store profile' }, { to: '/seller/onboarding', label: 'Verification' }],
+    [{ to: '/seller/orders', label: 'Orders' }, { to: '/seller/finance', label: 'Finances' }, { to: '/seller/disputes', label: 'Disputes' }],
+  ].find((items) => items.some((item) => pathname === item.to || pathname.startsWith(`${item.to}/`))) : undefined;
+
+  const activePage = groups.flatMap((group) => group.items).find((item) =>
+    item.end ? pathname === item.to : pathname === item.to || pathname.startsWith(`${item.to}/`),
+  )?.label || 'Overview';
+
   const settingsTo = variant === 'seller' ? '/seller/profile' : '/admin/settings';
 
   // Persist sidebar collapsed preference
@@ -296,40 +307,7 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
     };
   }, [menuOpen]);
 
-  const pageTitle = useMemo(() => {
-    if (variant === 'seller') {
-      if (pathname.startsWith('/seller/products/new')) return 'New Listing';
-      if (pathname.includes('/edit') && pathname.startsWith('/seller/products/')) return 'Edit Listing';
-      if (pathname.startsWith('/seller/products/') && pathname !== '/seller/products') return 'Listing Details';
-      if (pathname.startsWith('/seller/products')) return 'Catalog';
-      if (pathname.startsWith('/seller/reviews')) return 'Customer Reviews';
-      if (pathname.startsWith('/seller/inventory')) return 'Inventory Stock';
-      if (pathname.startsWith('/seller/orders/') && pathname !== '/seller/orders') return 'Order Details';
-      if (pathname.startsWith('/seller/orders')) return 'Orders';
-      if (pathname.startsWith('/seller/finance')) return 'Finances & Payouts';
-      if (pathname.startsWith('/seller/messages')) return 'Messages';
-      if (pathname.startsWith('/seller/disputes')) return 'Dispute Cases';
-      if (pathname.startsWith('/seller/notifications')) return 'Store Alerts';
-      if (pathname.startsWith('/seller/onboarding')) return 'Seller Onboarding';
-      if (pathname.startsWith('/seller/profile')) return 'Store Settings';
-      return 'Overview';
-    }
-    if (pathname.startsWith('/admin/users')) return 'Users & Roles';
-    if (pathname.startsWith('/admin/sellers')) return 'Sellers Directory';
-    if (pathname.startsWith('/admin/products')) return 'Product Moderation';
-    if (pathname.startsWith('/admin/orders')) return 'Marketplace Orders';
-    if (pathname.startsWith('/admin/payouts')) return 'Payouts & Settlement';
-    if (pathname.startsWith('/admin/disputes')) return 'Dispute Resolution';
-    if (pathname.startsWith('/admin/messages')) return 'Inquiries & Messages';
-    if (pathname.startsWith('/admin/notifications')) return 'System Alerts';
-    if (pathname.startsWith('/admin/cms')) return 'Content Management';
-    if (pathname.startsWith('/admin/settings')) return 'Platform Settings';
-    if (pathname.startsWith('/admin/audit')) return 'Audit Trail';
-    if (pathname.startsWith('/admin/profile')) return 'Admin Profile';
-    return 'Operations Dashboard';
-  }, [pathname, variant]);
 
-  const pageHint = variant === 'seller' ? 'Seller Workspace' : 'Marketplace Admin';
 
   function toggleCollapsed() {
     setCollapsed((value) => !value);
@@ -556,7 +534,7 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
               type="button"
               className={styles.hamburgerBtn}
               aria-label="Toggle navigation"
-              aria-expanded={open}
+              aria-expanded={open || !collapsed}
               aria-controls="workspace-navigation"
               onClick={() => {
                 if (window.innerWidth <= 980) {
@@ -573,6 +551,10 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
               </svg>
             </button>
 
+            <div className={styles.context}>
+              <p className={styles.contextHint}>{variant === 'admin' ? 'Administration' : 'Seller workspace'}</p>
+              <p className={styles.contextTitle}>{activePage}</p>
+            </div>
             {/* Quick Header Search Command Bar */}
             <div className={styles.headerSearch}>
               <svg viewBox="0 0 24 24" className={styles.headerSearchIcon} aria-hidden="true">
@@ -581,39 +563,41 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
               </svg>
               <input
                 ref={searchInputRef}
+                onChange={(event) => event.currentTarget.setCustomValidity('')}
                 type="search"
-                placeholder="Search or type command..."
+                placeholder={variant === 'seller' ? 'Search products…' : 'Find a workspace page…'}
                 aria-label="Search workspace"
                 className={styles.headerSearchInput}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     const val = (e.target as HTMLInputElement).value.trim();
                     if (val) {
-                      navigate(
-                        variant === 'seller'
-                          ? `/seller/products?q=${encodeURIComponent(val)}`
-                          : `/admin/sellers?q=${encodeURIComponent(val)}`,
-                      );
+                      if (variant === 'seller') {
+                        navigate(`/seller/products?q=${encodeURIComponent(val)}`);
+                      } else {
+                        const match = groups.flatMap((group) => group.items)
+                          .find((item) => item.label.toLowerCase().includes(val.toLowerCase()));
+                        if (match) navigate(match.to);
+                        else e.currentTarget.setCustomValidity('Enter a page name, such as Orders or Sellers.');
+                        e.currentTarget.reportValidity();
+                      }
                     }
                   }
                 }}
               />
-              <kbd className={styles.cmdKBadge}>⌘K</kbd>
+              <kbd className={styles.cmdKBadge}>Ctrl K</kbd>
             </div>
           </div>
 
           <div className={styles.topActions}>
-            {/* Theme Toggle Button (Moon) */}
-            <button
-              type="button"
-              className={styles.roundActionBtn}
-              aria-label="Toggle dark mode"
-              title="Toggle theme"
-            >
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-              </svg>
-            </button>
+            <Link to="/" className={styles.headerLiveBtn}>
+              <StoreIcon /><span>Marketplace</span>
+            </Link>
+            <Link to={variant === 'seller' ? '/seller/messages' : '/admin/messages'}
+              className={styles.roundActionBtn} aria-label={`Messages${unreadMessages ? ` (${unreadMessages} unread)` : ''}`} title="Messages">
+              <NavIcon name="messages" />
+              {unreadMessages > 0 && <span className={styles.alertDot} />}
+            </Link>
 
             {/* Notification Bell with red indicator dot */}
             <Link
@@ -703,6 +687,16 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
         {/* Content View */}
         <main id="workspace-content" tabIndex={-1} className={styles.content}>
           <WorkspaceAccess variant={variant}>
+            {sellerSectionTabs && isSeller && (
+              <nav className={`${pageStyles.sectionTabs} ${pageStyles.sellerTabs}`} aria-label="Related seller pages">
+                {sellerSectionTabs.map((item) => (
+                  <NavLink key={item.to} to={item.to}
+                    className={({ isActive }) => `${pageStyles.sectionTab} ${isActive ? pageStyles.sectionTabActive : ''}`}>
+                    {item.label}
+                  </NavLink>
+                ))}
+              </nav>
+            )}
             <Suspense fallback={<TableSkeleton rows={5} />}>
               <Outlet />
             </Suspense>

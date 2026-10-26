@@ -42,7 +42,7 @@ export function SellerReviewsPage() {
       <header className={styles.pageHead}>
         <div className={styles.pageHeadCopy}>
           <p className={styles.kicker}>Customer Feedback</p>
-          <h1>Store & Product Reviews</h1>
+          <h1>Customer reviews</h1>
           <p className={styles.muted}>
             Verified customer ratings, purchase feedback, and review scores across your marketplace listings.
           </p>

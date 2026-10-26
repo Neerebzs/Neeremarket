@@ -32,10 +32,10 @@ export function OverviewTab() {
             <span className={styles.kickerText}>Platform Operations</span>
           </div>
 
-          <h1 className={styles.heroTitle}>Operations Command Center</h1>
+          <h1 className={styles.heroTitle}>Marketplace overview</h1>
 
           <p className={styles.heroSubtitle}>
-            Live platform transactions, merchant verification pipelines, and catalog governance across the marketplace.
+            Monitor marketplace performance, review sellers, and keep daily operations moving.
           </p>
         </div>
 
@@ -52,7 +52,7 @@ export function OverviewTab() {
               <path d="M23 4v6h-6M1 20v-6h6" />
               <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
             </svg>
-            <span>Sync</span>
+            <span>Refresh data</span>
           </button>
         </div>
       </header>

@@ -67,7 +67,7 @@ export function SellerDisputesPage() {
       <header className={styles.pageHead}>
         <div className={styles.pageHeadCopy}>
           <p className={styles.kicker}>Customer Claims</p>
-          <h1>Dispute Cases & Resolution</h1>
+          <h1>Disputes</h1>
           <p className={styles.muted}>
             Review customer claims, submit evidence, communicate resolutions, and track escrow release status.
           </p>

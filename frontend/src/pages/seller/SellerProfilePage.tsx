@@ -111,7 +111,7 @@ export function SellerProfilePage() {
       <header className={styles.pageHead}>
         <div className={styles.pageHeadCopy}>
           <p className={styles.kicker}>Merchant Settings</p>
-          <h1>Store Profile & Identity</h1>
+          <h1>Store profile</h1>
           <p className={styles.muted}>
             Configure your public storefront branding, Kigali market center location, contact channels, and KYC business details.
           </p>

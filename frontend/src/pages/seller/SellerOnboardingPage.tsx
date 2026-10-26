@@ -182,7 +182,7 @@ export function SellerOnboardingPage() {
       <header className={styles.pageHead}>
         <div className={styles.pageHeadCopy}>
           <p className={styles.kicker}>Merchant Compliance</p>
-          <h1>Seller Onboarding & KYC Verification</h1>
+          <h1>Business verification</h1>
           <p className={styles.muted}>
             Complete your Rwanda national ID, RDB business registration, TIN verification, and Mobile Money payout credentials to activate your store.
           </p>

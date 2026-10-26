@@ -1,4 +1,3 @@
-import React from 'react';
 import styles from './TargetGaugeCard.module.css';
 
 export interface TargetGaugeCardProps {

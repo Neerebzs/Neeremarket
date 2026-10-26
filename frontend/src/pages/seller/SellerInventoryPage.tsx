@@ -80,7 +80,7 @@ export function SellerInventoryPage() {
       <header className={styles.pageHead}>
         <div className={styles.pageHeadCopy}>
           <p className={styles.kicker}>Warehouse & Stock</p>
-          <h1>Inventory Stock Control</h1>
+          <h1>Inventory</h1>
           <p className={styles.muted}>
             Real-time variant quantity tracking, reserved order allocations, safety thresholds, and low-stock replenishment alerts.
           </p>
