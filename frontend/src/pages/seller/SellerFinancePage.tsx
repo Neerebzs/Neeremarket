@@ -27,7 +27,7 @@ export function SellerFinancePage() {
     const normalizedPhone = normalizeRwandaPhone(phone);
     const requestedAmount = Number(amount);
     if (!normalizedPhone) { setErr('Enter a valid Rwandan mobile number, such as 0780 000 000 or +250780000000.'); return; }
-    if (!Number.isInteger(requestedAmount) || requestedAmount < 100 || requestedAmount > Number(finance?.wallet.availableBalance || 0)) { setErr('Enter a whole RWF amount within your available balance (minimum 100 RWF).'); return; }
+    if (!Number.isInteger(requestedAmount) || requestedAmount < 100 || requestedAmount > Number(finance?.wallet.withdrawableBalance || 0)) { setErr('Enter a whole RWF amount within what you can withdraw now (minimum 100 RWF).'); return; }
     try {
       await requestPayout.mutateAsync({ amount: Number(amount), destination: { phone: normalizedPhone } });
       setMsg('Withdrawal requested. Once NeereMarket approves it, the money is sent to your Mobile Money wallet.');
@@ -57,10 +57,14 @@ export function SellerFinancePage() {
                 <span className={styles.kpiIcon} data-tone="ok">
                   <MetricIcon path={ICONS.wallet} />
                 </span>
-                <span>Available balance</span>
+                <span>Can withdraw now</span>
               </div>
-              <strong>{formatRwf(finance.wallet.availableBalance)}</strong>
-              <em>Can request payout</em>
+              <strong>{formatRwf(finance.wallet.withdrawableBalance)}</strong>
+              <em>
+                {Number(finance.wallet.disputedOnHold) > 0
+                  ? `${formatRwf(finance.wallet.disputedOnHold)} held for open disputes`
+                  : 'Customers confirmed these orders as received'}
+              </em>
             </article>
             <article className={styles.kpi}>
               <div className={styles.kpiHead}>
@@ -94,6 +98,16 @@ export function SellerFinancePage() {
             </article>
           </section>
 
+          {Number(finance.wallet.disputedOnHold) > 0 ? (
+            <aside className={styles.notice} data-tone="info">
+              <p>
+                <strong>{formatRwf(finance.wallet.disputedOnHold)} is on hold</strong>
+                A customer opened a dispute after confirming they received the order. This money becomes
+                withdrawable again once the dispute is resolved.
+              </p>
+            </aside>
+          ) : null}
+
           <p className={styles.muted}>Lifetime gross sales: <strong>{formatRwf(finance.totals.sales)}</strong>. Available and pending balances are distinct from sales revenue.</p>
           <section className={styles.split}>
             <article className={styles.panel}>
@@ -106,7 +120,7 @@ export function SellerFinancePage() {
                     label="Amount (RWF)"
                     type="number"
                     min={100}
-                    max={Number(finance.wallet.availableBalance) || undefined}
+                    max={Number(finance.wallet.withdrawableBalance) || undefined}
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     required
@@ -119,7 +133,7 @@ export function SellerFinancePage() {
                     placeholder="0780 000 000"
                     required
                   />
-                  <Button type="submit" disabled={requestPayout.isPending || Number(finance.wallet.availableBalance) < 100}>
+                  <Button type="submit" disabled={requestPayout.isPending || Number(finance.wallet.withdrawableBalance) < 100}>
                     {requestPayout.isPending ? 'Submitting…' : 'Request withdrawal'}
                   </Button>
                 </form>

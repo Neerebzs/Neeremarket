@@ -35,7 +35,8 @@ type IconName =
   | 'payouts'
   | 'onboarding'
   | 'inventory'
-  | 'reviews';
+  | 'reviews'
+  | 'agakaye';
 
 type NavItem = {
   to: string;
@@ -88,6 +89,7 @@ export function WorkspaceLayout({ variant }: { variant: Variant }) {
         { to: '/seller/inventory', label: 'Inventory', icon: 'inventory' },
         { to: '/seller/reviews', label: 'Reviews', icon: 'reviews' },
         { to: '/seller/finance', label: 'Finances', icon: 'finance' },
+        { to: '/seller/agakaye', label: 'Agakaye', icon: 'agakaye' },
       ],
     },
     {
@@ -965,6 +967,15 @@ function NavIcon({ name }: { name: IconName }) {
       return (
         <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case 'agakaye':
+      return (
+        <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
+          <path d="M5 4a2 2 0 0 1 2-2h11v18H7a2 2 0 0 0-2 2V4z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M5 20a2 2 0 0 1 2-2h11" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <line x1="9" y1="7" x2="14" y2="7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          <line x1="9" y1="11" x2="14" y2="11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
         </svg>
       );
     case 'finance':

@@ -239,7 +239,14 @@ export function useSellerFinance() {
       const { data } = await api.get<
         ApiSuccess<{
           finance: {
-            wallet: { pendingBalance: string; availableBalance: string; currency: string };
+            wallet: {
+              pendingBalance: string;
+              availableBalance: string;
+              /** Confirmed-but-disputed earnings that cannot be withdrawn yet. */
+              disputedOnHold: string;
+              withdrawableBalance: string;
+              currency: string;
+            };
             totals: {
               orders: number;
               sales: string;

@@ -192,6 +192,16 @@ enum DisputeResolution {
   OTHER
 }
 
+enum AgakayeKind {
+  MONEY
+  ITEM
+}
+
+enum AgakayeStatus {
+  OUTSTANDING
+  RETURNED
+}
+
 enum DisputeParty {
   CUSTOMER
   SELLER
@@ -350,6 +360,7 @@ model SellerProfile {
   payoutRequests PayoutRequest[]
   reviews        Review[]             @relation("SellerReviews")
   disputes       Dispute[]
+  agakayeEntries AgakayeEntry[]
 
   @@index([verificationStatus])
   @@index([district])
@@ -1237,4 +1248,30 @@ model CmsPage {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("cms_pages")
+}
+
+/// Agakaye: a seller's private notebook of short-term loans (money or items) to people.
+model AgakayeEntry {
+  id            String        @id @default(uuid()) @db.Uuid
+  sellerId      String        @map("seller_id") @db.Uuid
+  borrowerName  String        @map("borrower_name")
+  borrowerPhone String?       @map("borrower_phone")
+  kind          AgakayeKind
+  /// What was lent when kind is ITEM (e.g. "Pen", "Shoes").
+  itemName      String?       @map("item_name")
+  quantity      Int           @default(1)
+  /// RWF lent when kind is MONEY; optional estimated value for an item.
+  amount        BigInt?
+  lentAt        DateTime      @default(now()) @map("lent_at")
+  dueAt         DateTime?     @map("due_at")
+  status        AgakayeStatus @default(OUTSTANDING)
+  returnedAt    DateTime?     @map("returned_at")
+  notes         String?
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  seller SellerProfile @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@index([sellerId, status, dueAt])
+  @@map("agakaye_entries")
 }

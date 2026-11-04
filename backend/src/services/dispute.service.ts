@@ -5,6 +5,7 @@ import { Errors } from '../shared/errors';
 import type { AuthUser } from '../shared/middleware';
 import { notifyUser } from './notification.service';
 import { writeAuditLog } from './audit.service';
+import { lockWallet } from './finance.service';
 import type { CreateDisputeInput, ResolveDisputeInput } from '../validators/dispute.validator';
 
 export const ACTIVE_DISPUTE_STATUSES: DisputeStatus[] = ['OPEN', 'SELLER_RESPONDED', 'ESCALATED'];
@@ -218,29 +219,35 @@ export async function createDispute(user: AuthUser, input: CreateDisputeInput) {
     throw Errors.conflict('This order is not paid yet. Only payment issues can be disputed before payment.');
   }
 
-  const existing = await prisma.dispute.findFirst({
-    where: { sellerOrderId: sellerOrder.id, status: { in: ACTIVE_DISPUTE_STATUSES } },
-    select: { id: true, disputeNumber: true },
-  });
-  if (existing) {
-    throw Errors.conflict(
-      `Dispute ${existing.disputeNumber} is already open for this parcel. Add details to that dispute instead.`,
-    );
-  }
+  const dispute = await prisma.$transaction(async (tx) => {
+    // Lock the seller's wallet like a payout request does: a dispute and a withdrawal arriving
+    // together are serialized, so the payout always sees the disputed earnings as on hold. The
+    // lock also stops two concurrent submissions from opening duplicate disputes.
+    await lockWallet(tx, sellerOrder.sellerId);
+    const existing = await tx.dispute.findFirst({
+      where: { sellerOrderId: sellerOrder.id, status: { in: ACTIVE_DISPUTE_STATUSES } },
+      select: { id: true, disputeNumber: true },
+    });
+    if (existing) {
+      throw Errors.conflict(
+        `Dispute ${existing.disputeNumber} is already open for this parcel. Add details to that dispute instead.`,
+      );
+    }
 
-  const dispute = await prisma.dispute.create({
-    data: {
-      disputeNumber: newDisputeNumber(),
-      orderId: order.id,
-      sellerOrderId: sellerOrder.id,
-      customerId: user.id,
-      sellerId: sellerOrder.sellerId,
-      type: input.type,
-      subject: input.subject,
-      description: input.description,
-      desiredOutcome: input.desiredOutcome,
-      evidenceUrls: input.evidenceUrls,
-    },
+    return tx.dispute.create({
+      data: {
+        disputeNumber: newDisputeNumber(),
+        orderId: order.id,
+        sellerOrderId: sellerOrder.id,
+        customerId: user.id,
+        sellerId: sellerOrder.sellerId,
+        type: input.type,
+        subject: input.subject,
+        description: input.description,
+        desiredOutcome: input.desiredOutcome,
+        evidenceUrls: input.evidenceUrls,
+      },
+    });
   });
 
   await notifyUser({

@@ -27,7 +27,7 @@ const MIN_MOMO_AMOUNT = 100;
  * the writes that follow them are therefore serialized per seller, so concurrent sales,
  * payouts and refunds cannot overwrite each other or overdraw the wallet.
  */
-async function lockWallet(tx: Tx, sellerId: string) {
+export async function lockWallet(tx: Tx, sellerId: string) {
   await tx.sellerWallet.upsert({
     where: { sellerId },
     update: {},
@@ -35,6 +35,38 @@ async function lockWallet(tx: Tx, sellerId: string) {
   });
   await tx.$queryRaw`SELECT id FROM seller_wallets WHERE seller_id = ${sellerId}::uuid FOR UPDATE`;
   return tx.sellerWallet.findUniqueOrThrow({ where: { sellerId } });
+}
+
+const OPEN_DISPUTE_STATUSES = ['OPEN', 'SELLER_RESPONDED', 'ESCALATED'] as const;
+
+/**
+ * Earnings of parcels the customer confirmed as received but then disputed. They sit in the
+ * available balance but cannot be withdrawn until every dispute on the parcel is closed.
+ */
+export async function disputedEarningsOnHold(tx: Tx, sellerId: string) {
+  const held = await tx.sellerOrder.aggregate({
+    where: {
+      sellerId,
+      status: { in: ['DELIVERED', 'COMPLETED'] },
+      disputes: { some: { status: { in: [...OPEN_DISPUTE_STATUSES] } } },
+    },
+    _sum: { sellerEarnings: true },
+  });
+  return held._sum.sellerEarnings ?? 0n;
+}
+
+/**
+ * A payout already took its amount out of the available balance, so what is left must still
+ * cover the disputed earnings; otherwise the payout would be paying out money under dispute.
+ */
+async function assertPayoutLeavesDisputesCovered(tx: Tx, sellerId: string) {
+  const wallet = await lockWallet(tx, sellerId);
+  const onHold = await disputedEarningsOnHold(tx, sellerId);
+  if (wallet.availableBalance < onHold) {
+    throw Errors.conflict(
+      `This seller has ${onHold} RWF under open disputes. Resolve the disputes before paying out, or cancel this payout.`,
+    );
+  }
 }
 
 /**
@@ -224,14 +256,16 @@ export async function getSellerFinance(userId: string) {
   ]);
 
   const wallet = seller.wallet;
+  const available = wallet?.availableBalance ?? 0n;
+  const onHold = await disputedEarningsOnHold(prisma, seller.id);
   return {
-    wallet: wallet
-      ? {
-          pendingBalance: String(wallet.pendingBalance),
-          availableBalance: String(wallet.availableBalance),
-          currency: wallet.currency,
-        }
-      : { pendingBalance: '0', availableBalance: '0', currency: 'RWF' },
+    wallet: {
+      pendingBalance: String(wallet?.pendingBalance ?? 0n),
+      availableBalance: String(available),
+      disputedOnHold: String(onHold),
+      withdrawableBalance: String(available > onHold ? available - onHold : 0n),
+      currency: wallet?.currency ?? 'RWF',
+    },
     totals: {
       orders: sales._count,
       sales: String(sales._sum.subtotal ?? 0n),
@@ -271,8 +305,14 @@ export async function requestPayout(userId: string, amount: number, phone: strin
 
     const wallet = await lockWallet(tx, seller.id);
     const amt = BigInt(amount);
-    if (wallet.availableBalance < amt) {
-      throw Errors.conflict('Insufficient available balance');
+    const onHold = await disputedEarningsOnHold(tx, seller.id);
+    const withdrawable = wallet.availableBalance > onHold ? wallet.availableBalance - onHold : 0n;
+    if (withdrawable < amt) {
+      throw Errors.conflict(
+        onHold > 0n
+          ? `You can withdraw up to ${withdrawable} RWF now. ${onHold} RWF is on hold until your open disputes are resolved.`
+          : 'Insufficient available balance',
+      );
     }
 
     await tx.sellerWallet.update({
@@ -406,6 +446,7 @@ export async function reviewPayout(
     if (!['REQUESTED', 'UNDER_REVIEW'].includes(payout.status)) {
       throw Errors.conflict(`Cannot approve a payout in status ${payout.status}`);
     }
+    await assertPayoutLeavesDisputesCovered(tx, payout.sellerId);
     const claimed = await tx.payoutRequest.updateMany({
       where: { id: payoutId, status: { in: ['REQUESTED', 'UNDER_REVIEW'] } },
       data: { status: 'APPROVED', reviewNotes: notes },
@@ -435,9 +476,13 @@ export async function reviewPayout(
  * double transfer.
  */
 export async function sendPayout(payoutId: string, actorId?: string, ip?: string) {
-  const claimed = await prisma.payoutRequest.updateMany({
-    where: { id: payoutId, status: 'APPROVED' },
-    data: { status: 'PROCESSING' },
+  const claimed = await prisma.$transaction(async (tx) => {
+    const pending = await tx.payoutRequest.findUnique({ where: { id: payoutId } });
+    if (pending?.status === 'APPROVED') await assertPayoutLeavesDisputesCovered(tx, pending.sellerId);
+    return tx.payoutRequest.updateMany({
+      where: { id: payoutId, status: 'APPROVED' },
+      data: { status: 'PROCESSING' },
+    });
   });
   if (claimed.count === 0) {
     const exists = await prisma.payoutRequest.findUnique({ where: { id: payoutId } });
@@ -569,7 +614,6 @@ export async function listPayoutsForAdmin(status?: string) {
 export type SellerFulfilmentStatus = 'PROCESSING' | 'READY_FOR_SHIPMENT' | 'SHIPPED' | 'OUT_FOR_DELIVERY';
 
 const AWAITING_RECEIPT: OrderStatus[] = ['SHIPPED', 'OUT_FOR_DELIVERY'];
-const ACTIVE_DISPUTE = ['OPEN', 'SELLER_RESPONDED', 'ESCALATED'] as const;
 
 export async function updateSellerOrderStatus(
   userId: string,
@@ -639,7 +683,7 @@ export async function confirmSellerOrderDelivery(input: {
       },
       include: {
         order: true,
-        disputes: { where: { status: { in: [...ACTIVE_DISPUTE] } }, select: { id: true } },
+        disputes: { where: { status: { in: [...OPEN_DISPUTE_STATUSES] } }, select: { id: true } },
       },
     });
     if (!sellerOrder) throw Errors.notFound('Seller order');

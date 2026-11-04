@@ -151,8 +151,9 @@ async function main() {
 
   // 5. N payout requests for the whole balance at once
   const bal = Number(wd1.availableBalance);
+  const payoutsFrom = new Date();
   await Promise.all(Array.from({ length: N }, () => call('POST', '/sellers/me/payouts', S, { amount: bal, destination: { phone: '0788123456' } })));
-  const held = await prisma.payoutRequest.count({ where: { sellerId: seller.id, status: 'REQUESTED', amount: BigInt(bal) } });
+  const held = await prisma.payoutRequest.count({ where: { sellerId: seller.id, status: 'REQUESTED', createdAt: { gte: payoutsFrom } } });
   check('payout: balance withdrawn at most once', held === 1 && (await wallet()).availableBalance === 0n, `accepted=${held}`);
 
   // 6. Cancel that payout N times at once

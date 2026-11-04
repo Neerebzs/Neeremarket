@@ -17,6 +17,7 @@ const SellerDashboardPage = lazy(() => import('@/pages/seller/SellerDashboardPag
 const SellerProductsPage = lazy(() => import('@/pages/seller/SellerProductsPage').then(module => ({ default: module.SellerProductsPage })));
 const SellerProductFormPage = lazy(() => import('@/pages/seller/SellerProductFormPage').then(module => ({ default: module.SellerProductFormPage })));
 const SellerFinancePage = lazy(() => import('@/pages/seller/SellerFinancePage').then(module => ({ default: module.SellerFinancePage })));
+const SellerAgakayePage = lazy(() => import('@/pages/seller/SellerAgakayePage').then(module => ({ default: module.SellerAgakayePage })));
 const SellerOrdersPage = lazy(() => import('@/pages/seller/SellerOrdersPage').then(module => ({ default: module.SellerOrdersPage })));
 const SellerDisputesPage = lazy(() => import('@/pages/seller/SellerDisputesPage').then(module => ({ default: module.SellerDisputesPage })));
 const SellerProfilePage = lazy(() => import('@/pages/seller/SellerProfilePage').then(module => ({ default: module.SellerProfilePage })));
@@ -70,6 +71,7 @@ export function AppRouter() {
           <Route path="seller/inventory" element={<SellerInventoryPage />} />
           <Route path="seller/reviews" element={<SellerReviewsPage />} />
           <Route path="seller/finance" element={<SellerFinancePage />} />
+          <Route path="seller/agakaye" element={<SellerAgakayePage />} />
           <Route path="seller/orders" element={<SellerOrdersPage />} />
           <Route path="seller/orders/:id" element={<SellerOrderDetailPage />} />
           <Route path="seller/messages" element={<InboxPage basePath="/seller/messages" />} />

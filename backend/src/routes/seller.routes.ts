@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as sellerController from '../controllers/seller.controller';
+import * as agakayeController from '../controllers/agakaye.controller';
 import { requireAuth, requireRole } from '../middlewares/auth.middleware';
 import { asyncHandler } from '../shared/middleware';
 import { mediaUpload } from '../services/upload.service';
@@ -29,3 +30,9 @@ sellerRouter.post(
   '/me/inventory/:variantId/adjust',
   asyncHandler(sellerController.adjustInventory),
 );
+
+// Agakaye: the seller's private notebook of things lent to people
+sellerRouter.get('/me/agakaye', asyncHandler(agakayeController.listEntries));
+sellerRouter.post('/me/agakaye', asyncHandler(agakayeController.createEntry));
+sellerRouter.patch('/me/agakaye/:id', asyncHandler(agakayeController.updateEntry));
+sellerRouter.delete('/me/agakaye/:id', asyncHandler(agakayeController.deleteEntry));
